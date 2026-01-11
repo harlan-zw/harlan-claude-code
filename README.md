@@ -14,6 +14,12 @@ Already configured in `~/.claude/settings.json`:
 
 ## Hooks
 
+### SessionStart
+
+| Hook | Purpose |
+|------|---------|
+| `session-start.sh` | Detect project type, warn about npm/yarn, suggest CLAUDE.md |
+
 ### PostToolUse (Write|Edit)
 
 | Hook | Purpose |
@@ -32,41 +38,66 @@ Already configured in `~/.claude/settings.json`:
 
 | Command | Description |
 |---------|-------------|
-| `/release` | Bump version, changelog, publish |
+| `/release` | Bump version, changelog, publish (bumpp) |
 | `/typecheck` | Run TypeScript checking |
 | `/test` | Run vitest |
 | `/playground` | Start Nuxt dev for playground |
 | `/build-module` | Build Nuxt module |
+| `/pr` | Create GitHub pull request |
+| `/stub` | Stub mode for module dev |
+| `/update-deps` | Update deps with taze |
+| `/check-exports` | Verify exports with attw |
+| `/init-module` | Scaffold module or add CLAUDE.md |
 
 ## Agents
 
-| Agent | Trigger |
-|-------|---------|
-| `nuxt-module` | Nuxt module dev context |
+| Agent | When to use |
+|-------|-------------|
+| `nuxt-module` | Nuxt module development (runtime vs build, hooks, options) |
+| `unjs` | UnJS ecosystem packages (unbuild, defu, pathe patterns) |
 
 ## Structure
 
 ```
 harlan-claude-code/
 ├── plugin.json
+├── README.md
 ├── hooks/
+│   ├── session-start.sh
 │   ├── eslint.sh
 │   ├── typecheck.sh
 │   ├── vitest.sh
 │   └── pnpm-only.sh
 ├── skills/
-│   ├── release/skill.md
-│   ├── typecheck/skill.md
-│   ├── test/skill.md
-│   ├── playground/skill.md
-│   └── build-module/skill.md
+│   ├── release/
+│   ├── typecheck/
+│   ├── test/
+│   ├── playground/
+│   ├── build-module/
+│   ├── pr/
+│   ├── stub/
+│   ├── update-deps/
+│   ├── check-exports/
+│   └── init-module/
 └── agents/
-    └── nuxt-module.md
+    ├── nuxt-module.md
+    └── unjs.md
 ```
 
 ## Customization
 
-Edit hooks in `hooks/` directory. All hooks receive JSON via stdin:
+### Disabling hooks temporarily
+
+```bash
+# In hook script
+[ "$SKIP_LINT" = "1" ] && exit 0
+```
+
+Then run: `SKIP_LINT=1 claude`
+
+### Hook JSON input
+
+All hooks receive JSON via stdin:
 
 ```json
 {
@@ -80,16 +111,8 @@ Edit hooks in `hooks/` directory. All hooks receive JSON via stdin:
 
 ### Blocking actions
 
-Return JSON to block:
+Return JSON to block a tool call:
 
 ```bash
 echo '{"decision": "block", "reason": "Reason here"}'
-```
-
-### Disabling hooks temporarily
-
-Comment out in `plugin.json` or use env var in hook:
-
-```bash
-[ "$SKIP_LINT" = "1" ] && exit 0
 ```

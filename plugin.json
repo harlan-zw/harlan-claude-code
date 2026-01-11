@@ -2,6 +2,16 @@
   "name": "harlan-claude-code",
   "description": "Harlan's personal Claude Code plugin - Nuxt/Vue/TS workflow tools",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
