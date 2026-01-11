@@ -1,0 +1,39 @@
+{
+  "name": "harlan-claude-code",
+  "description": "Harlan's personal Claude Code plugin - Nuxt/Vue/TS workflow tools",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pnpm-only.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/eslint.sh",
+            "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.sh",
+            "timeout": 60000
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/vitest.sh",
+            "timeout": 120000
+          }
+        ]
+      }
+    ]
+  }
+}
