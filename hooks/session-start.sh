@@ -1,39 +1,54 @@
 #!/bin/bash
 
-# Detect project type and show relevant info
+# Context-aware session start
+# Detects project type, shows relevant info, primes context
 
-show_info() {
-  echo -e "\033[36m$1\033[0m"
-}
+show() { echo -e "\033[36m$1\033[0m"; }
+dim() { echo -e "\033[90m$1\033[0m"; }
+warn() { echo -e "\033[33m$1\033[0m"; }
 
 # Check for package.json
 if [ -f "package.json" ]; then
-  name=$(jq -r '.name // "unnamed"' package.json)
+  name=$(jq -r '.name // "unnamed"' package.json 2>/dev/null)
 
   # Detect project type
   if [ -f "src/module.ts" ] || grep -q "nuxt-module-build" package.json 2>/dev/null; then
-    show_info "Nuxt Module: $name"
+    show "Nuxt Module: $name"
   elif [ -f "nuxt.config.ts" ]; then
-    show_info "Nuxt App: $name"
+    show "Nuxt App: $name"
   elif [ -f "build.config.ts" ]; then
-    show_info "UnJS Package: $name"
+    show "UnJS Package: $name"
   elif grep -q '"vue"' package.json 2>/dev/null; then
-    show_info "Vue Project: $name"
+    show "Vue Project: $name"
   else
-    show_info "Node Project: $name"
+    show "Node Project: $name"
   fi
 
-  # Check package manager
+  # Git info
+  if git rev-parse --git-dir > /dev/null 2>&1; then
+    branch=$(git branch --show-current 2>/dev/null)
+    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+      dim "Branch: $branch (dirty)"
+    else
+      dim "Branch: $branch"
+    fi
+
+    # Last commit
+    last=$(git log -1 --format="%s" 2>/dev/null | head -c 50)
+    [ -n "$last" ] && dim "Last: $last"
+  fi
+
+  # Package manager check
   if [ -f "pnpm-lock.yaml" ]; then
-    :  # good, pnpm
+    :
   elif [ -f "package-lock.json" ]; then
-    echo -e "\033[33mWarning: npm detected, consider using pnpm\033[0m"
+    warn "npm detected - use pnpm"
   elif [ -f "yarn.lock" ]; then
-    echo -e "\033[33mWarning: yarn detected, consider using pnpm\033[0m"
+    warn "yarn detected - use pnpm"
   fi
 fi
 
-# Check for CLAUDE.md
+# CLAUDE.md hint
 if [ ! -f ".claude/CLAUDE.md" ] && [ ! -f "CLAUDE.md" ]; then
-  echo -e "\033[90mTip: Add .claude/CLAUDE.md for project context\033[0m"
+  dim "Tip: /init-module to add CLAUDE.md"
 fi

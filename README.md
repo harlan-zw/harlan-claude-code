@@ -18,7 +18,13 @@ Already configured in `~/.claude/settings.json`:
 
 | Hook | Purpose |
 |------|---------|
-| `session-start.sh` | Detect project type, warn about npm/yarn, suggest CLAUDE.md |
+| `session-start.sh` | Detect project type, show git status, warn about npm/yarn |
+
+### PreCompact
+
+| Hook | Purpose |
+|------|---------|
+| `pre-compact.sh` | Save context to `.claude/session-context.md` before compaction |
 
 ### PostToolUse (Write|Edit)
 
@@ -48,6 +54,8 @@ Already configured in `~/.claude/settings.json`:
 | `/update-deps` | Update deps with taze |
 | `/check-exports` | Verify exports with attw |
 | `/init-module` | Scaffold module or add CLAUDE.md |
+| `/changelog` | Generate changelog from commits |
+| `/context-prime` | Load comprehensive project context |
 
 ## Agents
 
@@ -56,6 +64,18 @@ Already configured in `~/.claude/settings.json`:
 | `nuxt-module` | Nuxt module development (runtime vs build, hooks, options) |
 | `unjs` | UnJS ecosystem packages (unbuild, defu, pathe patterns) |
 
+## Per-Project Config
+
+Disable hooks per-project by creating `.claude/hooks.json`:
+
+```json
+{
+  "disabled": ["typecheck", "vitest"]
+}
+```
+
+Available hook names: `eslint`, `typecheck`, `vitest`
+
 ## Structure
 
 ```
@@ -63,7 +83,9 @@ harlan-claude-code/
 ├── plugin.json
 ├── README.md
 ├── hooks/
-│   ├── session-start.sh
+│   ├── check-config.sh      # Shared config loader
+│   ├── session-start.sh     # Project detection
+│   ├── pre-compact.sh       # Context saving
 │   ├── eslint.sh
 │   ├── typecheck.sh
 │   ├── vitest.sh
@@ -78,41 +100,24 @@ harlan-claude-code/
 │   ├── stub/
 │   ├── update-deps/
 │   ├── check-exports/
-│   └── init-module/
+│   ├── init-module/
+│   ├── changelog/
+│   └── context-prime/
 └── agents/
     ├── nuxt-module.md
     └── unjs.md
 ```
 
-## Customization
+## Environment Variables
 
-### Disabling hooks temporarily
-
-```bash
-# In hook script
-[ "$SKIP_LINT" = "1" ] && exit 0
-```
-
-Then run: `SKIP_LINT=1 claude`
-
-### Hook JSON input
-
-All hooks receive JSON via stdin:
-
-```json
-{
-  "tool_name": "Write",
-  "tool_input": {
-    "file_path": "/path/to/file.ts",
-    "content": "..."
-  }
-}
-```
-
-### Blocking actions
-
-Return JSON to block a tool call:
+Disable all hooks for a session:
 
 ```bash
-echo '{"decision": "block", "reason": "Reason here"}'
+SKIP_LINT=1 claude
 ```
+
+## Resources
+
+- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) - Community workflows
+- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
+- [Hooks Reference](https://docs.claude.com/en/docs/claude-code/hooks)

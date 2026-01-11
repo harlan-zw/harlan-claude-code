@@ -1,4 +1,7 @@
 #!/bin/bash
+source "$(dirname "$0")/check-config.sh" 2>/dev/null
+is_hook_disabled "eslint" && exit 0
+
 input=$(cat)
 file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 
