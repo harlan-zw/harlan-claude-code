@@ -1,46 +1,35 @@
 # harlan-claude-code
 
-Personal Claude Code plugin for Nuxt/Vue/TypeScript development.
+Personal [Claude Code](https://claude.com/code) plugin for Nuxt/Vue/TypeScript development.
 
-## Installation
+## Install
 
-Already configured in `~/.claude/settings.json`:
+```bash
+claude /plugin add harlan-zw/harlan-claude-code
+```
+
+Or manually add to `~/.claude/settings.json`:
 
 ```json
 {
-  "plugins": ["/home/harlan/pkg/harlan-claude-code"]
+  "plugins": ["harlan-zw/harlan-claude-code"]
 }
 ```
 
-## Hooks
+## What's Included
 
-### SessionStart
+### Hooks
 
-| Hook | Purpose |
-|------|---------|
-| `session-start.sh` | Detect project type, show git status, warn about npm/yarn |
+| Event | Hook | What it does |
+|-------|------|--------------|
+| SessionStart | `session-start.sh` | Detect project type, show git status |
+| PreCompact | `pre-compact.sh` | Save context before conversation compaction |
+| PostToolUse | `eslint.sh` | Auto-lint + fix on file changes |
+| PostToolUse | `typecheck.sh` | Run vue-tsc/tsc on TS/Vue changes |
+| PostToolUse | `vitest.sh` | Run related tests on file changes |
+| PreToolUse | `pnpm-only.sh` | Block npm/yarn commands |
 
-### PreCompact
-
-| Hook | Purpose |
-|------|---------|
-| `pre-compact.sh` | Save context to `.claude/session-context.md` before compaction |
-
-### PostToolUse (Write|Edit)
-
-| Hook | Purpose |
-|------|---------|
-| `eslint.sh` | Auto-lint + fix JS/TS/Vue files |
-| `typecheck.sh` | Run vue-tsc/tsc on changes |
-| `vitest.sh` | Run related tests on file change |
-
-### PreToolUse (Bash)
-
-| Hook | Purpose |
-|------|---------|
-| `pnpm-only.sh` | Block npm/yarn, enforce pnpm |
-
-## Skills
+### Skills
 
 | Command | Description |
 |---------|-------------|
@@ -49,24 +38,24 @@ Already configured in `~/.claude/settings.json`:
 | `/test` | Run vitest |
 | `/playground` | Start Nuxt dev for playground |
 | `/build-module` | Build Nuxt module |
+| `/stub` | Stub mode for fast dev iteration |
 | `/pr` | Create GitHub pull request |
-| `/stub` | Stub mode for module dev |
 | `/update-deps` | Update deps with taze |
 | `/check-exports` | Verify exports with attw |
 | `/init-module` | Scaffold module or add CLAUDE.md |
 | `/changelog` | Generate changelog from commits |
 | `/context-prime` | Load comprehensive project context |
 
-## Agents
+### Agents
 
 | Agent | When to use |
 |-------|-------------|
-| `nuxt-module` | Nuxt module development (runtime vs build, hooks, options) |
-| `unjs` | UnJS ecosystem packages (unbuild, defu, pathe patterns) |
+| `nuxt-module` | Nuxt module development - runtime vs build context, hooks, options |
+| `unjs` | UnJS packages - unbuild, defu, pathe, consola patterns |
 
 ## Per-Project Config
 
-Disable hooks per-project by creating `.claude/hooks.json`:
+Disable specific hooks by creating `.claude/hooks.json`:
 
 ```json
 {
@@ -74,50 +63,6 @@ Disable hooks per-project by creating `.claude/hooks.json`:
 }
 ```
 
-Available hook names: `eslint`, `typecheck`, `vitest`
+## License
 
-## Structure
-
-```
-harlan-claude-code/
-├── plugin.json
-├── README.md
-├── hooks/
-│   ├── check-config.sh      # Shared config loader
-│   ├── session-start.sh     # Project detection
-│   ├── pre-compact.sh       # Context saving
-│   ├── eslint.sh
-│   ├── typecheck.sh
-│   ├── vitest.sh
-│   └── pnpm-only.sh
-├── skills/
-│   ├── release/
-│   ├── typecheck/
-│   ├── test/
-│   ├── playground/
-│   ├── build-module/
-│   ├── pr/
-│   ├── stub/
-│   ├── update-deps/
-│   ├── check-exports/
-│   ├── init-module/
-│   ├── changelog/
-│   └── context-prime/
-└── agents/
-    ├── nuxt-module.md
-    └── unjs.md
-```
-
-## Environment Variables
-
-Disable all hooks for a session:
-
-```bash
-SKIP_LINT=1 claude
-```
-
-## Resources
-
-- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) - Community workflows
-- [Claude Code Best Practices](https://www.anthropic.com/engineering/claude-code-best-practices)
-- [Hooks Reference](https://docs.claude.com/en/docs/claude-code/hooks)
+MIT
