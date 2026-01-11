@@ -8,7 +8,8 @@ if [[ "$command" =~ ^(npm|yarn)[[:space:]]+(install|add|remove|uninstall|i[[:spa
   exit 0
 fi
 
-# also catch npx when pnpm dlx should be used
+# block npx -> use pnpx/pnpm dlx
 if [[ "$command" =~ ^npx[[:space:]] ]]; then
-  echo "Note: prefer 'pnpm dlx' over 'npx'"
+  echo '{"decision": "block", "reason": "Use pnpx or pnpm dlx instead of npx"}'
+  exit 0
 fi
