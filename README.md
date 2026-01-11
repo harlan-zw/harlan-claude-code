@@ -2,18 +2,11 @@
 
 Personal [Claude Code](https://claude.com/code) plugin for Nuxt/Vue/TypeScript development.
 
-## Install
+## Installation
 
 ```bash
-claude /plugin add harlan-zw/harlan-claude-code
-```
-
-Or manually add to `~/.claude/settings.json`:
-
-```json
-{
-  "plugins": ["harlan-zw/harlan-claude-code"]
-}
+/plugin marketplace add harlan-zw/harlan-claude-code
+/plugin install harlan-claude-code
 ```
 
 ## What's Included
