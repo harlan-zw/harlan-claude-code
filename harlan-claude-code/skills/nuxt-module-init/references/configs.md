@@ -48,8 +48,8 @@ Nuxt modules extend generated config:
 ## vitest.config.ts
 
 ```ts
-import { defineConfig, defineProject } from 'vitest/config'
 import { defineVitestProject } from '@nuxt/test-utils/config'
+import { defineConfig, defineProject } from 'vitest/config'
 
 export default defineConfig({
   test: {

@@ -45,12 +45,12 @@ CLAUDE.md                     # This file
 
 **Blocking**: PreToolUse hooks block with:
 ```json
-{"decision": "block", "reason": "Use pnpm instead of npm"}
+{ "decision": "block", "reason": "Use pnpm instead of npm" }
 ```
 
 **Per-project disable**: Target projects create `.claude/hooks.json`:
 ```json
-{"disabled": ["typecheck", "vitest"]}
+{ "disabled": ["typecheck", "vitest"] }
 ```
 
 ## Testing

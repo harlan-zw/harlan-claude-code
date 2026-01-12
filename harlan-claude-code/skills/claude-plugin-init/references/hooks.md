@@ -65,12 +65,19 @@
 
 ## Matchers
 
+Single tool:
 ```json
-{
-  "matcher": "Bash",           // single tool
-  "matcher": "Write|Edit",     // multiple tools (regex)
-  "matcher": ".*"              // all tools
-}
+{ "matcher": "Bash" }
+```
+
+Multiple tools (regex):
+```json
+{ "matcher": "Write|Edit" }
+```
+
+All tools:
+```json
+{ "matcher": ".*" }
 ```
 
 ## Blocking Hook (PreToolUse only)
@@ -104,7 +111,7 @@ fi
 Target projects create `.claude/hooks.json`:
 
 ```json
-{"disabled": ["hook-name"]}
+{ "disabled": ["hook-name"] }
 ```
 
 Check in hook script:

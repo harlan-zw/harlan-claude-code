@@ -1,8 +1,8 @@
 # src/module.ts Template
 
 ```ts
-import { addImports, addPlugin, addServerHandler, addServerImportsDir, addServerPlugin, createResolver, defineNuxtModule, hasNuxtModule } from '@nuxt/kit'
 import type { ModuleOptions } from './types'
+import { addImports, addPlugin, addServerHandler, addServerImportsDir, addServerPlugin, createResolver, defineNuxtModule, hasNuxtModule } from '@nuxt/kit'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -103,6 +103,5 @@ if (!config.enabled) {
       imports: ['useMyServerComposable'],
     })
   })
-  return
 }
 ```

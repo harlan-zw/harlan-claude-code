@@ -34,6 +34,10 @@ Skill tool: skill="plugin-dev:create-plugin" args="Improve existing plugin: [plu
 my-plugin/
 ├── .claude-plugin/
 │   └── plugin.json      # manifest (required)
+├── package.json         # scripts: lint, release
+├── eslint.config.js     # @antfu/eslint-config
+├── scripts/
+│   └── release.ts       # version bump + git tag
 ├── skills/              # markdown prompts
 │   └── my-skill/
 │       ├── skill.md
@@ -44,6 +48,29 @@ my-plugin/
 │   └── my-agent.md
 └── hooks/               # bash scripts
     └── my-hook.sh
+```
+
+## package.json Template
+
+```json
+{
+  "name": "my-plugin",
+  "type": "module",
+  "packageManager": "pnpm@10.27.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "release": "npx tsx scripts/release.ts"
+  },
+  "dependencies": {
+    "@antfu/eslint-config": "^6.7.3",
+    "eslint": "^9.39.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  }
+}
 ```
 
 ---
@@ -108,12 +135,15 @@ See `references/` for component details:
 ## Sync Checklist
 
 1. [ ] `plugin.json` - skills array, hooks registered, agents registered
-2. [ ] Skills have frontmatter with `description` and `user_invocable`
-3. [ ] Skills have trigger phrases in description
-4. [ ] Commands have `description` in frontmatter
-5. [ ] Agents have `model`, `color`, `tools` in frontmatter
-6. [ ] README documents installation
-7. [ ] All paths use `${CLAUDE_PLUGIN_ROOT}`
+2. [ ] `package.json` - lint and release scripts
+3. [ ] `eslint.config.js` - @antfu/eslint-config
+4. [ ] `scripts/release.ts` - version bump script
+5. [ ] Skills have frontmatter with `description` and `user_invocable`
+6. [ ] Skills have trigger phrases in description
+7. [ ] Commands have `description` in frontmatter
+8. [ ] Agents have `model`, `color`, `tools` in frontmatter
+9. [ ] README documents installation
+10. [ ] All paths use `${CLAUDE_PLUGIN_ROOT}`
 
 ## Auto-improvements (when syncing)
 

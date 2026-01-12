@@ -66,8 +66,8 @@ export default defineNuxtConfig({
 ### Basic module test
 
 ```ts
+import { $fetch, setup } from '@nuxt/test-utils/e2e'
 import { describe, expect, it } from 'vitest'
-import { setup, $fetch } from '@nuxt/test-utils/e2e'
 
 describe('my-module', async () => {
   await setup({
@@ -84,8 +84,8 @@ describe('my-module', async () => {
 ### Testing composables
 
 ```ts
-import { describe, expect, it } from 'vitest'
 import { setup, useTestContext } from '@nuxt/test-utils/e2e'
+import { describe, expect, it } from 'vitest'
 
 describe('composables', async () => {
   await setup({

@@ -5,8 +5,8 @@
 ```yaml
 ---
 description: Short description shown in /help
-argument-hint: <branch-name>       # optional argument hint
-allowed-tools:                     # restrict available tools
+argument-hint: <branch-name> # optional argument hint
+allowed-tools: # restrict available tools
   - Bash
   - Read
   - Write

@@ -4,9 +4,9 @@
 
 ```yaml
 ---
-model: sonnet                    # sonnet, opus, haiku
-color: blue                      # terminal color
-tools:                           # allowed tools
+model: sonnet # sonnet, opus, haiku
+color: blue # terminal color
+tools: # allowed tools
   - Read
   - Grep
   - Glob
