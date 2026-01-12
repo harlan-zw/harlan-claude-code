@@ -1,6 +1,6 @@
 {
   "name": "harlan-claude-code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "Harlan Wilton" },
   "description": "Harlan's personal Claude Code plugin - Nuxt/Vue/TS workflow tools",
   "skills": [
