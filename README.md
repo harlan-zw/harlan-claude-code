@@ -21,30 +21,21 @@ Personal [Claude Code](https://claude.com/code) plugin for Nuxt/Vue/TypeScript d
 | PostToolUse | `typecheck.sh` | Run vue-tsc/tsc on TS/Vue changes |
 | PostToolUse | `vitest.sh` | Run related tests on file changes |
 | PreToolUse | `pnpm-only.sh` | Block npm/yarn commands |
+| PreToolUse | `pre-commit-push.sh` | Run lint/typecheck/test before commit/push |
 
 ### Skills
 
 | Command | Description |
 |---------|-------------|
-| `/release` | Bump version, changelog, publish (bumpp) |
-| `/typecheck` | Run TypeScript checking |
-| `/test` | Run vitest |
-| `/playground` | Start Nuxt dev for playground |
-| `/build-module` | Build Nuxt module |
-| `/stub` | Stub mode for fast dev iteration |
-| `/pr` | Create GitHub pull request |
-| `/update-deps` | Update deps with taze |
-| `/check-exports` | Verify exports with attw |
-| `/init-module` | Scaffold module or add CLAUDE.md |
-| `/changelog` | Generate changelog from commits |
-| `/context-prime` | Load comprehensive project context |
+| `/pkg-init` | Initialize or sync npm package architecture |
+| `/nuxt-module-init` | Initialize or sync Nuxt module architecture |
+| `/claude-plugin-init` | Initialize or sync Claude Code plugin structure |
 
-### Agents
+### Commands
 
-| Agent | When to use |
-|-------|-------------|
-| `nuxt-module` | Nuxt module development - runtime vs build context, hooks, options |
-| `unjs` | UnJS packages - unbuild, defu, pathe, consola patterns |
+| Command | Description |
+|---------|-------------|
+| `/pr` | Create GitHub PR with conventional commit template |
 
 ## Per-Project Config
 

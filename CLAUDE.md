@@ -32,8 +32,9 @@ CLAUDE.md                     # This file
 - `check-config.sh` - Shared config loader (checks .claude/hooks.json)
 
 **Skills** (`harlan-claude-code/skills/`):
-- `nuxt-module-init/` - scaffold/sync Nuxt modules
 - `pkg-init/` - scaffold/sync npm packages
+- `nuxt-module-init/` - scaffold/sync Nuxt modules
+- `claude-plugin-init/` - scaffold/sync Claude Code plugins
 
 **Commands** (`harlan-claude-code/commands/`):
 - `pr.md` - create PR with conventional commit template
