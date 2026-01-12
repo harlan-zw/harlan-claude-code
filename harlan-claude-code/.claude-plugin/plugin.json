@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "author": { "name": "Harlan Wilton" },
   "description": "Harlan's personal Claude Code plugin - Nuxt/Vue/TS workflow tools",
+  "skills": [
+    {
+      "name": "pkg-init",
+      "path": "${CLAUDE_PLUGIN_ROOT}/skills/pkg-init/skill.md"
+    },
+    {
+      "name": "nuxt-module-init",
+      "path": "${CLAUDE_PLUGIN_ROOT}/skills/nuxt-module-init/skill.md"
+    }
+  ],
   "hooks": {
     "SessionStart": [
       {
