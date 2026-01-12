@@ -79,8 +79,120 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt.options.runtimeConfig.public.myModule,
       { enabled: config.enabled }
     )
+
+    // Type templates (see templates.ts pattern below)
+    registerTypeTemplates({ nuxt, config })
   },
 })
+```
+
+## Type Templates (src/templates.ts)
+
+Separate file for type augmentations using `addTypeTemplate()`:
+
+```ts
+import type { Nuxt } from '@nuxt/schema'
+import type { ModuleOptions } from './module'
+import { addTypeTemplate } from '@nuxt/kit'
+import { relative, resolve } from 'pathe'
+
+interface TemplateContext {
+  nuxt: Nuxt
+  config: ModuleOptions
+}
+
+function getTypesPath(nuxt: Nuxt) {
+  return relative(
+    resolve(nuxt.options.rootDir, nuxt.options.buildDir, 'module'),
+    resolve('runtime/types'),
+  )
+}
+
+export function registerTypeTemplates(ctx: TemplateContext) {
+  const { nuxt, config } = ctx
+
+  // Nuxt-only: client/Vue type augments
+  addTypeTemplate({
+    filename: 'module/my-module.d.ts',
+    getContents: () => `declare module '#my-module' {
+  export interface MyModuleContext {
+    config: typeof import('../../../src/types').ModuleOptions
+  }
+}
+`,
+  }, { nuxt: true })
+
+  // Nitro-only: server virtual module types
+  addTypeTemplate({
+    filename: 'module/my-module-server.d.ts',
+    getContents: (data) => {
+      const typesPath = getTypesPath(data.nuxt!)
+      return `declare module '#my-module/virtual' {
+  const config: import('${typesPath}').ModuleOptions
+  export default config
+}
+`
+    },
+  }, { nitro: true })
+
+  // Nitro-only: nitropack augmentations (route rules, hooks)
+  addTypeTemplate({
+    filename: 'module/my-module-nitro.d.ts',
+    getContents: (data) => {
+      const typesPath = getTypesPath(data.nuxt!)
+      const types = `interface NitroRouteRules {
+    myModule?: false | import('${typesPath}').RouteOptions
+  }
+  interface NitroRouteConfig {
+    myModule?: false | import('${typesPath}').RouteOptions
+  }
+  interface NitroRuntimeHooks {
+    'my-module:context': (ctx: import('${typesPath}').ModuleContext) => void | Promise<void>
+  }`
+      return `import '${typesPath}'
+
+declare module 'nitropack' {
+${types}
+}
+
+declare module 'nitropack/types' {
+${types}
+}
+
+export {}
+`
+    },
+  }, { nitro: true })
+}
+```
+
+### Type Template Context Options
+
+| Option | Effect |
+|--------|--------|
+| `{ nuxt: true }` | Vue/Nuxt app context (default if no context passed) |
+| `{ nitro: true }` | Nitro server build context |
+| `{ node: true }` | Node.js env where nuxt.config.ts loads |
+| `{ shared: true }` | Shared types across all environments |
+
+Can combine: `{ nuxt: true, nitro: true }` for both contexts.
+
+### Common Augmentations
+
+```ts
+// Runtime config augmentation (in src/types.ts)
+declare module '@nuxt/schema' {
+  interface PublicRuntimeConfig {
+    myModule: ModuleOptions
+  }
+}
+
+// App config augmentation
+declare module 'nuxt/schema' {
+  interface AppConfigInput {
+    myModule?: ModuleOptions
+  }
+}
 ```
 
 ## Mock Pattern (when disabled)

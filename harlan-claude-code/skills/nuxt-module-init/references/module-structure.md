@@ -5,6 +5,7 @@
 ```
 src/
 ├── module.ts              # Main module entry (build-time)
+├── templates.ts           # Type augments via addTypeTemplate()
 ├── runtime/
 │   ├── app/               # Client/SSR code (Vue context)
 │   │   ├── composables/   # Auto-imported composables
@@ -28,9 +29,9 @@ src/
 │   ├── shared/            # Isomorphic code (client + server)
 │   │   ├── utils.ts
 │   │   └── constants.ts
-│   └── types.ts           # Runtime types
+│   └── types.ts           # Runtime types (for nitro augments)
 ├── content.ts             # Content module integration (optional)
-└── types.ts               # Module options types
+└── types.ts               # ModuleOptions + schema augments
 
 playground/
 ├── nuxt.config.ts
@@ -84,3 +85,4 @@ test/
 | Server plugin | `addServerPlugin()` | runs on Nitro startup |
 | API route | `addServerHandler({ route })` | GET/POST endpoint |
 | Middleware | `addServerHandler({ middleware: true })` | H3 middleware |
+| Type augments | `addTypeTemplate()` | `nuxt`/`nitro`/`node`/`shared` |
