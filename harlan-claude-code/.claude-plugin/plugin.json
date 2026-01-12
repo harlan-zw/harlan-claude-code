@@ -5,23 +5,7 @@
     "name": "Harlan Wilton"
   },
   "description": "Harlan's personal Claude Code plugin - Nuxt/Vue/TS workflow tools",
-  "skills": [
-    {
-      "name": "pkg-init",
-      "path": "${CLAUDE_PLUGIN_ROOT}/skills/pkg-init/skill.md",
-      "description": "Initialize a new or sync existing package with standard config"
-    },
-    {
-      "name": "nuxt-module-init",
-      "path": "${CLAUDE_PLUGIN_ROOT}/skills/nuxt-module-init/skill.md",
-      "description": "Initialize a new or sync existing Nuxt module project"
-    },
-    {
-      "name": "claude-plugin-init",
-      "path": "${CLAUDE_PLUGIN_ROOT}/skills/claude-plugin-init/skill.md",
-      "description": "Initialize a new or sync existing Claude Code plugin"
-    }
-  ],
+  "skills": "./skills/",
   "hooks": {
     "SessionStart": [
       {
