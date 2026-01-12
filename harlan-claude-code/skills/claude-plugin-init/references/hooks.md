@@ -37,6 +37,16 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh"
+          }
+        ]
+      }
     ]
   }
 }
@@ -44,13 +54,26 @@
 
 ## Hook Events
 
-- `SessionStart` - session begins
-- `PreToolUse` - before tool execution (can block)
-- `PostToolUse` - after tool execution
-- `PreCompact` - before context compaction
-- `Stop` / `SubagentStop` - conversation ends
+| Event | When | Can Block | Use Case |
+|-------|------|-----------|----------|
+| `SessionStart` | session begins | no | show status, load context |
+| `PreToolUse` | before tool execution | yes | validate, block dangerous ops |
+| `PostToolUse` | after tool execution | no | lint, test, notify |
+| `PreCompact` | before context compaction | no | save context to file |
+| `Stop` | conversation ends | no | cleanup, summary |
+| `SubagentStop` | subagent completes | no | post-agent tasks |
 
-## Blocking Hook (PreToolUse)
+## Matchers
+
+```json
+{
+  "matcher": "Bash",           // single tool
+  "matcher": "Write|Edit",     // multiple tools (regex)
+  "matcher": ".*"              // all tools
+}
+```
+
+## Blocking Hook (PreToolUse only)
 
 ```bash
 #!/bin/bash
@@ -61,6 +84,19 @@ if [[ "$COMMAND" =~ ^npm ]]; then
   echo '{"decision": "block", "reason": "Use pnpm instead of npm"}'
   exit 0
 fi
+```
+
+## Hook Input (stdin JSON)
+
+```json
+{
+  "session_id": "abc123",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "npm install",
+    "file_path": "/path/to/file"
+  }
+}
 ```
 
 ## Per-project disable
