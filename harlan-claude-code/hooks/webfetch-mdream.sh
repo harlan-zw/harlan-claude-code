@@ -3,6 +3,13 @@ input=$(cat)
 url=$(echo "$input" | jq -r '.tool_input.url // empty')
 prompt=$(echo "$input" | jq -r '.tool_input.prompt // empty' | tr '[:upper:]' '[:lower:]')
 
+deny() {
+  cat <<EOF
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"$1"}}
+EOF
+  exit 0
+}
+
 # skip if prompt requests raw/html
 if [[ "$prompt" =~ (raw|html|source) ]]; then
   exit 0
@@ -25,6 +32,5 @@ fi
 
 # suggest mdream for HTML->markdown conversion
 if [[ -n "$url" ]]; then
-  echo "{\"decision\": \"block\", \"reason\": \"Use mdream for markdown: curl -sL '$url' | pnpx mdream --preset minimal\"}"
-  exit 0
+  deny "Use mdream for markdown: curl -sL '$url' | pnpx mdream --preset minimal"
 fi
