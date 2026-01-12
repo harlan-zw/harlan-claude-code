@@ -42,6 +42,15 @@
             "timeout": 120000
           }
         ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/webfetch-mdream.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
