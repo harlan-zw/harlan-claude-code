@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "release": "npx tsx scripts/release.ts"
+    "release": "node --experimental-strip-types scripts/release.ts"
   },
   "dependencies": {
     "@antfu/eslint-config": "^6.7.3",
