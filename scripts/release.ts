@@ -21,7 +21,9 @@ function bumpVersion(version: string, type: 'patch' | 'minor' | 'major'): string
 
 // Get current version from plugin.json
 const pluginPath = 'harlan-claude-code/.claude-plugin/plugin.json'
+const marketplacePath = '.claude-plugin/marketplace.json'
 const plugin = JSON.parse(readFileSync(pluginPath, 'utf-8'))
+const marketplace = JSON.parse(readFileSync(marketplacePath, 'utf-8'))
 const oldVersion = plugin.version
 const newVersion = bumpVersion(oldVersion, bumpType)
 
@@ -31,6 +33,11 @@ console.log(`Bumping ${oldVersion} → ${newVersion}`)
 plugin.version = newVersion
 writeFileSync(pluginPath, `${JSON.stringify(plugin, null, 2)}\n`)
 console.log(`  ✓ ${pluginPath}`)
+
+// Update marketplace.json (sync version in plugins array)
+marketplace.plugins[0].version = newVersion
+writeFileSync(marketplacePath, `${JSON.stringify(marketplace, null, 2)}\n`)
+console.log(`  ✓ ${marketplacePath}`)
 
 // Update all SKILL.md files (if they have version in frontmatter)
 for await (const file of glob('**/skill.md', { nocase: true })) {
