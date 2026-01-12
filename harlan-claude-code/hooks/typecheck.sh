@@ -14,8 +14,10 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 # check if tsconfig exists
 [ ! -f "tsconfig.json" ] && [ ! -f "tsconfig.app.json" ] && exit 0
 
-# prefer vue-tsc for vue projects, else tsc
-if [ -f "node_modules/.bin/vue-tsc" ]; then
+# nuxt projects use nuxt typecheck, not vue-tsc/tsc
+if [ -f "nuxt.config.ts" ] || [ -f "nuxt.config.js" ]; then
+  pnpm nuxt typecheck 2>&1 | head -30 || true
+elif [ -f "node_modules/.bin/vue-tsc" ]; then
   ./node_modules/.bin/vue-tsc --noEmit 2>&1 | head -30 || true
 elif [ -f "node_modules/.bin/tsc" ]; then
   ./node_modules/.bin/tsc --noEmit 2>&1 | head -30 || true
