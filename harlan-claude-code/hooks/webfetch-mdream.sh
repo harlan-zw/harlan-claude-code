@@ -25,6 +25,17 @@ if [[ "$url" =~ \.(json|xml|md|txt|pdf|png|jpg|jpeg|gif|svg|webp|csv|yaml|yml)($
   exit 0
 fi
 
+# GitHub blob URLs → suggest raw URL instead
+if [[ "$url" =~ ^https?://github\.com/([^/]+)/([^/]+)/blob/(.+)$ ]]; then
+  raw_url="https://raw.githubusercontent.com/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+  deny "GitHub blob URL returns HTML. Use raw URL: curl -sL '$raw_url'"
+fi
+
+# GitHub tree URLs (directories) → no raw equivalent
+if [[ "$url" =~ ^https?://github\.com/([^/]+)/([^/]+)/tree/ ]]; then
+  deny "GitHub tree URL is a directory listing (HTML). Use GitHub API or clone the repo instead."
+fi
+
 # skip API endpoints (likely return json)
 if [[ "$url" =~ /api/ ]] || [[ "$url" =~ api\. ]]; then
   exit 0
@@ -32,5 +43,5 @@ fi
 
 # suggest mdream for HTML->markdown conversion
 if [[ -n "$url" ]]; then
-  deny "Use mdream for markdown: curl -sL '$url' | pnpx mdream --preset minimal"
+  deny "IMPORTANT - For HTML pages use: curl -sL '$url' | pnpx mdream --preset minimal"
 fi
