@@ -23,7 +23,28 @@ Create a pull request following this exact template format:
 
 ### 📚 Description
 
-<!-- Describe changes, why needed, what problem it solves -->
+<!--
+Background: High-level problem being solved (1-2 sentences)
+
+How: Concise explanation of the solution (1-2 sentences)
+-->
+
+<!-- Optional, If relevant, show minimal code example demonstrating the change -->
+
+### ⚠️ Breaking Changes <!-- Optional -->
+
+<!-- If breaking, list what changed and migration steps -->
+
+### 📝 Migration <!-- Optional -->
+
+<!-- If migration needed, show before/after code examples -->
 ```
 
-Check the appropriate type box based on the changes. Fill in linked issues if mentioned in commits. Write a clear description summarizing the changes.
+**Checklist:**
+- [ ] Check the appropriate type box
+- [ ] Link issues (check commits, branch name, or search repo for related issues)
+- [ ] Description: background (problem) → how (solution)
+- [ ] Code example if change affects API/usage
+- [ ] Breaking changes: list what changed + before/after migration
+
+Be concise. Write like a human, not a robot. Skip fluff and marketing speak.
