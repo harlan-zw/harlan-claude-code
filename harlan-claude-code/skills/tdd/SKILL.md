@@ -1,11 +1,7 @@
 ---
 name: tdd
-description: Test-driven development workflow - write tests first, then implement
-triggers:
-  - tdd
-  - test first
-  - test driven
-  - write tests first
+description: Use when user says "write tests first", "TDD", "test-driven", "tests before implementation", or when implementing a feature where verification is critical. Creates scratchpad, writes failing tests, then iterates implementation until tests pass.
+user_invocable: true
 ---
 
 # Test-Driven Development Workflow

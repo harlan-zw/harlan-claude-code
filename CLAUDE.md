@@ -126,6 +126,26 @@ Commands reference these hooks:
 - `/review` - checks hook output before re-running
 - `/tdd` skill - relies on vitest hook for iteration
 
+## Proactive Workflows
+
+**Use these commands automatically based on context:**
+
+| Trigger | Action |
+|---------|--------|
+| User mentions "fix issue", "GitHub issue", or gives issue number | Invoke `/fix-issue` |
+| User asks to debug, mentions bug, or something isn't working | Invoke `/debug` with hypothesis-driven approach |
+| User says "write tests first", "TDD", or "test-driven" | Invoke `/tdd` skill |
+| Before committing significant changes | Invoke `/review` to catch issues |
+| Creating a PR or user says "make a PR" | Invoke `/pr` |
+| Multi-step task (3+ steps) | Create `.claude/scratchpad.md` for grind pattern |
+| User mentions "diagram", "architecture", "flowchart" | Invoke `/diagram` |
+| New session with `.claude/scratchpad.md` or `.claude/plans/` | Invoke `/resume` |
+
+**Always:**
+- Use scratchpad for any task that might span multiple turns
+- Let hooks do their job (lint, typecheck, test run automatically)
+- Reference `/review` output before committing
+
 ## Testing
 
 No build. Test via marketplace install:
