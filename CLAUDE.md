@@ -46,6 +46,7 @@ CLAUDE.md                     # This file
 - `debug.md` - hypothesis-driven debugging with instrumentation
 - `diagram.md` - generate Mermaid architecture diagrams
 - `resume.md` - resume interrupted work from scratchpad/plan
+- `issue-triage.md` - triage repo issues by difficulty/impact
 
 ## Hook Patterns
 
@@ -140,6 +141,7 @@ Commands reference these hooks:
 | Multi-step task (3+ steps) | Create `.claude/scratchpad.md` for grind pattern |
 | User mentions "diagram", "architecture", "flowchart" | Invoke `/diagram` |
 | New session with `.claude/scratchpad.md` or `.claude/plans/` | Invoke `/resume` |
+| User mentions "triage issues", "rank issues", or provides a repo issues URL | Invoke `/issue-triage` |
 
 **Always:**
 - Use scratchpad for any task that might span multiple turns
