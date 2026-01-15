@@ -52,3 +52,24 @@ fi
 if [ ! -f ".claude/CLAUDE.md" ] && [ ! -f "CLAUDE.md" ]; then
   dim "Tip: /init-module to add CLAUDE.md"
 fi
+
+# Check for incomplete work (grind pattern)
+if [ -f ".claude/scratchpad.md" ]; then
+  if grep -qi "## *DONE\|status:.*done" .claude/scratchpad.md 2>/dev/null; then
+    dim "Scratchpad: completed"
+  elif grep -qi "## *BLOCKED\|status:.*blocked" .claude/scratchpad.md 2>/dev/null; then
+    warn "Scratchpad: BLOCKED - needs attention"
+  else
+    goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 60)
+    warn "Resume: $goal..."
+  fi
+fi
+
+# Check for recent plans
+if [ -d ".claude/plans" ]; then
+  recent=$(find .claude/plans -name "*.md" -mtime -1 2>/dev/null | head -1)
+  if [ -n "$recent" ]; then
+    plan_name=$(basename "$recent" .md)
+    dim "Recent plan: $plan_name"
+  fi
+fi

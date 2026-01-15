@@ -23,7 +23,8 @@ CLAUDE.md                     # This file
 
 **Hooks** (`harlan-claude-code/hooks/`):
 - `session-start.sh` - SessionStart: detect project type, show git status
-- `pre-compact.sh` - PreCompact: save context to .claude/session-context.md
+- `pre-compact.sh` - PreCompact: save context to .claude/session-context.md (includes scratchpad + active plans)
+- `grind.sh` - Stop: autonomous iteration until scratchpad marked DONE
 - `eslint.sh` - PostToolUse(Write|Edit): auto-lint changed files
 - `typecheck.sh` - PostToolUse(Write|Edit): run vue-tsc/tsc
 - `vitest.sh` - PostToolUse(Write|Edit): run related tests
@@ -35,9 +36,16 @@ CLAUDE.md                     # This file
 - `pkg-init/` - scaffold/sync npm packages
 - `nuxt-module-init/` - scaffold/sync Nuxt modules
 - `claude-plugin-init/` - scaffold/sync Claude Code plugins
+- `tdd/` - test-driven development workflow
 
 **Commands** (`harlan-claude-code/commands/`):
 - `pr.md` - create PR with conventional commit template
+- `fix-issue.md` - fetch GitHub issue, implement fix, create PR
+- `review.md` - review changes for issues and improvements
+- `save-plan.md` - persist plans to .claude/plans/
+- `debug.md` - hypothesis-driven debugging with instrumentation
+- `diagram.md` - generate Mermaid architecture diagrams
+- `resume.md` - resume interrupted work from scratchpad/plan
 
 ## Hook Patterns
 
@@ -50,8 +58,73 @@ CLAUDE.md                     # This file
 
 **Per-project disable**: Target projects create `.claude/hooks.json`:
 ```json
-{ "disabled": ["typecheck", "vitest"] }
+{ "disabled": ["typecheck", "vitest", "grind"] }
 ```
+
+## Grind Pattern (Autonomous Iteration)
+
+The `grind.sh` Stop hook enables autonomous iteration until a goal is achieved.
+
+**How it works:**
+1. Agent creates `.claude/scratchpad.md` with goal and tasks
+2. Agent works on tasks, updating scratchpad with progress
+3. When agent stops, hook checks scratchpad
+4. If not marked `## DONE`, hook sends `followup_message` to continue
+5. Agent resumes work (up to 10 iterations)
+
+**Scratchpad format:**
+```markdown
+## Goal
+[What you're trying to achieve]
+
+## Current Task
+- [ ] Task 1
+- [ ] Task 2
+
+## Status
+In progress
+
+## DONE  <- Add this when complete
+```
+
+**Markers:**
+- `## DONE` - Stops iteration, work complete
+- `## BLOCKED` - Stops iteration, needs human help
+
+## Plan Persistence
+
+Save plans to `.claude/plans/` for documentation and resumption:
+- Plans auto-included in session context during compaction
+- Reference in new conversations: "Continue plan in .claude/plans/[name].md"
+
+## Hook Integration
+
+All hooks work together:
+
+```
+Write/Edit file
+    ↓
+eslint.sh → auto-fix lint
+    ↓
+typecheck.sh → suggest typecheck
+    ↓
+vitest.sh → run related tests
+    ↓
+[Agent continues work]
+    ↓
+git commit
+    ↓
+pre-commit-push.sh → block if lint/typecheck/test fail
+    ↓
+[Agent stops]
+    ↓
+grind.sh → check scratchpad, continue if not DONE
+```
+
+Commands reference these hooks:
+- `/fix-issue`, `/debug` - mention vitest auto-runs
+- `/review` - checks hook output before re-running
+- `/tdd` skill - relies on vitest hook for iteration
 
 ## Testing
 
