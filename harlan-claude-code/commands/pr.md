@@ -14,6 +14,8 @@ Create a pull request following this exact template format:
 
 ### ❓ Type of change
 
+<!-- keep all of these just tick which ones are relevant -->
+
 - [ ] 📖 Documentation (updates to the documentation or readme)
 - [ ] 🐞 Bug fix (a non-breaking change that fixes an issue)
 - [ ] 👌 Enhancement (improving an existing functionality)
@@ -23,11 +25,7 @@ Create a pull request following this exact template format:
 
 ### 📚 Description
 
-<!--
-Background: High-level problem being solved (1-2 sentences)
-
-How: Concise explanation of the solution (1-2 sentences)
--->
+<!-- 2-3 plain sentences: what problem existed, then what we did. No labels, no checkboxes. -->
 
 <!-- Optional, If relevant, show minimal code example demonstrating the change -->
 
