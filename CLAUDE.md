@@ -1,63 +1,55 @@
 # CLAUDE.md
 
-Claude Code plugin for Nuxt/Vue/TypeScript workflows.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Overview
+
+Claude Code plugin for Nuxt/Vue/TypeScript workflows. No build step - pure bash hooks and markdown skills.
+
+## Commands
+
+```bash
+pnpm lint          # ESLint check
+pnpm lint:fix      # ESLint autofix
+pnpm release patch|minor|major  # Bump version, tag, push
+```
 
 ## Structure
 
 ```
-harlan-claude-code/
-  .claude-plugin/plugin.json    # Hook config
-  hooks/                        # Bash scripts
-  skills/                       # Markdown prompts
-  commands/                     # Slash commands
+harlan-claude-code/           # Plugin root (nested to allow workspace tooling)
+  .claude-plugin/plugin.json  # Manifest with hook config
+  hooks/                      # Bash scripts
+  commands/                   # Slash commands (markdown)
+  skills/                     # Multi-file skills (skill.md + templates/)
+.claude-plugin/marketplace.json  # Marketplace metadata (version synced on release)
+scripts/release.ts            # Version bump script
 ```
 
-## Adding Hooks
+## Architecture
 
-1. Create `hooks/[name].sh`
-2. Add to `plugin.json` under appropriate event (SessionStart, PreToolUse, PostToolUse, PreCompact, Stop)
-3. Source `check-config.sh` for disable support
+**Dual-directory layout**: Root has workspace tooling (eslint, release script). Actual plugin lives in `harlan-claude-code/` subdirectory.
 
-**Input**: JSON via stdin with `tool_input.*` fields
+**Hook lifecycle**:
+- `SessionStart`: Show project info, clear plan trackers
+- `PreToolUse`: Block npm/yarn, run pre-commit checks
+- `PostToolUse`: Lint, typecheck, run tests on Write/Edit
+- `PreCompact`: Save context before compaction
+- `Stop`: Grind hook continues incomplete scratchpad work
 
-**Block** (PreToolUse only):
-```json
-{ "decision": "block", "reason": "message" }
-```
+**Disable hooks per-project**: Create `.claude/hooks.json` with `{"disabled": ["typecheck", "vitest"]}`
 
-**Continue** (Stop only):
-```json
-{ "decision": "followup_message", "message": "continue working" }
-```
+## Adding Components
 
-## Adding Commands
+**Hook**: Create `hooks/[name].sh`, add to `plugin.json`. Source `check-config.sh` for disable support. Input via stdin JSON (`tool_input.*`). Block with `{"decision":"block","reason":"..."}`. Continue (Stop only) with `{"decision":"followup_message","message":"..."}`.
 
-Create `commands/[name].md` with frontmatter:
-```yaml
----
-name: command-name
-description: Short description
----
-```
+**Command**: Create `commands/[name].md` with `name` and `description` frontmatter.
 
-## Adding Skills
-
-Create `skills/[name]/skill.md` with frontmatter:
-```yaml
----
-name: skill-name
-description: When to use this skill
----
-```
+**Skill**: Create `skills/[name]/skill.md` with frontmatter. Add `templates/` subdir for scaffolding files.
 
 ## Testing
 
-No build. Install from local:
+No build needed. Install locally:
 ```bash
 /plugin install /path/to/harlan-claude-code
-```
-
-Or via marketplace after push:
-```bash
-/plugin marketplace add harlan-zw/harlan-claude-code
 ```
