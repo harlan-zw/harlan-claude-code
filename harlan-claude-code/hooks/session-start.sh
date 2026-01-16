@@ -8,9 +8,14 @@ source "$(dirname "$0")/check-config.sh"
 # Read session_id from stdin for plan tracking
 input=$(cat)
 session_id=$(echo "$input" | jq -r '.session_id // empty')
+agent_type=$(echo "$input" | jq -r '.agent_type // empty')
 
-show() { echo -e "\033[36m$1\033[0m"; }
-dim() { echo -e "\033[90m$1\033[0m"; }
+# Quiet mode for sub-agents - only show warnings
+quiet=""
+[ "$agent_type" = "task" ] && quiet=1
+
+show() { [ -z "$quiet" ] && echo -e "\033[36m$1\033[0m"; }
+dim() { [ -z "$quiet" ] && echo -e "\033[90m$1\033[0m"; }
 warn() { echo -e "\033[33m$1\033[0m"; }
 
 # Check for package.json
