@@ -9,8 +9,15 @@ EOF
   exit 0
 }
 
-# run on git commit, push, or gh pr create
-[[ ! "$command" =~ ^git[[:space:]]+(commit|push) ]] && [[ ! "$command" =~ ^gh[[:space:]]+pr[[:space:]]+create ]] && exit 0
+# Inject commit guidelines for git commit (additionalContext doesn't block)
+if [[ "$command" =~ ^git[[:space:]]+commit ]]; then
+  cat <<EOF
+{"additionalContext": "Commit format: type(scope): description. Types: feat/fix/docs/refactor/test/chore. Scope: monorepo folder or treeshakable export name, omit if neither applies. Subject <72 chars."}
+EOF
+fi
+
+# run checks only on push/pr
+[[ ! "$command" =~ ^git[[:space:]]+push ]] && [[ ! "$command" =~ ^gh[[:space:]]+pr[[:space:]]+create ]] && exit 0
 
 errors=""
 
