@@ -55,9 +55,7 @@ fi
 
 # Check for incomplete work (grind pattern)
 if [ -f ".claude/scratchpad.md" ]; then
-  if grep -qi "## *DONE\|status:.*done" .claude/scratchpad.md 2>/dev/null; then
-    dim "Scratchpad: completed"
-  elif grep -qi "## *BLOCKED\|status:.*blocked" .claude/scratchpad.md 2>/dev/null; then
+  if grep -qi "## *BLOCKED\|status:.*blocked" .claude/scratchpad.md 2>/dev/null; then
     warn "Scratchpad: BLOCKED - needs attention"
   else
     goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 60)

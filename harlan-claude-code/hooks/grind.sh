@@ -52,7 +52,8 @@ CONTENT=$(cat "$SCRATCHPAD")
 
 # Check for DONE marker (case insensitive)
 if echo "$CONTENT" | grep -qi "^## *DONE\|^DONE\|status:.*done\|✅.*done\|done.*✅"; then
-  echo '{"message": "✅ Grind complete - scratchpad marked DONE"}'
+  rm "$SCRATCHPAD"
+  echo '{"message": "✅ Grind complete - scratchpad cleared"}'
   exit 0
 fi
 
