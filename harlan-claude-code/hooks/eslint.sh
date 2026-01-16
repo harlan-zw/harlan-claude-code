@@ -21,9 +21,11 @@ fi
 [ -z "$ESLINT" ] && exit 0
 
 # run --fix with unused-imports disabled (don't auto-remove, code may be partial)
+# prefer-const disabled - let vars may be reassigned in code not yet written
 "$ESLINT" "$file_path" --fix \
   --rule 'unused-imports/no-unused-imports: off' \
-  --rule 'unused-imports/no-unused-vars: off' 2>&1 | grep -v "could not find plugin" || true
+  --rule 'unused-imports/no-unused-vars: off' \
+  --rule 'prefer-const: off' 2>&1 | grep -v "could not find plugin" || true
 
 # then report unused imports/vars as warnings only (no fix)
 "$ESLINT" "$file_path" \
