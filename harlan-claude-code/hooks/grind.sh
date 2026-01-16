@@ -38,7 +38,12 @@ fi
 
 # Check if scratchpad exists
 if [ ! -f "$SCRATCHPAD" ]; then
-  echo '{}'
+  # First stop without scratchpad - suggest creating one for complex tasks
+  if [ "$LOOP_COUNT" -eq 0 ]; then
+    jq -n '{"message": "💡 Tip: For multi-step tasks, create .claude/scratchpad.md to enable autonomous iteration and cross-session persistence."}'
+  else
+    echo '{}'
+  fi
   exit 0
 fi
 

@@ -63,6 +63,8 @@ if [ -f ".claude/scratchpad.md" ]; then
     goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 60)
     warn "Resume: $goal..."
   fi
+else
+  dim "Tip: For complex tasks, use .claude/scratchpad.md for autonomous iteration"
 fi
 
 # Check for recent plans
