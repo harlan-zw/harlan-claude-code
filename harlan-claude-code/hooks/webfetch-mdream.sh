@@ -24,8 +24,8 @@ if [[ "$url" =~ ^https?://r\.jina\.ai ]]; then
   exit 0
 fi
 
-# skip non-HTML resources (json, xml, md, txt, pdf, images, etc)
-if [[ "$url" =~ \.(json|xml|md|txt|pdf|png|jpg|jpeg|gif|svg|webp|csv|yaml|yml)($|\?) ]]; then
+# skip non-HTML resources (json, xml, md, txt, pdf, images, scripts, etc)
+if [[ "$url" =~ \.(json|xml|md|txt|pdf|png|jpg|jpeg|gif|svg|webp|csv|yaml|yml|js|css|woff2?|ttf|eot)($|\?) ]]; then
   exit 0
 fi
 
