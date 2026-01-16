@@ -1,2 +1,6 @@
 .idea
 node_modules
+
+# Session tracking files
+.claude/.active-plan-*
+.claude/.edit-count-*

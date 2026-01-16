@@ -3,6 +3,12 @@
 # Context-aware session start
 # Detects project type, shows relevant info, primes context
 
+source "$(dirname "$0")/check-config.sh"
+
+# Read session_id from stdin for plan tracking
+input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // empty')
+
 show() { echo -e "\033[36m$1\033[0m"; }
 dim() { echo -e "\033[90m$1\033[0m"; }
 warn() { echo -e "\033[33m$1\033[0m"; }
@@ -53,23 +59,44 @@ if [ ! -f ".claude/CLAUDE.md" ] && [ ! -f "CLAUDE.md" ]; then
   dim "Tip: /init-module to add CLAUDE.md"
 fi
 
-# Check for incomplete work (grind pattern)
-if [ -f ".claude/scratchpad.md" ]; then
-  if grep -qi "## *BLOCKED\|status:.*blocked" .claude/scratchpad.md 2>/dev/null; then
-    warn "Scratchpad: BLOCKED - needs attention"
-  else
-    goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 60)
-    warn "Resume: $goal..."
-  fi
-else
-  dim "Tip: For complex tasks, use .claude/scratchpad.md for autonomous iteration"
+# Check for incomplete work (grind pattern) - plans preferred over scratchpad
+active_plan_found=""
+if [ -d ".claude/plans" ]; then
+  # Find most recent non-DONE plan (portable: works on macOS and Linux)
+  for plan in $(find .claude/plans -name "*.md" -mtime -30 2>/dev/null | xargs ls -t 2>/dev/null); do
+    if [ -f "$plan" ]; then
+      content=$(cat "$plan")
+      if ! is_work_done "$content"; then
+        plan_name=$(basename "$plan" .md)
+        active_plan_found="$plan"
+
+        # Write active plan tracker so grind.sh can continue it
+        if [ -n "$session_id" ]; then
+          mkdir -p .claude
+          echo "$plan" > ".claude/.active-plan-${session_id}"
+        fi
+
+        if is_work_blocked "$content"; then
+          warn "Plan '$plan_name': BLOCKED - needs attention"
+        else
+          goal=$(grep -A1 "## Goal\|## Current\|## Objective" "$plan" 2>/dev/null | tail -1 | head -c 60)
+          warn "Resume plan '$plan_name': $goal..."
+        fi
+        break
+      fi
+    fi
+  done
 fi
 
-# Check for recent plans
-if [ -d ".claude/plans" ]; then
-  recent=$(find .claude/plans -name "*.md" -mtime -1 2>/dev/null | head -1)
-  if [ -n "$recent" ]; then
-    plan_name=$(basename "$recent" .md)
-    dim "Recent plan: $plan_name"
+# Only show scratchpad if no active plan (prefer plans)
+if [ -z "$active_plan_found" ] && [ -f ".claude/scratchpad.md" ]; then
+  content=$(cat .claude/scratchpad.md)
+  if is_work_blocked "$content"; then
+    warn "Scratchpad: BLOCKED"
+  elif ! is_work_done "$content"; then
+    goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 50)
+    [ -n "$goal" ] && warn "Scratchpad: $goal..."
   fi
+elif [ -z "$active_plan_found" ]; then
+  dim "Tip: For complex tasks, use .claude/scratchpad.md for autonomous iteration"
 fi

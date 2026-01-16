@@ -3,10 +3,14 @@
 # PreCompact hook - save context before conversation compaction
 # Writes a summary to .claude/session-context.md for reference
 
-SESSION_FILE=".claude/session-context.md"
-
 # Only if .claude dir exists (project is claude-aware)
 [ ! -d ".claude" ] && exit 0
+
+# Get session_id from stdin
+input=$(cat)
+session_id=$(echo "$input" | jq -r '.session_id // empty')
+
+SESSION_FILE=".claude/session-context.md"
 
 # Create/update session context
 {
@@ -47,9 +51,10 @@ SESSION_FILE=".claude/session-context.md"
     echo ""
   fi
 
-  # Include active plan if exists
-  ACTIVE_PLAN=$(find .claude/plans -name "*.md" -mmin -60 2>/dev/null | head -1)
-  if [ -n "$ACTIVE_PLAN" ]; then
+  # Include active plan if tracked for this session
+  ACTIVE_PLAN=""
+  [ -n "$session_id" ] && ACTIVE_PLAN=$(cat ".claude/.active-plan-${session_id}" 2>/dev/null || echo "")
+  if [ -n "$ACTIVE_PLAN" ] && [ -f "$ACTIVE_PLAN" ]; then
     echo "## Active Plan"
     echo ""
     echo "File: $ACTIVE_PLAN"

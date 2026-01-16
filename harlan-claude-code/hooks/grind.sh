@@ -1,11 +1,10 @@
 #!/bin/bash
 
 # Stop hook - Grind pattern for autonomous iteration
-# Continues agent until scratchpad contains DONE or max iterations reached
+# Continues agent until workfile contains DONE or max iterations reached
 #
-# Usage: Agent writes to .claude/scratchpad.md with status updates
-# When done, agent writes "DONE" to scratchpad
-# Hook checks and sends followup_message to continue if not done
+# Uses session-tracked plan (.claude/plans/*.md) if active, else .claude/scratchpad.md
+# Mark '## DONE' when complete or '## BLOCKED' if stuck
 
 # Source config checker
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,9 +19,20 @@ INPUT=$(cat)
 # Parse stop hook fields
 STATUS=$(echo "$INPUT" | jq -r '.stop_hook_status // .status // "completed"')
 LOOP_COUNT=$(echo "$INPUT" | jq -r '.loop_count // 0')
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
 MAX_ITERATIONS=10
-SCRATCHPAD=".claude/scratchpad.md"
+
+# Check for session-tracked plan first, fall back to scratchpad
+ACTIVE_PLAN=""
+[ -n "$SESSION_ID" ] && ACTIVE_PLAN=$(cat ".claude/.active-plan-${SESSION_ID}" 2>/dev/null || echo "")
+if [ -n "$ACTIVE_PLAN" ] && [ -f "$ACTIVE_PLAN" ]; then
+  WORKFILE="$ACTIVE_PLAN"
+  WORKFILE_TYPE="plan"
+else
+  WORKFILE=".claude/scratchpad.md"
+  WORKFILE_TYPE="scratchpad"
+fi
 
 # Only continue if completed normally (not aborted/error)
 if [ "$STATUS" != "completed" ]; then
@@ -32,55 +42,62 @@ fi
 
 # Check max iterations
 if [ "$LOOP_COUNT" -ge "$MAX_ITERATIONS" ]; then
-  echo '{"message": "⚠️ Max iterations reached. Review scratchpad for status."}'
+  echo "{\"message\": \"⚠️ Max iterations reached. Review ${WORKFILE_TYPE} for status.\"}"
   exit 0
 fi
 
-# Check if scratchpad exists
-if [ ! -f "$SCRATCHPAD" ]; then
-  # First stop without scratchpad - suggest creating one for complex tasks
+# Check if workfile exists
+if [ ! -f "$WORKFILE" ]; then
+  # First stop without workfile - suggest creating one for complex tasks
   if [ "$LOOP_COUNT" -eq 0 ]; then
-    jq -n '{"message": "💡 Tip: For multi-step tasks, create .claude/scratchpad.md to enable autonomous iteration and cross-session persistence."}'
+    jq -n '{"message": "💡 Tip: For multi-step tasks, create .claude/scratchpad.md or .claude/plans/[name].md to enable autonomous iteration."}'
   else
     echo '{}'
   fi
   exit 0
 fi
 
-# Read scratchpad content
-CONTENT=$(cat "$SCRATCHPAD")
+# Read workfile content
+CONTENT=$(cat "$WORKFILE")
 
-# Check for DONE marker (case insensitive)
-if echo "$CONTENT" | grep -qi "^## *DONE\|^DONE\|status:.*done\|✅.*done\|done.*✅"; then
-  rm "$SCRATCHPAD"
-  echo '{"message": "✅ Grind complete - scratchpad cleared"}'
+# Check for DONE marker (using shared pattern)
+if is_work_done "$CONTENT"; then
+  # Clean up session tracking files
+  [ -n "$SESSION_ID" ] && rm -f ".claude/.edit-count-${SESSION_ID}" ".claude/.active-plan-${SESSION_ID}"
+
+  if [ "$WORKFILE_TYPE" = "scratchpad" ]; then
+    rm "$WORKFILE"
+    echo '{"message": "✅ Grind complete - scratchpad cleared"}'
+  else
+    echo '{"message": "✅ Grind complete - plan marked done"}'
+  fi
   exit 0
 fi
 
-# Check for explicit BLOCKED marker
-if echo "$CONTENT" | grep -qi "^## *BLOCKED\|^BLOCKED\|status:.*blocked\|❌.*blocked"; then
-  echo '{"message": "❌ Grind stopped - scratchpad marked BLOCKED"}'
+# Check for explicit BLOCKED marker (using shared pattern)
+if is_work_blocked "$CONTENT"; then
+  echo "{\"message\": \"❌ Grind stopped - ${WORKFILE_TYPE} marked BLOCKED\"}"
   exit 0
 fi
 
-# Check for active goals/tasks
-if echo "$CONTENT" | grep -qi "## *current\|## *goal\|## *task\|- \[ \]"; then
+# Check for active goals/tasks (using shared pattern)
+if has_active_work "$CONTENT"; then
   # Has incomplete work, continue
   ITERATION=$((LOOP_COUNT + 1))
 
-  # Check for repeated failure patterns in scratchpad
+  # Check for repeated failure patterns
   FAILURE_COUNT=$(echo "$CONTENT" | grep -ci "fail\|error\|❌" || echo "0")
   FAILURE_HINT=""
   if [ "$FAILURE_COUNT" -gt 3 ]; then
     FAILURE_HINT=" Note: Multiple failures detected - consider marking '## BLOCKED' if stuck on same issue."
   fi
 
-  # Build context from scratchpad
+  # Build context from workfile
   CONTEXT=$(echo "$CONTENT" | head -20 | tr '\n' ' ' | cut -c1-200)
 
-  FOLLOWUP="[Iteration ${ITERATION}/${MAX_ITERATIONS}] Continue working on the task. Update .claude/scratchpad.md with progress. Mark '## DONE' when complete or '## BLOCKED' if stuck.${FAILURE_HINT}
+  FOLLOWUP="[Iteration ${ITERATION}/${MAX_ITERATIONS}] Continue working on the task. Update ${WORKFILE} with progress. Mark '## DONE' when complete or '## BLOCKED' if stuck.${FAILURE_HINT}
 
-Current scratchpad context: ${CONTEXT}..."
+Current ${WORKFILE_TYPE} context: ${CONTEXT}..."
 
   # Return followup message to continue agent
   jq -n --arg msg "$FOLLOWUP" '{"followup_message": $msg}'
