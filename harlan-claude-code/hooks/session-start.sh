@@ -14,6 +14,28 @@ agent_type=$(echo "$input" | jq -r '.agent_type // empty')
 quiet=""
 [ "$agent_type" = "task" ] && quiet=1
 
+# Initialize session log
+if [ -n "$session_id" ] && [ "$agent_type" != "task" ]; then
+  log_dir="$HOME/.claude/logs/sessions"
+  mkdir -p "$log_dir"
+
+  # Prune logs older than 30 days
+  find "$log_dir" -name "*.jsonl" -mtime +30 -delete 2>/dev/null
+
+  # Gather project context
+  project_path=$(pwd)
+  branch=$(git branch --show-current 2>/dev/null || echo "")
+
+  # Write session metadata as first entry
+  jq -nc \
+    --arg id "$session_id" \
+    --arg project "$project_path" \
+    --arg branch "$branch" \
+    --argjson ts "$(date +%s)" \
+    '{type: "session_start", id: $id, project: $project, branch: $branch, ts: $ts}' \
+    > "$log_dir/${session_id}.jsonl"
+fi
+
 show() { [ -z "$quiet" ] && echo -e "\033[36m$1\033[0m"; }
 dim() { [ -z "$quiet" ] && echo -e "\033[90m$1\033[0m"; }
 warn() { echo -e "\033[33m$1\033[0m"; }

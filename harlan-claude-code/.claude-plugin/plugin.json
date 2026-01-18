@@ -58,6 +58,14 @@
     ],
     "PostToolUse": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/usage-log.sh"
+          }
+        ]
+      },
+      {
         "matcher": "Read|Write|Edit",
         "hooks": [
           {
