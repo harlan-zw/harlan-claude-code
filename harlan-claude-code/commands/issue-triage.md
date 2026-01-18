@@ -20,9 +20,10 @@ Triage all open issues and rank by difficulty/impact.
    Use Task tool with `model: haiku` to analyze issues:
    - **Difficulty** (1-5): code complexity, unknowns, testing effort
    - **Impact** (1-5): user-facing value, frequency, severity
+   - **Has Repro**: check if body contains reproduction steps, stackblitz/codesandbox links, or minimal repo links
 
-4. **Display table** sorted by impact/difficulty ratio
-   Include columns: #, Title, Labels, Difficulty, Impact, Notes
+4. **Display table** sorted by: has repro (yes first), then impact/difficulty ratio
+   Include columns: #, Title, Labels, Repro, Diff, Impact, Notes
 
 5. **Highlight quick wins** - low difficulty (1-2), decent impact (2+)
 
@@ -31,9 +32,10 @@ Triage all open issues and rank by difficulty/impact.
 ## Example Output
 
 ```
-| # | Title | Labels | Diff | Impact | Notes |
-|---|-------|--------|------|--------|-------|
-| 42 | Fix CSS regression | bug | 1 | 3 | 1-line fix |
+| # | Title | Labels | Repro | Diff | Impact | Notes |
+|---|-------|--------|-------|------|--------|-------|
+| 42 | Fix CSS regression | bug | ✓ | 1 | 3 | 1-line fix |
+| 17 | Add dark mode | enhancement | | 2 | 4 | no repro needed |
 ```
 
 ## Notes
@@ -41,3 +43,4 @@ Triage all open issues and rank by difficulty/impact.
 - For large repos, focus on first 100 issues
 - Labels like "good first issue" suggest low difficulty
 - "bug" labels often higher impact than "enhancement"
+- Issues with reproductions are prioritized - easier to verify fix works
