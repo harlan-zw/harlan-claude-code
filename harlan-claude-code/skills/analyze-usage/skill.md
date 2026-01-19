@@ -69,6 +69,44 @@ grep -h '"Skill"' ~/.claude/logs/sessions/*.jsonl 2>/dev/null | \
 
 5. Compare against available skills to find unused ones.
 
+## Time Tracking
+
+Sessions now include timing data:
+- `session_start`: `{type: "session_start", ts: ..., project: ...}`
+- `session_end`: `{type: "session_end", ts: ..., events: ...}`
+
+**Calculate session duration**:
+```bash
+for f in ~/.claude/logs/sessions/*.jsonl; do
+  start=$(head -1 "$f" | jq -r '.ts // empty')
+  end=$(grep session_end "$f" | jq -r '.ts // empty')
+  if [ -n "$start" ] && [ -n "$end" ]; then
+    duration=$((end - start))
+    mins=$((duration / 60))
+    project=$(head -1 "$f" | jq -r '.project | split("/") | .[-1]')
+    echo "$mins min - $project"
+  fi
+done | sort -rn | head -20
+```
+
+**Estimate active time** (gaps > 5min = idle):
+```bash
+# Parse timestamps, sum intervals where gap < 300s
+jq -s '[.[].ts | select(. != null)] | sort |
+  reduce range(1; length) as $i (0;
+    if (.[($i)] - .[($i-1)]) < 300 then . + (.[($i)] - .[($i-1)]) else . end
+  ) / 60 | floor' session.jsonl
+```
+
+**Daily/weekly totals**:
+```bash
+for f in ~/.claude/logs/sessions/*.jsonl; do
+  start=$(head -1 "$f" | jq -r '.ts // empty')
+  end=$(grep session_end "$f" | jq -r '.ts // empty')
+  [ -n "$start" ] && [ -n "$end" ] && echo "$start $((end - start))"
+done | awk '{d=strftime("%Y-%m-%d", $1); t[d]+=$2} END {for(d in t) print d, int(t[d]/60) "min"}' | sort
+```
+
 ## Output Format
 
 Group findings into:
@@ -76,3 +114,4 @@ Group findings into:
 - **Automate**: Repeated manual patterns that could be skills
 - **Remove**: Skills never/rarely used
 - **Promote**: Useful skills that could be more discoverable
+- **Time**: Session durations, active time estimates, project breakdown
