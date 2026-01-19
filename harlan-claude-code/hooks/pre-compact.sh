@@ -53,7 +53,7 @@ SESSION_FILE=".claude/session-context.md"
 
   # Include active plan if tracked for this session
   ACTIVE_PLAN=""
-  [ -n "$session_id" ] && ACTIVE_PLAN=$(cat ".claude/.active-plan-${session_id}" 2>/dev/null || echo "")
+  [ -n "$session_id" ] && ACTIVE_PLAN=$(cat ".claude/sessions/.active-plan-${session_id}" 2>/dev/null || echo "")
   if [ -n "$ACTIVE_PLAN" ] && [ -f "$ACTIVE_PLAN" ]; then
     echo "## Active Plan"
     echo ""

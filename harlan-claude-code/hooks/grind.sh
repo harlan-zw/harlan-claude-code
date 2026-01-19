@@ -25,7 +25,7 @@ MAX_ITERATIONS=10
 
 # Check for session-tracked plan first, fall back to scratchpad
 ACTIVE_PLAN=""
-[ -n "$SESSION_ID" ] && ACTIVE_PLAN=$(cat ".claude/.active-plan-${SESSION_ID}" 2>/dev/null || echo "")
+[ -n "$SESSION_ID" ] && ACTIVE_PLAN=$(cat ".claude/sessions/.active-plan-${SESSION_ID}" 2>/dev/null || echo "")
 if [ -n "$ACTIVE_PLAN" ] && [ -f "$ACTIVE_PLAN" ]; then
   WORKFILE="$ACTIVE_PLAN"
   WORKFILE_TYPE="plan"
@@ -63,7 +63,7 @@ CONTENT=$(cat "$WORKFILE")
 # Check for DONE marker (using shared pattern)
 if is_work_done "$CONTENT"; then
   # Clean up session tracking files
-  [ -n "$SESSION_ID" ] && rm -f ".claude/.edit-count-${SESSION_ID}" ".claude/.active-plan-${SESSION_ID}"
+  [ -n "$SESSION_ID" ] && rm -f ".claude/sessions/.edit-count-${SESSION_ID}" ".claude/sessions/.active-plan-${SESSION_ID}"
 
   if [ "$WORKFILE_TYPE" = "scratchpad" ]; then
     rm "$WORKFILE"

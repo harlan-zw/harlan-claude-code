@@ -99,8 +99,8 @@ if [ -d ".claude/plans" ]; then
 
         # Write active plan tracker so grind.sh can continue it
         if [ -n "$session_id" ]; then
-          mkdir -p .claude
-          echo "$plan" > ".claude/.active-plan-${session_id}"
+          mkdir -p .claude/sessions
+          echo "$plan" > ".claude/sessions/.active-plan-${session_id}"
         fi
 
         if is_work_blocked "$content"; then

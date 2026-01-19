@@ -5,7 +5,8 @@ input=$(cat)
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 [ -z "$session_id" ] && exit 0
 
-# Clean up stale tracking files (older than 24h)
+# Clean up stale tracking files (older than 4h - sessions rarely last that long)
 # Note: Don't clear current session files - session-start may have just set them
-find .claude -maxdepth 1 -name ".active-plan-*" -mtime +1 -delete 2>/dev/null
-find .claude -maxdepth 1 -name ".edit-count-*" -mtime +1 -delete 2>/dev/null
+find .claude/sessions -maxdepth 1 -type f -mmin +240 -delete 2>/dev/null
+# Remove empty sessions dir
+rmdir .claude/sessions 2>/dev/null

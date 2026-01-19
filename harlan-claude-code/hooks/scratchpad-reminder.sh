@@ -10,7 +10,7 @@ session_id=$(echo "$input" | jq -r '.session_id // empty')
 [ -z "$session_id" ] && exit 0
 
 # Check for active plan (tracked via track-plan-access or session-start hooks)
-active_plan=$(cat ".claude/.active-plan-${session_id}" 2>/dev/null || echo "")
+active_plan=$(cat ".claude/sessions/.active-plan-${session_id}" 2>/dev/null || echo "")
 has_scratchpad=false
 [ -f ".claude/scratchpad.md" ] && has_scratchpad=true
 
@@ -27,7 +27,8 @@ elif [ "$has_scratchpad" = true ]; then
 fi
 
 # Track edits per session
-count_file=".claude/.edit-count-${session_id}"
+mkdir -p .claude/sessions
+count_file=".claude/sessions/.edit-count-${session_id}"
 count=$(($(cat "$count_file" 2>/dev/null || echo 0) + 1))
 echo "$count" > "$count_file"
 

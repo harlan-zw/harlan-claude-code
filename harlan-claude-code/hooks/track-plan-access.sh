@@ -17,5 +17,5 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 [[ "$file_path" == *".claude/plans/"*".md" ]] || exit 0
 
 # Store as active plan for this session
-mkdir -p .claude
-echo "$file_path" > ".claude/.active-plan-${session_id}"
+mkdir -p .claude/sessions
+echo "$file_path" > ".claude/sessions/.active-plan-${session_id}"
