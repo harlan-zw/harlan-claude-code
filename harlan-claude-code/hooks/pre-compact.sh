@@ -35,11 +35,11 @@ SESSION_FILE=".claude/session-context.md"
     echo ""
   fi
 
-  # Recently modified files
+  # Recently modified files (portable: works on macOS and Linux)
   echo "## Recently Modified"
   echo "\`\`\`"
-  find . -type f -name "*.ts" -o -name "*.vue" -o -name "*.js" 2>/dev/null | \
-    xargs ls -lt 2>/dev/null | head -10 | awk '{print $NF}'
+  find . -type f \( -name "*.ts" -o -name "*.vue" -o -name "*.js" \) -not -path "*/node_modules/*" 2>/dev/null | \
+    head -100 | xargs ls -t 2>/dev/null | head -10
   echo "\`\`\`"
   echo ""
 

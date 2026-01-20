@@ -7,12 +7,19 @@ source "$(dirname "$0")/check-config.sh"
 
 # Read session_id from stdin for plan tracking
 input=$(cat)
-session_id=$(echo "$input" | jq -r '.session_id // empty')
+session_id=$(get_session_id "$input")
 agent_type=$(echo "$input" | jq -r '.agent_type // empty')
+
+# Clean up stale tracking files (older than 4h)
+find .claude/sessions -maxdepth 1 -type f -mmin +240 -delete 2>/dev/null
+rmdir .claude/sessions 2>/dev/null || true
 
 # Quiet mode for sub-agents - only show warnings
 quiet=""
 [ "$agent_type" = "task" ] && quiet=1
+
+# Cache git info (used by both logging and display)
+branch=$(git branch --show-current 2>/dev/null || echo "")
 
 # Initialize session log
 if [ -n "$session_id" ] && [ "$agent_type" != "task" ]; then
@@ -22,14 +29,10 @@ if [ -n "$session_id" ] && [ "$agent_type" != "task" ]; then
   # Prune logs older than 30 days
   find "$log_dir" -name "*.jsonl" -mtime +30 -delete 2>/dev/null
 
-  # Gather project context
-  project_path=$(pwd)
-  branch=$(git branch --show-current 2>/dev/null || echo "")
-
   # Write session metadata as first entry
   jq -nc \
     --arg id "$session_id" \
-    --arg project "$project_path" \
+    --arg project "$(pwd)" \
     --arg branch "$branch" \
     --argjson ts "$(date +%s)" \
     '{type: "session_start", id: $id, project: $project, branch: $branch, ts: $ts}' \
@@ -57,9 +60,8 @@ if [ -f "package.json" ]; then
     show "Node Project: $name"
   fi
 
-  # Git info
-  if git rev-parse --git-dir > /dev/null 2>&1; then
-    branch=$(git branch --show-current 2>/dev/null)
+  # Git info (branch already cached above)
+  if [ -n "$branch" ]; then
     if ! git diff-index --quiet HEAD -- 2>/dev/null; then
       dim "Branch: $branch (dirty)"
     else

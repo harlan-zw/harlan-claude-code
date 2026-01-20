@@ -7,13 +7,22 @@ HOOK_CONFIG=".claude/hooks.json"
 
 is_hook_disabled() {
   local hook_name="$1"
-
   if [ -f "$HOOK_CONFIG" ]; then
     disabled=$(jq -r ".disabled // [] | index(\"$hook_name\") // empty" "$HOOK_CONFIG" 2>/dev/null)
     [ -n "$disabled" ] && return 0
   fi
-
   return 1
+}
+
+# Helper: extract session_id from hook input JSON
+get_session_id() { echo "$1" | jq -r '.session_id // empty'; }
+
+# Helper: cleanup session tracking files
+cleanup_session_files() {
+  local sid="$1"
+  [ -z "$sid" ] && return
+  rm -f ".claude/sessions/.active-plan-${sid}" ".claude/sessions/.edit-count-${sid}" 2>/dev/null
+  rmdir .claude/sessions 2>/dev/null || true
 }
 
 # Shared workfile status patterns (unified across all hooks)

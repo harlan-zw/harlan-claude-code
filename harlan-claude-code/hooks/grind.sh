@@ -19,7 +19,7 @@ INPUT=$(cat)
 # Parse stop hook fields
 STATUS=$(echo "$INPUT" | jq -r '.stop_hook_status // .status // "completed"')
 LOOP_COUNT=$(echo "$INPUT" | jq -r '.loop_count // 0')
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+SESSION_ID=$(get_session_id "$INPUT")
 
 MAX_ITERATIONS=10
 
@@ -62,8 +62,7 @@ CONTENT=$(cat "$WORKFILE")
 
 # Check for DONE marker (using shared pattern)
 if is_work_done "$CONTENT"; then
-  # Clean up session tracking files
-  [ -n "$SESSION_ID" ] && rm -f ".claude/sessions/.edit-count-${SESSION_ID}" ".claude/sessions/.active-plan-${SESSION_ID}"
+  cleanup_session_files "$SESSION_ID"
 
   if [ "$WORKFILE_TYPE" = "scratchpad" ]; then
     rm "$WORKFILE"

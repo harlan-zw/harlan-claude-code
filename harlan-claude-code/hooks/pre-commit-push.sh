@@ -19,28 +19,32 @@ fi
 # run checks only on push/pr
 [[ ! "$command" =~ ^git[[:space:]]+push ]] && [[ ! "$command" =~ ^gh[[:space:]]+pr[[:space:]]+create ]] && exit 0
 
-errors=""
+# Run checks in parallel for speed
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
 
-# eslint
+# eslint (background)
 if [ -f "node_modules/.bin/eslint" ]; then
-  if ! ./node_modules/.bin/eslint . --fix 2>&1; then
-    errors+="eslint failed; "
-  fi
+  (./node_modules/.bin/eslint . --fix 2>&1 || echo "FAILED" > "$tmpdir/eslint") &
 fi
 
-# typecheck
+# typecheck (background)
 if [ -f "package.json" ] && grep -q '"typecheck"' package.json 2>/dev/null; then
-  if ! pnpm typecheck 2>&1; then
-    errors+="typecheck failed; "
-  fi
+  (pnpm typecheck 2>&1 || echo "FAILED" > "$tmpdir/typecheck") &
 fi
 
-# test
+# test (background)
 if [ -f "package.json" ] && grep -q '"test"' package.json 2>/dev/null; then
-  if ! pnpm test 2>&1; then
-    errors+="tests failed; "
-  fi
+  (pnpm test 2>&1 || echo "FAILED" > "$tmpdir/test") &
 fi
+
+wait
+
+# Collect errors
+errors=""
+[ -f "$tmpdir/eslint" ] && errors+="eslint failed; "
+[ -f "$tmpdir/typecheck" ] && errors+="typecheck failed; "
+[ -f "$tmpdir/test" ] && errors+="tests failed; "
 
 if [ -n "$errors" ]; then
   deny "Pre-push checks failed: ${errors}Fix issues before pushing."
