@@ -16,18 +16,30 @@ Triage all open issues and rank by difficulty/impact.
    gh issue list --repo <repo> --state open --limit 100 --json number,title,labels,body,createdAt,author
    ```
 
-3. **Spawn haiku agent** to rank each issue
-   Use Task tool with `model: haiku` to analyze issues:
+3. **Parallel batch analysis** (8-10x faster than sequential)
+   Split issues into batches and spawn parallel haiku agents:
+
+   ```
+   # Spawn 5-10 Task agents IN PARALLEL (single message, multiple tool calls)
+   Task(model: haiku, prompt: "Analyze issues 1-10: [JSON]. Return JSON array with: number, difficulty (1-5), impact (1-5), hasRepro (bool), notes")
+   Task(model: haiku, prompt: "Analyze issues 11-20: [JSON]. Return JSON array...")
+   Task(model: haiku, prompt: "Analyze issues 21-30: [JSON]. Return JSON array...")
+   ... (continue for all batches)
+   ```
+
+   Each agent evaluates:
    - **Difficulty** (1-5): code complexity, unknowns, testing effort
    - **Impact** (1-5): user-facing value, frequency, severity
-   - **Has Repro**: check if body contains reproduction steps, stackblitz/codesandbox links, or minimal repo links
+   - **Has Repro**: reproduction steps, stackblitz/codesandbox links, minimal repo
 
-4. **Display table** sorted by: has repro (yes first), then impact/difficulty ratio
+4. **Merge results** from all agents into unified list
+
+5. **Display table** sorted by: has repro (yes first), then impact/difficulty ratio
    Include columns: #, Title, Labels, Repro, Diff, Impact, Notes
 
-5. **Highlight quick wins** - low difficulty (1-2), decent impact (2+)
+6. **Highlight quick wins** - low difficulty (1-2), decent impact (2+)
 
-6. **Highlight high priorities** - impact 4-5 regardless of difficulty
+7. **Highlight high priorities** - impact 4-5 regardless of difficulty
 
 ## Example Output
 

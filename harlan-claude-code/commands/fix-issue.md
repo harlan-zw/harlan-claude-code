@@ -7,9 +7,14 @@ Fix GitHub issue #$ARGUMENTS and create a PR.
 
 ## Workflow
 
-1. **Fetch issue details**
-   ```bash
-   gh issue view $ARGUMENTS --json title,body,labels,comments
+1. **Parallel context gathering** (30-40% faster)
+   Spawn these IN PARALLEL (single message, multiple tool calls):
+
+   ```
+   # Fetch issue while exploring codebase simultaneously
+   Bash: gh issue view $ARGUMENTS --json title,body,labels,comments
+   Task(Explore): "Find files related to: [issue keywords]. Search for error messages, function names, component names mentioned."
+   Task(Explore): "Find test files that cover: [issue area]. Look for existing test patterns."
    ```
 
 2. **Initialize scratchpad** for grind pattern
@@ -34,7 +39,7 @@ Fix GitHub issue #$ARGUMENTS and create a PR.
    git checkout -b fix/issue-$ARGUMENTS
    ```
 
-4. **Find relevant code** using Explore agent or grep based on issue description
+4. **Review exploration results** from parallel agents, identify target files
 
 5. **Implement the fix** - make minimal changes to solve the issue
    - `eslint.sh` auto-fixes lint on each edit

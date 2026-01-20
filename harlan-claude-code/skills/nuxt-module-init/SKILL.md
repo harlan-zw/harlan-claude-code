@@ -75,6 +75,33 @@ See `references/` for detailed templates:
 
 ---
 
+## Sync Process (Parallelized - 3-4x faster)
+
+Inherits parallel patterns from `/pkg-init`, plus Nuxt-specific parallel review:
+
+### Phase 1: Parallel Nuxt Structure Review
+Spawn these IN PARALLEL (single message, multiple tool calls):
+
+```
+Task(Explore): "Review src/module.ts: check registration methods, resolver usage, module options. Report issues."
+Task(Explore): "Review src/runtime/app/: check composables export, plugins mode, imports registration."
+Task(Explore): "Review src/runtime/server/: check server handlers, Nitro plugins, middleware. Verify no Vue deps."
+Task(Explore): "Review playground/ and test/fixtures/: check nuxt.config, prepare scripts, test patterns."
+```
+
+### Phase 2: Apply Changes
+Based on parallel review results, apply updates per checklist below.
+
+### Phase 3: Parallel Preparation & Verification
+```
+Bash: pnpm dev:prepare && pnpm prepare:fixtures
+Bash(background): pnpm lint
+Bash(background): pnpm typecheck  # Uses nuxt typecheck
+Bash: pnpm test:run
+```
+
+---
+
 ## Sync Checklist
 
 In addition to `/pkg-init` checklist:

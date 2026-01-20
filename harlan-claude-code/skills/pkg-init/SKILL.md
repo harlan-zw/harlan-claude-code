@@ -130,21 +130,32 @@ When syncing existing project:
 11. [ ] `build.config.ts` - externals defined
 12. [ ] Package scripts - standard naming, include `lint:fix`
 
-## Sync Process
+## Sync Process (Parallelized - 3-4x faster)
 
-```bash
-# 1. Check current state
-cat pnpm-workspace.yaml
-cat package.json | jq '.devDependencies'
+### Phase 1: Parallel Config Review
+Spawn these IN PARALLEL (single message, multiple tool calls):
 
-# 2. Update catalogs (see references/catalogs.md)
-# 3. Migrate package.json deps to catalog:* format
-# 4. Update GH actions to latest versions
+```
+Task(Explore): "Read and compare: pnpm-workspace.yaml, package.json deps. Report differences from standards."
+Task(Explore): "Read and compare: .github/workflows/*.yml. Check action versions against v6 standards."
+Task(Explore): "Read and compare: eslint.config.mjs, vitest.config.ts, tsconfig.json. Report missing options."
+Task(Explore): "Read and compare: build.config.ts, .npmrc, .editorconfig, .gitignore. Report missing settings."
+```
 
-# 5. Verify
-pnpm install
-pnpm lint
-pnpm typecheck
-pnpm build
-pnpm test:run
+### Phase 2: Apply Changes
+Based on parallel review results, apply necessary updates.
+
+### Phase 3: Parallel Verification
+Run verification commands IN PARALLEL:
+
+```
+Bash(background): pnpm install
+Bash(background): pnpm lint
+Bash(background): pnpm typecheck
+```
+
+Then sequentially (depends on install):
+```
+Bash: pnpm build
+Bash: pnpm test:run
 ```

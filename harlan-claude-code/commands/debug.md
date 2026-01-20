@@ -5,9 +5,19 @@ args: bug_description
 
 Debug "$ARGUMENTS" using hypothesis-driven approach.
 
-## Phase 1: Hypothesize
+## Phase 1: Parallel Hypothesis Generation (40-50% faster)
 
-Generate 3-5 hypotheses about what could cause this bug:
+Spawn parallel agents to explore different angles simultaneously:
+
+```
+# Single message with multiple Task calls
+Task(Explore): "Search for code related to: $ARGUMENTS. Find error handling, state mutations, async operations."
+Task(Explore): "Find similar bugs in git history: git log --grep='[keywords]'. Look for past fixes."
+Task(haiku): "Based on bug description '$ARGUMENTS', generate 2 hypotheses about: timing/race conditions, state management issues."
+Task(haiku): "Based on bug description '$ARGUMENTS', generate 2 hypotheses about: data validation, edge cases, null/undefined."
+```
+
+Merge findings into hypothesis list:
 
 ```markdown
 ## Hypotheses

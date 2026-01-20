@@ -132,6 +132,27 @@ See `references/` for component details:
 
 ---
 
+## Sync Process (Parallelized - 3-4x faster)
+
+### Phase 1: Parallel Component Review
+Spawn these IN PARALLEL (single message, multiple tool calls):
+
+```
+Task(Explore): "Review plugin.json: check skills array, hooks registered, agents registered. Report missing entries."
+Task(Explore): "Review all skills/*/SKILL.md: check frontmatter has description, user_invocable, trigger phrases. Report issues."
+Task(Explore): "Review all commands/*.md: check frontmatter has description. Report missing fields."
+Task(Explore): "Review all agents/*.md: check frontmatter has model, color, tools. Report missing fields."
+Task(Explore): "Review package.json, eslint.config.js, scripts/release.ts. Check against templates."
+```
+
+### Phase 2: Apply Improvements
+Based on parallel review results, fix issues and improve:
+- Better descriptions with trigger phrases
+- Clearer instructions and examples
+- Missing references or context
+- Consistency across components
+- Progressive disclosure patterns
+
 ## Sync Checklist
 
 1. [ ] `plugin.json` - skills array, hooks registered, agents registered
@@ -144,11 +165,3 @@ See `references/` for component details:
 8. [ ] Agents have `model`, `color`, `tools` in frontmatter
 9. [ ] README documents installation
 10. [ ] All paths use `${CLAUDE_PLUGIN_ROOT}`
-
-## Auto-improvements (when syncing)
-
-- Better descriptions with trigger phrases
-- Clearer instructions and examples
-- Missing references or context
-- Consistency across components
-- Progressive disclosure patterns
