@@ -19,11 +19,10 @@ pnpm release patch|minor|major  # Bump version, tag, push
 ```
 harlan-claude-code/           # Plugin root (nested to allow workspace tooling)
   .claude-plugin/plugin.json  # Manifest with hook config
-  hooks/                      # Bash scripts
-  commands/                   # Slash commands (markdown)
-  skills/                     # Multi-file skills (skill.md + templates/)
+  hooks/                      # Bash scripts (7 hooks)
+  skills/                     # Skills (SKILL.md + optional templates/)
 .claude-plugin/marketplace.json  # Marketplace metadata (version synced on release)
-scripts/release.ts            # Version bump script
+scripts/release.ts            # Version bump script (syncs plugin.json, marketplace.json, skill frontmatter)
 ```
 
 ## Architecture
@@ -31,21 +30,19 @@ scripts/release.ts            # Version bump script
 **Dual-directory layout**: Root has workspace tooling (eslint, release script). Actual plugin lives in `harlan-claude-code/` subdirectory.
 
 **Hook lifecycle**:
-- `SessionStart`: Show project info, clear plan trackers
-- `PreToolUse`: Block npm/yarn, run pre-commit checks
-- `PostToolUse`: Lint, typecheck, run tests on Write/Edit
-- `PreCompact`: Save context before compaction
-- `Stop`: Grind hook continues incomplete scratchpad work
+- `SessionStart`: Detect project type (Nuxt Module/App, UnJS, Vue, Node), show git info, warn if not pnpm
+- `PreToolUse` (Bash): Block npm/yarn/npx (`pnpm-only.sh`), run parallel lint+typecheck+test on commit/push (`pre-commit-push.sh`)
+- `PostToolUse` (Write|Edit): Auto-fix eslint, suggest typecheck, run related vitest
 
 **Disable hooks per-project**: Create `.claude/hooks.json` with `{"disabled": ["typecheck", "vitest"]}`
+
+**Skills**: `pkg-init` (scaffold/sync packages), `issue-triage` (batch analyze GitHub issues), `pr` (conventional commit PRs), `tweet` (draft + screenshot wrapper)
 
 ## Adding Components
 
 **Hook**: Create `hooks/[name].sh`, add to `plugin.json`. Source `check-config.sh` for disable support. Input via stdin JSON (`tool_input.*`). Block with `{"decision":"block","reason":"..."}`. Continue (Stop only) with `{"decision":"followup_message","message":"..."}`.
 
-**Command**: Create `commands/[name].md` with `name` and `description` frontmatter.
-
-**Skill**: Create `skills/[name]/skill.md` with frontmatter. Add `templates/` subdir for scaffolding files.
+**Skill**: Create `skills/[name]/SKILL.md` with frontmatter (`description`, `user_invocable: true`). Add `templates/` subdir for scaffolding files.
 
 ## Testing
 

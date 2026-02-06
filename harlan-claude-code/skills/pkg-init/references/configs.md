@@ -2,10 +2,10 @@
 
 ## .npmrc
 
+Optional. Only needed for monorepos with hoisting issues:
+
 ```ini
 shamefully-hoist=true
-strict-peer-dependencies=false
-ignore-workspace-root-check=true
 ```
 
 ## .editorconfig
@@ -28,48 +28,45 @@ trim_trailing_whitespace = false
 ## .gitignore
 
 ```gitignore
-# Dependencies
 node_modules
-
-# Build output
 dist
 .output
-
-# IDE
 .idea
 .vscode
 *.swp
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs
 *.log
-
-# Test
 coverage
-
-# Local
 .env
 .env.*
 !.env.example
 ```
 
-## eslint.config.mjs
+## eslint.config.js
 
 ```js
 import antfu from '@antfu/eslint-config'
 
 export default antfu({
-  type: 'lib', // or 'app' for applications
-  ignores: [
-    'CLAUDE.md',
-  ],
+  rules: {
+    'no-use-before-define': 'off',
+    'node/prefer-global/process': 'off',
+    'node/prefer-global/buffer': 'off',
+  },
+}, {
+  ignores: ['docs/**'],
+}, {
+  files: ['**/test/**/*.ts', '**/test/**/*.js'],
+  rules: {
+    'ts/no-unsafe-function-type': 'off',
+    'no-console': 'off',
+  },
 })
 ```
 
 ## vitest.config.ts
+
+Basic:
 
 ```ts
 import { defineConfig } from 'vitest/config'
@@ -77,33 +74,46 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
     globals: true,
-    reporters: 'dot',
+    include: ['test/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts'],
+      reporter: ['text', 'text-summary'],
+    },
   },
 })
 ```
 
-For projects with unit + e2e separation:
+With unit + e2e projects:
 
 ```ts
-import { defineConfig, defineProject } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    globals: true,
-    reporters: 'dot',
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts'],
+      reporter: ['text', 'html'],
+    },
     projects: [
-      defineProject({
+      {
+        extends: true,
         test: {
           name: 'unit',
-          include: ['test/unit/**/*.test.ts'],
+          include: ['test/**/*.test.ts'],
+          exclude: ['**/node_modules/**', 'test/e2e/**'],
         },
-      }),
-      defineProject({
+      },
+      {
+        extends: true,
         test: {
           name: 'e2e',
           include: ['test/e2e/**/*.test.ts'],
         },
-      }),
+      },
     ],
   },
 })
@@ -114,33 +124,57 @@ export default defineConfig({
 ```json
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "Preserve",
+    "target": "esnext",
+    "module": "preserve",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
+    "baseUrl": ".",
+    "rootDir": ".",
+    "types": ["node", "vitest/globals"],
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "strict": true,
-    "skipLibCheck": true,
-    "declaration": true,
+    "strictNullChecks": true,
     "noUnusedLocals": true,
-    "noEmit": true
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+    "declaration": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
 }
 ```
 
 ## build.config.ts
 
 ```ts
-import { defineBuildConfig } from 'unbuild'
+import { defineBuildConfig } from 'obuild/config'
 
 export default defineBuildConfig({
-  declaration: true,
   entries: [
-    'src/index',
+    {
+      type: 'bundle',
+      input: [
+        './src/index.ts',
+      ],
+    },
   ],
-  externals: [
-    // add runtime externals here
+})
+```
+
+With CLI and multiple entry points:
+
+```ts
+import { defineBuildConfig } from 'obuild/config'
+
+export default defineBuildConfig({
+  entries: [
+    {
+      type: 'bundle',
+      input: [
+        './src/index.ts',
+        './src/cli.ts',
+        './src/types.ts',
+      ],
+    },
   ],
 })
 ```

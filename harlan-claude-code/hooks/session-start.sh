@@ -1,43 +1,19 @@
 #!/bin/bash
 
 # Context-aware session start
-# Detects project type, shows relevant info, primes context
+# Detects project type, shows relevant info
 
 source "$(dirname "$0")/check-config.sh"
 
-# Read session_id from stdin for plan tracking
+# Read input from stdin
 input=$(cat)
-session_id=$(get_session_id "$input")
 agent_type=$(echo "$input" | jq -r '.agent_type // empty')
-
-# Clean up stale tracking files (older than 4h)
-find .claude/sessions -maxdepth 1 -type f -mmin +240 -delete 2>/dev/null
-rmdir .claude/sessions 2>/dev/null || true
 
 # Quiet mode for sub-agents - only show warnings
 quiet=""
 [ "$agent_type" = "task" ] && quiet=1
 
-# Cache git info (used by both logging and display)
 branch=$(git branch --show-current 2>/dev/null || echo "")
-
-# Initialize session log
-if [ -n "$session_id" ] && [ "$agent_type" != "task" ]; then
-  log_dir="$HOME/.claude/logs/sessions"
-  mkdir -p "$log_dir"
-
-  # Prune logs older than 30 days
-  find "$log_dir" -name "*.jsonl" -mtime +30 -delete 2>/dev/null
-
-  # Write session metadata as first entry
-  jq -nc \
-    --arg id "$session_id" \
-    --arg project "$(pwd)" \
-    --arg branch "$branch" \
-    --argjson ts "$(date +%s)" \
-    '{type: "session_start", id: $id, project: $project, branch: $branch, ts: $ts}' \
-    > "$log_dir/${session_id}.jsonl"
-fi
 
 show() { [ -z "$quiet" ] && echo -e "\033[36m$1\033[0m"; }
 dim() { [ -z "$quiet" ] && echo -e "\033[90m$1\033[0m"; }
@@ -88,44 +64,3 @@ if [ ! -f ".claude/CLAUDE.md" ] && [ ! -f "CLAUDE.md" ]; then
   dim "Tip: /init-module to add CLAUDE.md"
 fi
 
-# Check for incomplete work (grind pattern) - plans preferred over scratchpad
-active_plan_found=""
-if [ -d ".claude/plans" ]; then
-  # Find most recent non-DONE plan (portable: works on macOS and Linux)
-  for plan in $(find .claude/plans -name "*.md" -mtime -30 2>/dev/null | xargs ls -t 2>/dev/null); do
-    if [ -f "$plan" ]; then
-      content=$(cat "$plan")
-      if ! is_work_done "$content"; then
-        plan_name=$(basename "$plan" .md)
-        active_plan_found="$plan"
-
-        # Write active plan tracker so grind.sh can continue it
-        if [ -n "$session_id" ]; then
-          mkdir -p .claude/sessions
-          echo "$plan" > ".claude/sessions/.active-plan-${session_id}"
-        fi
-
-        if is_work_blocked "$content"; then
-          warn "Plan '$plan_name': BLOCKED - needs attention"
-        else
-          goal=$(grep -A1 "## Goal\|## Current\|## Objective" "$plan" 2>/dev/null | tail -1 | head -c 60)
-          warn "Resume plan '$plan_name': $goal..."
-        fi
-        break
-      fi
-    fi
-  done
-fi
-
-# Only show scratchpad if no active plan (prefer plans)
-if [ -z "$active_plan_found" ] && [ -f ".claude/scratchpad.md" ]; then
-  content=$(cat .claude/scratchpad.md)
-  if is_work_blocked "$content"; then
-    warn "Scratchpad: BLOCKED"
-  elif ! is_work_done "$content"; then
-    goal=$(grep -A1 "## Goal\|## Current" .claude/scratchpad.md 2>/dev/null | tail -1 | head -c 50)
-    [ -n "$goal" ] && warn "Scratchpad: $goal..."
-  fi
-elif [ -z "$active_plan_found" ]; then
-  dim "Tip: For complex tasks, use .claude/scratchpad.md for autonomous iteration"
-fi
