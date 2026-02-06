@@ -12,23 +12,27 @@ Create or update a pull request for the current branch. Idempotent — safe to r
 git branch --show-current
 ```
 
-**If on `main`** → isolate work into a new branch via `wt` (git worktree manager):
+**If on `main`** → isolate work into a new branch via `wt` (git worktree manager).
+
+`wt` creates parallel worktrees so you can work on branches without touching the main checkout. Key commands:
+- `wt switch --create <branch>` — create new branch + worktree from current HEAD (changes shell cwd)
+- `wt switch <branch>` — switch into an existing worktree (changes shell cwd)
+- `wt switch main` — switch back to main worktree
+
+Steps:
 
 1. Derive a branch name from the session's changes (e.g. `feat/add-widget`, `fix/login-bug`). Use `git diff --stat` and `git status` to inform the name.
-2. Create worktree with `wt`:
-   ```bash
-   wt step setup <branch-name>
-   ```
-3. Copy uncommitted changes into the worktree:
+2. Save uncommitted changes, create worktree, apply patches:
    ```bash
    git diff > /tmp/pr-changes.patch
    git diff --cached > /tmp/pr-staged.patch
-   wt switch <branch-name>
+   wt switch --create <branch-name>
    git apply /tmp/pr-changes.patch 2>/dev/null
    git apply /tmp/pr-staged.patch 2>/dev/null
    ```
-4. Commit the changes in the worktree, then continue from Step 1 **inside the worktree directory**.
-5. After PR is created, switch back and clean up:
+   Note: `wt switch` resets the shell cwd to the worktree directory automatically.
+3. Commit the changes in the worktree, then continue from Step 1 **inside the worktree directory**.
+4. After PR is created, switch back and clean up:
    ```bash
    wt switch main
    git checkout .
@@ -120,3 +124,14 @@ EOF
 ```
 
 Output the PR URL when done.
+
+## Step 6: Cleanup (after merge or user says "finish")
+
+If the PR was created from a worktree (Step 0), clean up:
+
+```bash
+wt switch main
+wt delete <branch-name>
+```
+
+`wt delete` removes the worktree directory and deletes the local branch.

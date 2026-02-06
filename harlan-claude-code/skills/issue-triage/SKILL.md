@@ -71,8 +71,8 @@ Triage all open issues and rank by difficulty/impact.
 
    For each selected issue, create an isolated worktree using `wt` (git worktree manager):
    ```bash
-   wt step setup fix/<number>-<slug>
+   wt switch --create fix/<number>-<slug>
    ```
-   Where `<slug>` is a kebab-case short title (first 4-5 words).
+   Where `<slug>` is a kebab-case short title (first 4-5 words). `wt switch --create` creates a new branch + worktree from current HEAD.
 
    After creation, list worktrees with `wt list` so user can open them in separate sessions.
