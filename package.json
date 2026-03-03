@@ -10,7 +10,7 @@
   "dependencies": {
     "@antfu/eslint-config": "^7.6.1",
     "eslint": "^10.0.2",
-    "eslint-plugin-harlanzw": "^0.2.3"
+    "eslint-plugin-harlanzw": "^0.2.5"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
