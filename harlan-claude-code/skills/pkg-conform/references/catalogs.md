@@ -14,6 +14,7 @@ catalog:
   '@types/node': ^25.2.1
   bumpp: ^10.4.1
   eslint: ^9.39.2
+  eslint-plugin-harlanzw: ^0.2.0
   obuild: ^0.4.24
   typescript: ^5.9.3
   vitest: ^4.0.18
@@ -38,6 +39,7 @@ catalog:
   '@types/node': ^25.2.1
   bumpp: ^10.4.1
   eslint: ^9.39.2
+  eslint-plugin-harlanzw: ^0.2.0
   obuild: ^0.4.24
   typescript: ^5.9.3
   vitest: ^4.0.18
@@ -53,6 +55,7 @@ ignoredBuiltDependencies:
 {
   "devDependencies": {
     "eslint": "catalog:",
+    "eslint-plugin-harlanzw": "catalog:",
     "@antfu/eslint-config": "catalog:",
     "vitest": "catalog:",
     "typescript": "catalog:",

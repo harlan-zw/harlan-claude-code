@@ -42,26 +42,32 @@ coverage
 !.env.example
 ```
 
-## eslint.config.js
+## eslint.config.mjs
 
 ```js
 import antfu from '@antfu/eslint-config'
+import harlanzw from 'eslint-plugin-harlanzw'
 
-export default antfu({
-  rules: {
-    'no-use-before-define': 'off',
-    'node/prefer-global/process': 'off',
-    'node/prefer-global/buffer': 'off',
+export default antfu(
+  {
+    rules: {
+      'no-use-before-define': 'off',
+      'node/prefer-global/process': 'off',
+      'node/prefer-global/buffer': 'off',
+    },
   },
-}, {
-  ignores: ['docs/**'],
-}, {
-  files: ['**/test/**/*.ts', '**/test/**/*.js'],
-  rules: {
-    'ts/no-unsafe-function-type': 'off',
-    'no-console': 'off',
+  {
+    ignores: ['docs/**'],
   },
-})
+  {
+    files: ['**/test/**/*.ts', '**/test/**/*.js'],
+    rules: {
+      'ts/no-unsafe-function-type': 'off',
+      'no-console': 'off',
+    },
+  },
+  ...harlanzw({ link: true, nuxt: true, vue: true }),
+)
 ```
 
 ## vitest.config.ts

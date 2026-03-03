@@ -2,11 +2,11 @@
 
 ## Additional Catalogs
 
-Add to `pnpm-workspace.yaml` alongside base catalogs from `/pkg-init`:
+Add to `pnpm-workspace.yaml` alongside base catalogs from `/pkg-conform`:
 
 ```yaml
 catalogs:
-  # ... base catalogs from /pkg-init ...
+  # ... base catalogs from /pkg-conform ...
 
   # Nuxt testing
   dev-test:
@@ -83,15 +83,19 @@ export default defineConfig({
 
 ```js
 import antfu from '@antfu/eslint-config'
+import harlanzw from 'eslint-plugin-harlanzw'
 
-export default antfu({
-  type: 'lib',
-  ignores: [
-    'CLAUDE.md',
-    'test/fixtures/**',
-    'playground/**',
-  ],
-})
+export default antfu(
+  {
+    type: 'lib',
+    ignores: [
+      'CLAUDE.md',
+      'test/fixtures/**',
+      'playground/**',
+    ],
+  },
+  ...harlanzw({ link: true, nuxt: true, vue: true }),
+)
 ```
 
 ## build.config.ts

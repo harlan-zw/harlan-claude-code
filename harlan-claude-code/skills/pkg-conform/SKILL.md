@@ -1,17 +1,17 @@
 ---
-description: Use when user asks to "init package", "create npm package", "scaffold project", "sync package", "update catalogs", "add github actions", "setup eslint", "configure vitest", "init nuxt module", "create nuxt module", "scaffold module", "sync nuxt module", "add playground", "setup test fixtures", "configure @nuxt/test-utils", or needs help with pnpm workspace catalogs, obuild config, standard npm package architecture, Nuxt module architecture, runtime vs build-time code, addImports, addServerHandler, or nuxt-module-builder.
+description: Use when user asks to "conform package", "check standards", "sync package", "audit project config", "update catalogs", "add github actions", "setup eslint", "configure vitest", "init package", "create npm package", "scaffold project", "init nuxt module", "create nuxt module", "scaffold module", "sync nuxt module", "add playground", "setup test fixtures", "configure @nuxt/test-utils", or needs help with pnpm workspace catalogs, obuild config, standard npm package architecture, Nuxt module architecture, runtime vs build-time code, addImports, addServerHandler, or nuxt-module-builder.
 user_invocable: true
 ---
 
-# Package Init / Sync Skill
+# Package Conform Skill
 
-Initialize a new package or sync an existing one to standardized architecture.
+Conform a package to standardized architecture, or scaffold a new one.
 
 ## Usage
 
 ```
-/pkg-init              # sync existing project
-/pkg-init my-package   # init new package
+/pkg-conform              # conform existing project
+/pkg-conform my-package   # scaffold new package
 ```
 
 ## Behavior
@@ -96,6 +96,7 @@ Always prefer UnJS ecosystem packages over Node.js builtins:
     "obuild": "catalog:",
     "bumpp": "catalog:",
     "eslint": "catalog:",
+    "eslint-plugin-harlanzw": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
@@ -128,6 +129,7 @@ Always prefer UnJS ecosystem packages over Node.js builtins:
     "@types/node": "catalog:",
     "bumpp": "catalog:",
     "eslint": "catalog:",
+    "eslint-plugin-harlanzw": "catalog:",
     "obuild": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
@@ -213,7 +215,7 @@ When syncing existing project:
 4. [ ] `.github/workflows/release.yml` - action versions, `bumpp --output=CHANGELOG.md`
 5. [ ] `.editorconfig` - standard config
 6. [ ] `.gitignore` - standard patterns
-7. [ ] `eslint.config.js` - antfu config with standard rule overrides
+7. [ ] `eslint.config.mjs` - antfu config with `eslint-plugin-harlanzw` configs and standard rule overrides
 8. [ ] `vitest.config.ts` - coverage config, projects if unit + e2e
 9. [ ] `tsconfig.json` - `module: preserve`, `moduleDetection: force`, `types: ["node", "vitest/globals"]`
 10. [ ] `build.config.ts` - obuild with explicit entry points
