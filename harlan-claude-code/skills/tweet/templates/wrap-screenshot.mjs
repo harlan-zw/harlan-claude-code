@@ -8,7 +8,6 @@
  * Dependencies: sharp, @resvg/resvg-js
  * Usage: node wrap-screenshot.mjs
  */
-import { readFileSync } from 'node:fs'
 import { Resvg } from '@resvg/resvg-js'
 import sharp from 'sharp'
 

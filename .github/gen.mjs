@@ -1,27 +1,27 @@
 import sharp from 'sharp'
 
-const W = 1280, H = 640
+const W = 1280; const H = 640
 
-const hash = (x, y, seed = 0) => {
+function hash(x, y, seed = 0) {
   const n = Math.sin(x * 12.9898 + y * 78.233 + seed * 43.12) * 43758.5453
   return n - Math.floor(n)
 }
 
-const smoothNoise = (x, y, seed = 0) => {
-  const ix = Math.floor(x), iy = Math.floor(y)
-  const fx = x - ix, fy = y - iy
+function smoothNoise(x, y, seed = 0) {
+  const ix = Math.floor(x); const iy = Math.floor(y)
+  const fx = x - ix; const fy = y - iy
   const ux = fx * fx * (3 - 2 * fx)
   const uy = fy * fy * (3 - 2 * fy)
   return (
-    hash(ix, iy, seed) * (1 - ux) * (1 - uy) +
-    hash(ix + 1, iy, seed) * ux * (1 - uy) +
-    hash(ix, iy + 1, seed) * (1 - ux) * uy +
-    hash(ix + 1, iy + 1, seed) * ux * uy
+    hash(ix, iy, seed) * (1 - ux) * (1 - uy)
+    + hash(ix + 1, iy, seed) * ux * (1 - uy)
+    + hash(ix, iy + 1, seed) * (1 - ux) * uy
+    + hash(ix + 1, iy + 1, seed) * ux * uy
   )
 }
 
-const fbm = (x, y, octaves = 6, seed = 0) => {
-  let val = 0, amp = 0.5, freq = 1
+function fbm(x, y, octaves = 6, seed = 0) {
+  let val = 0; let amp = 0.5; let freq = 1
   for (let i = 0; i < octaves; i++) {
     val += smoothNoise(x * freq, y * freq, seed + i * 100) * amp
     freq *= 2
@@ -30,10 +30,12 @@ const fbm = (x, y, octaves = 6, seed = 0) => {
   return val
 }
 
-const clifford = (x, y, a, b, c, d) => ({
-  x: Math.sin(a * y) + c * Math.cos(a * x),
-  y: Math.sin(b * x) + d * Math.cos(b * y)
-})
+function clifford(x, y, a, b, c, d) {
+  return {
+    x: Math.sin(a * y) + c * Math.cos(a * x),
+    y: Math.sin(b * x) + d * Math.cos(b * y),
+  }
+}
 
 // Dark palette (vibrant on dark)
 const darkPalette = [
@@ -55,13 +57,15 @@ const lightPalette = [
   [0.75, 0.55, 0.15],
 ]
 
-const lerpColor = (c1, c2, t) => [
-  c1[0] + (c2[0] - c1[0]) * t,
-  c1[1] + (c2[1] - c1[1]) * t,
-  c1[2] + (c2[2] - c1[2]) * t
-]
+function lerpColor(c1, c2, t) {
+  return [
+    c1[0] + (c2[0] - c1[0]) * t,
+    c1[1] + (c2[1] - c1[1]) * t,
+    c1[2] + (c2[2] - c1[2]) * t,
+  ]
+}
 
-const generateVariant = async (variant, isLight) => {
+async function generateVariant(variant, isLight) {
   const accum = new Float32Array(W * H * 3)
   const pixels = Buffer.alloc(W * H * 3)
   const palette = isLight ? lightPalette : darkPalette
@@ -71,7 +75,7 @@ const generateVariant = async (variant, isLight) => {
     const py = Math.floor((y + 1.25) / 2.5 * H)
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
-        const nx = px + dx, ny = py + dy
+        const nx = px + dx; const ny = py + dy
         if (nx >= 0 && nx < W && ny >= 0 && ny < H) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const falloff = Math.exp(-dist * 0.6) * intensity
@@ -109,7 +113,7 @@ const generateVariant = async (variant, isLight) => {
     }
     for (let i = 0; i < 50000; i++) {
       const angle = Math.random() * Math.PI * 2
-      const r = Math.pow(Math.random(), 2) * 0.5
+      const r = Math.random() ** 2 * 0.5
       const c = isLight ? [0.6, 0.4, 0.2] : [1, 0.9, 0.7]
       addPoint(Math.cos(angle) * r, Math.sin(angle) * r * 0.5, c[0], c[1], c[2], 0.02)
     }
@@ -122,7 +126,7 @@ const generateVariant = async (variant, isLight) => {
       nodes.push({
         x: (Math.random() - 0.5) * 4,
         y: (Math.random() - 0.5) * 2,
-        color: palette[i % palette.length]
+        color: palette[i % palette.length],
       })
     }
     for (let i = 0; i < nodes.length; i++) {
@@ -147,9 +151,8 @@ const generateVariant = async (variant, isLight) => {
     for (const node of nodes) {
       for (let i = 0; i < 3000; i++) {
         const angle = Math.random() * Math.PI * 2
-        const r = Math.pow(Math.random(), 1.5) * 0.2
-        addPoint(node.x + Math.cos(angle) * r, node.y + Math.sin(angle) * r,
-          node.color[0], node.color[1], node.color[2], 0.03)
+        const r = Math.random() ** 1.5 * 0.2
+        addPoint(node.x + Math.cos(angle) * r, node.y + Math.sin(angle) * r, node.color[0], node.color[1], node.color[2], 0.03)
       }
     }
   }
@@ -171,7 +174,7 @@ const generateVariant = async (variant, isLight) => {
           const wave2 = Math.sin(y * 7 + curtain * 1.3) * 0.15
           const wave3 = fbm(y * 2 + layer, curtain * 0.3, 4, 77) * 0.5
           const x = baseX + wave1 + wave2 + wave3 + strandOffset + layerOffset
-          const vertFade = Math.pow(1 - t, 0.4)
+          const vertFade = (1 - t) ** 0.4
           const horizFade = 1 - Math.abs(strandOffset) * 8
           const fade = vertFade * Math.max(0, horizFade)
           const color = lerpColor(color1, color2, t)
@@ -190,11 +193,12 @@ const generateVariant = async (variant, isLight) => {
   else if (variant === 4) {
     // MANDALA
     const symmetry = 12
-    let ax = 0.1, ay = 0.1
+    let ax = 0.1; let ay = 0.1
     for (let i = 0; i < 600000; i++) {
       const next = clifford(ax, ay, -1.7, 1.8, -1.9, -0.4)
       ax = next.x; ay = next.y
-      if (i < 100) continue
+      if (i < 100)
+        continue
       const r = Math.sqrt(ax * ax + ay * ay) * 0.5
       const theta = Math.atan2(ay, ax)
       const colorT = (i / 600000)
@@ -228,7 +232,7 @@ const generateVariant = async (variant, isLight) => {
       const startY = (hash(stream, 0, 42) - 0.5) * 1.5
       const color1 = palette[stream % palette.length]
       const color2 = palette[(stream + 3) % palette.length]
-      let x = startX, y = startY
+      let x = startX; let y = startY
       for (let i = 0; i < 500; i++) {
         const angle = fbm(x * 0.4, y * 0.4, 5, 33) * Math.PI * 4
         x += Math.cos(angle) * 0.018
@@ -241,7 +245,7 @@ const generateVariant = async (variant, isLight) => {
           const wt = w / 15
           const wx = x + Math.cos(perpAngle) * wt * width
           const wy = y + Math.sin(perpAngle) * wt * width
-          const edgeFade = Math.pow(1 - Math.abs(wt), 0.5)
+          const edgeFade = (1 - Math.abs(wt)) ** 0.5
           addPoint(wx, wy, color[0], color[1], color[2], 0.025 * edgeFade, 2)
         }
       }
@@ -279,7 +283,8 @@ const generateVariant = async (variant, isLight) => {
         bgR = 0.96 - nebula * 0.04
         bgG = 0.95 - nebula * 0.05
         bgB = 0.94 - nebula * 0.03
-      } else {
+      }
+      else {
         bgR = 0.015 + nebula * 0.02
         bgG = 0.012 + nebula * 0.015
         bgB = 0.025 + nebula * 0.03
@@ -295,11 +300,12 @@ const generateVariant = async (variant, isLight) => {
         r = bgR - r * 0.8
         g = bgG - g * 0.8
         b = bgB - b * 0.8
-      } else {
+      }
+      else {
         // Additive for dark
-        r = bgR + Math.pow(r, 0.85)
-        g = bgG + Math.pow(g, 0.85)
-        b = bgB + Math.pow(b, 0.85)
+        r = bgR + r ** 0.85
+        g = bgG + g ** 0.85
+        b = bgB + b ** 0.85
       }
 
       // Vignette
@@ -327,7 +333,7 @@ const generateVariant = async (variant, isLight) => {
 // Generate all variants in both light and dark
 for (let v = 1; v <= 5; v++) {
   await generateVariant(v, false) // dark
-  await generateVariant(v, true)  // light
+  await generateVariant(v, true) // light
 }
 
 console.log('\nAll 10 variants complete!')

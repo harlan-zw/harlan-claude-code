@@ -135,3 +135,6 @@ wt delete <branch-name>
 ```
 
 `wt delete` removes the worktree directory and deletes the local branch.
+
+</branch>
+</branch>

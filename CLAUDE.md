@@ -36,7 +36,7 @@ scripts/release.ts            # Version bump script (syncs plugin.json, marketpl
 
 **Disable hooks per-project**: Create `.claude/hooks.json` with `{"disabled": ["typecheck", "vitest"]}`
 
-**Skills**: `pkg-init` (scaffold/sync packages), `issue-triage` (batch analyze GitHub issues), `pr` (conventional commit PRs), `tweet` (draft + screenshot wrapper)
+**Skills**: `pkg-conform` (conform/scaffold packages), `issue-triage` (batch analyze GitHub issues), `pr` (conventional commit PRs), `tweet` (draft + screenshot wrapper)
 
 ## Adding Components
 

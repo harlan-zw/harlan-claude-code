@@ -47,7 +47,7 @@ Triage all open issues and rank by difficulty/impact.
    **Signals to factor in**:
    - `comments` count — high count suggests community interest/severity
    - `assignees` — if assigned, note in output (someone may already be working on it)
-   - `labels` — "good first issue" suggests low difficulty, "bug" often higher impact than "enhancement"
+   - `labels` — "good first issue" suggests low difficulty, "bug" in most cases higher impact than "enhancement"
    - `createdAt` — old issues with no assignee may be stale or deprioritized
    - Reproduction steps, stackblitz/codesandbox links, minimal repos → `hasRepro: true`
 
@@ -76,3 +76,7 @@ Triage all open issues and rank by difficulty/impact.
    Where `<slug>` is a kebab-case short title (first 4-5 words). `wt switch --create` creates a new branch + worktree from current HEAD.
 
    After creation, list worktrees with `wt list` so user can open them in separate sessions.
+
+</name>
+</n>
+</slug>

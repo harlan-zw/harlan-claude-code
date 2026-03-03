@@ -53,7 +53,7 @@ For each variation show:
 ### Rules for Good Tweets
 - No hashtags unless the user explicitly includes them
 - No emojis unless the user's draft already uses them
-- Don't start with "I" if possible
+- Don't start with "I" Must
 - Avoid corporate/marketing speak ("excited to announce", "thrilled to share")
 - Match the user's voice - if they're casual, stay casual
 - If referencing code/tech, be specific not vague

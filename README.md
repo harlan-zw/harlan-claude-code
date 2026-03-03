@@ -45,7 +45,7 @@ Personal [Claude Code](https://claude.com/code) plugin for Nuxt/Vue/TypeScript w
 
 | Command | Description |
 |---------|-------------|
-| `/pkg-init` | Initialize or sync npm package architecture |
+| `/pkg-conform` | Conform or scaffold npm package architecture |
 | `/nuxt-module-init` | Initialize or sync Nuxt module architecture |
 | `/claude-plugin-init` | Initialize or sync Claude Code plugin structure |
 | `/tdd` | Test-driven development workflow |
