@@ -6,6 +6,7 @@ Industrial hardware aesthetic. Functional, mechanical, exposed structure with or
 **Trends**: Teenage Engineering product design
 **Mode**: Light
 **Fonts**: Space Mono (technical) + JetBrains Mono (code)
+**Icons**: `tabler` — thick mechanical strokes match the industrial hardware feel
 
 ---
 
@@ -102,11 +103,13 @@ export default defineAppConfig({
       slots: { base: 'rounded-te font-mono text-xs uppercase tracking-widest shadow-te-button transition-all duration-100' },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-te-orange text-te-black border border-amber-500 hover:shadow-te-button-hover active:shadow-te-pressed active:translate-y-px'
         },
         {
-          color: 'neutral', variant: 'solid',
+          color: 'neutral',
+          variant: 'solid',
           class: 'bg-te-light text-te-black border border-te-silver hover:bg-te-off-white active:shadow-te-pressed active:translate-y-px'
         }
       ]

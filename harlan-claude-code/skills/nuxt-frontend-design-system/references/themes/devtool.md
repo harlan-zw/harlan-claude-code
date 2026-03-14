@@ -6,6 +6,7 @@ Technical schematic aesthetic inspired by voidzero. Grid backgrounds, dashed bor
 **Trends**: Blueprint DevTool
 **Mode**: Light (with dark sections)
 **Fonts**: IBM Plex Mono (code/labels) + IBM Plex Sans (body)
+**Icons**: `lucide` — clean consistent 2px strokes match the schematic precision
 
 ---
 

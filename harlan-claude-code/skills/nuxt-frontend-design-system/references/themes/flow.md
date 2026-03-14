@@ -6,6 +6,7 @@ Liquid organic shapes with soft curves, ocean colors, and scrollytelling depth.
 **Trends**: Liquid Organic + Scrollytelling
 **Mode**: Light
 **Fonts**: Playfair Display (serif display) + Manrope (body)
+**Icons**: `mingcute` — rounded 2px corners feel organic and warm like water curves
 
 ---
 

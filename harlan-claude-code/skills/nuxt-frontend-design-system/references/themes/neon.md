@@ -6,6 +6,7 @@ Cyberpunk neon with glowing accents on deep black. Electric energy, high contras
 **Trends**: Cyberpunk Neon
 **Mode**: Dark only
 **Fonts**: Syne (display) + Fira Code (mono/body)
+**Icons**: `solar` bold — sharp geometric fills with neon glow via `drop-shadow` match the cyberpunk edge
 
 ---
 
@@ -94,11 +95,13 @@ export default defineAppConfig({
       slots: { base: 'font-mono uppercase tracking-wider text-sm' },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-neon-cyan text-black hover:shadow-neon-cyan hover:glow-cyan'
         },
         {
-          color: 'primary', variant: 'outline',
+          color: 'primary',
+          variant: 'outline',
           class: 'border-neon-cyan text-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan'
         }
       ]

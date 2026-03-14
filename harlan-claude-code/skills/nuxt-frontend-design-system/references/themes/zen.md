@@ -6,6 +6,7 @@ Japanese minimalism with generous negative space, earth tones, and contemplative
 **Trends**: Japanese Zen Minimalism + Kinetic Typography
 **Mode**: Light
 **Fonts**: Crimson Pro (serif display) + IBM Plex Sans (body)
+**Icons**: `lucide` — thin 2px strokes match the restrained, minimal aesthetic
 
 ---
 
@@ -81,11 +82,13 @@ export default defineAppConfig({
       variants: { size: { lg: { base: 'px-8 py-3 text-base tracking-wide' } } },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-zen-charcoal text-zen-cream hover:shadow-zen hover:-translate-y-0.5'
         },
         {
-          color: 'primary', variant: 'outline',
+          color: 'primary',
+          variant: 'outline',
           class: 'border-zen-charcoal text-zen-charcoal hover:bg-zen-charcoal hover:text-zen-cream'
         }
       ],

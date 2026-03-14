@@ -6,6 +6,7 @@ Aurora gradient mesh with cosmic depth. Cyan-violet gradients drifting through g
 **Trends**: Aurora Gradient Mesh + Glassmorphism
 **Mode**: Dark only
 **Fonts**: Plus Jakarta Sans (body) + JetBrains Mono (code)
+**Icons**: `solar` linear — geometric 1.5px lines feel modern and sharp against cosmic gradients
 
 ---
 
@@ -97,11 +98,13 @@ export default defineAppConfig({
       slots: { base: 'backdrop-blur-md transition-all duration-300' },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-[0_0_30px_rgba(0,223,216,0.4)] border-0'
         },
         {
-          color: 'neutral', variant: 'outline',
+          color: 'neutral',
+          variant: 'outline',
           class: 'bg-white/5 border-white/20 hover:bg-white/10 hover:border-white/30 hover:shadow-[0_0_20px_rgba(0,223,216,0.15)]'
         }
       ]

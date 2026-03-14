@@ -6,6 +6,7 @@ Neo-brutalist with thick borders, stark contrast, and hard offset shadows. Raw, 
 **Trends**: Neo-Brutalism + Bento Grid
 **Mode**: Light (cream background)
 **Fonts**: Archivo Black (headings) + Outfit (body) + JetBrains Mono (code)
+**Icons**: `tabler` — thick 2px rounded strokes match the bold, structural weight
 
 ---
 
@@ -90,8 +91,12 @@ export default defineNuxtConfig({
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'yellow', secondary: 'green',
-      success: 'green', error: 'red', info: 'blue', neutral: 'slate'
+      primary: 'yellow',
+      secondary: 'green',
+      success: 'green',
+      error: 'red',
+      info: 'blue',
+      neutral: 'slate'
     },
     button: {
       slots: { base: 'font-heading uppercase tracking-wide' },

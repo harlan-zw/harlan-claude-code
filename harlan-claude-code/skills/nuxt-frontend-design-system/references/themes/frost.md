@@ -6,6 +6,7 @@ Premium dark glassmorphism. Deep blacks with luminous purple-blue gradients blee
 **Trends**: Glassmorphism + Scrollytelling
 **Mode**: Dark only
 **Fonts**: Satoshi (sans) + JetBrains Mono (code)
+**Icons**: `heroicons` outline — clean 1.5px strokes glow beautifully against dark glass
 
 ---
 

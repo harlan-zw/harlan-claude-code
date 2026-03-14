@@ -93,6 +93,48 @@ See `nuxt-frontend-polish` typography reference for font pairing rules and recom
 
 ---
 
+## Icon System
+
+Icons are part of the design language — pick a collection that matches the theme's weight, geometry, and personality. Nuxt UI uses `@nuxt/icon` (Iconify-based).
+
+### Setup
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  icon: {
+    serverBundle: 'local',
+    collections: ['lucide'] // only bundle what you use
+  }
+})
+```
+
+### Usage
+
+```vue
+<UIcon name="i-lucide-arrow-right" />
+```
+
+### Choosing a Collection
+
+| Collection | Stroke | Feel | Best for |
+|-----------|--------|------|----------|
+| `lucide` | 2px, consistent | Clean, minimal | Zen, minimal, docs |
+| `phosphor` | Variable (thin/light/regular/bold/duotone/fill) | Versatile, playful | Clay, flow, general |
+| `tabler` | 2px, rounded | Friendly, thick | Blueprint, industrial |
+| `solar` | 1.5px, geometric | Modern, sharp | Neon, nebula, dashboards |
+| `heroicons` | 1.5px outline / solid | Apple-like, polished | Premium, frost, SaaS |
+| `mingcute` | 2px, rounded corners | Warm, approachable | Soft themes, consumer apps |
+
+**Rules**:
+- Pick ONE collection per project — mixing icon styles breaks cohesion
+- Match stroke weight to your typography weight (thin fonts → thin icons, bold fonts → bold icons)
+- Dark themes: prefer outline/line icons (they glow well). Light themes: fills and duotone work
+- Use the `duotone` variant from Phosphor or `solid` from Heroicons for filled states (active nav, selected items)
+- **Icons should be monochrome** — use `text-current` or inherit from parent. Only apply color to icons semantically (success/error/warning states, brand accent on hover). Random colorful icons look like a toy dashboard
+
+---
+
 ## Theme-Specific Custom Tokens
 
 Only add `@theme` tokens for things that don't exist in Tailwind/Nuxt UI. Examples of **valid** custom tokens:

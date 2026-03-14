@@ -6,6 +6,7 @@ Tactile paper objects with real weight, texture, and craft-inspired motion.
 **Trends**: Tactile Paper UI + Kinetic Typography
 **Mode**: Light (warm cream)
 **Fonts**: Fraunces (serif display) + IBM Plex Sans (body)
+**Icons**: `phosphor` thin — delicate 1px strokes feel hand-drawn and craft-like
 
 ---
 
@@ -94,11 +95,13 @@ export default defineAppConfig({
       slots: { base: 'rounded-paper font-semibold shadow-paper transition-all duration-300' },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-vermillion text-paper-white letterpress hover:shadow-paper-lg hover:-translate-y-1 active:translate-y-0.5 active:shadow-paper-sm'
         },
         {
-          color: 'primary', variant: 'outline',
+          color: 'primary',
+          variant: 'outline',
           class: 'border-ink-charcoal text-ink-charcoal hover:bg-paper-ivory'
         }
       ]
@@ -106,7 +109,9 @@ export default defineAppConfig({
     card: {
       slots: {
         root: 'rounded-paper bg-paper-white shadow-paper washi',
-        header: 'p-6', body: 'p-6', footer: 'p-6'
+        header: 'p-6',
+        body: 'p-6',
+        footer: 'p-6'
       },
       variants: {
         variant: {

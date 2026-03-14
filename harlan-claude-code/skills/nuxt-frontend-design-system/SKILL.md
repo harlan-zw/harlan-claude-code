@@ -14,9 +14,10 @@ If `$ARGUMENTS` is a theme name, read that theme file directly.
 
 1. **Color palette** — primary, neutral, accent via `app.config.ts`
 2. **Typography** — font selection, registration via Nuxt Fonts, `--font-*` in `@theme`
-3. **Semantic overrides** — `--ui-bg`, `--ui-text`, `--ui-radius`, etc. for light/dark
-4. **Component theming** — global overrides via `app.config.ts` slots/variants
-5. **Extended colors** — registering custom theme colors in `nuxt.config.ts`
+3. **Icon system** — icon collection that matches the theme aesthetic via `@nuxt/icon`
+4. **Semantic overrides** — `--ui-bg`, `--ui-text`, `--ui-radius`, etc. for light/dark
+5. **Component theming** — global overrides via `app.config.ts` slots/variants
+6. **Extended colors** — registering custom theme colors in `nuxt.config.ts`
 
 **Principle**: Use existing Tailwind (`shadow-md`, `rounded-xl`) and Nuxt UI (`bg-muted`, `text-default`) tokens. Only create custom `@theme` tokens for things truly unique to the design (glass effects, mesh gradients, etc.).
 

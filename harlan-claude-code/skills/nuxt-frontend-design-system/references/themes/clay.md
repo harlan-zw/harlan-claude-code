@@ -6,6 +6,7 @@ Plump, playful claymorphism with soft pastels and sculpted shadows. Like touchin
 **Trends**: Claymorphism + Bento Grid
 **Mode**: Light
 **Fonts**: Quicksand (display) + Nunito (body)
+**Icons**: `phosphor` duotone — soft two-tone fills feel playful and rounded like the clay aesthetic
 
 ---
 
@@ -86,7 +87,8 @@ export default defineAppConfig({
       variants: { size: { lg: { base: 'px-6 py-3 text-base' } } },
       compoundVariants: [
         {
-          color: 'primary', variant: 'solid',
+          color: 'primary',
+          variant: 'solid',
           class: 'bg-clay-purple text-gray-800 hover:shadow-clay-lg active:shadow-clay-pressed active:translate-y-0.5'
         }
       ],
@@ -95,7 +97,9 @@ export default defineAppConfig({
     card: {
       slots: {
         root: 'rounded-3xl bg-white shadow-clay',
-        header: 'p-6', body: 'p-6', footer: 'p-6'
+        header: 'p-6',
+        body: 'p-6',
+        footer: 'p-6'
       },
       variants: {
         variant: {
