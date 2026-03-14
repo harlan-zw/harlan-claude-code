@@ -27,6 +27,22 @@ Commit to a BOLD aesthetic direction before coding. Avoid "AI slop" — generic 
 
 Every interface must be: **Distinctive, Memorable, Cohesive, Production-grade, Intentional.**
 
+## After Setup: Emit Design Guidelines
+
+After writing `app.config.ts`, `main.css`, and `nuxt.config.ts`, **always** emit a design guidelines file that captures the intent behind the choices. This file is what pages, polish, and future contributors read to stay cohesive.
+
+1. Read the template: [templates/design-guidelines.md](templates/design-guidelines.md)
+2. Fill in every section based on the decisions you just made — **no placeholders**
+3. Write to `.claude/context/design-guidelines.md` in the target project
+
+The guidelines capture things code alone cannot communicate:
+- **Why** a color was chosen (not just which color)
+- **Component rules** — always/never constraints (e.g. "buttons always solid, never ghost")
+- **Avoid list** — patterns that break the aesthetic
+- **Custom utilities** — non-obvious CSS classes contributors should use instead of reinventing
+
+If a design system already exists and you're modifying it, **update** the existing guidelines file rather than overwriting.
+
 ## Reka UI
 
 For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use [Reka UI](https://reka-ui.com/docs/overview/installation) — unstyled, accessible Vue primitives you can style with Tailwind to match your design system.

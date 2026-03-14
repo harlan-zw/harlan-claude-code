@@ -15,12 +15,15 @@ If `$ARGUMENTS` names a page type or pattern, read only that reference.
 Before building anything, read the project's foundation files so pages use the established tokens:
 
 ```
-Read: app/assets/css/main.css      → @theme tokens, --ui-* overrides, custom utilities
-Read: app.config.ts                → colors, component theme overrides, defaultVariants
-Read: nuxt.config.ts               → fonts, colorMode, ui.theme.colors
+Read: .claude/context/design-guidelines.md  → aesthetic intent, component rules, avoid list, custom utilities
+Read: app/assets/css/main.css               → @theme tokens, --ui-* overrides, custom utilities
+Read: app.config.ts                         → colors, component theme overrides, defaultVariants
+Read: nuxt.config.ts                        → fonts, colorMode, ui.theme.colors
 ```
 
 **If no design system exists**: run `nuxt-frontend-design-system` first.
+
+The design guidelines file captures *why* decisions were made — component rules (always/never constraints), things to avoid, and custom utilities to use. The code files capture the *what*. Read both.
 
 Use the project's semantic tokens (`bg-muted`, `text-default`, `border-default`), fonts (`font-sans`, `font-display`), and component overrides — never hardcode colors, shadows, or radii that bypass the design system.
 
@@ -46,3 +49,5 @@ Verify the page is consistent with the design system:
 - No hardcoded shadows/radii that bypass `app.config.ts` component overrides
 - Fonts use `font-sans` / `font-display` / `font-mono` from `@theme`, not inline font families
 - Interactive elements use Nuxt UI components, not raw HTML
+- No violations of the "Avoid" list from `design-guidelines.md`
+- Custom utilities from `design-guidelines.md` used where applicable (not reinvented)

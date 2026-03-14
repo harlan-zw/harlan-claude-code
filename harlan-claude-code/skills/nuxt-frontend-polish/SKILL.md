@@ -15,12 +15,13 @@ If `$ARGUMENTS` names a specific area, skip to that area's audit + reference.
 Before touching anything, read the project's design system files:
 
 ```
-Read: app/assets/css/main.css      → @theme tokens, --ui-* overrides, custom classes
-Read: app.config.ts                → colors, component theme overrides, defaultVariants
-Read: nuxt.config.ts               → fonts, colorMode, ui.theme.colors
+Read: .claude/context/design-guidelines.md  → aesthetic intent, component rules, avoid list, custom utilities
+Read: app/assets/css/main.css               → @theme tokens, --ui-* overrides, custom classes
+Read: app.config.ts                         → colors, component theme overrides, defaultVariants
+Read: nuxt.config.ts                        → fonts, colorMode, ui.theme.colors
 ```
 
-This tells you what the project considers "correct." Every audit below is against **these files**, not generic best practices.
+The design guidelines file captures the *intent* — why colors were chosen, always/never component rules, patterns to avoid, and custom utilities. The code files capture the *implementation*. Both inform what "correct" means for this project. Every audit below is against **these files**, not generic best practices.
 
 ## Step 1: Audit Foundation Tokens
 
@@ -48,6 +49,8 @@ Scan `.vue` files for violations against the established tokens:
 | Mixed spacing | Random `p-3`, `p-5`, `p-8` on same-level elements | → consistent rhythm |
 | Inline styles | `style="background: #0a0a0a"` | → Tailwind class or semantic token |
 | Raw HTML elements | `button`, `input`, `table` | → Nuxt UI components |
+| Guideline violations | Patterns listed in design-guidelines.md "Avoid" section | → follow documented constraints |
+| Missing custom utilities | Reinventing a pattern that exists in design-guidelines.md | → use the documented utility class |
 
 ## Step 3: Elevate
 
