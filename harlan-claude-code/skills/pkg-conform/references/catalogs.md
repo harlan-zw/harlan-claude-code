@@ -15,7 +15,9 @@ catalog:
   bumpp: ^10.4.1
   eslint: ^9.39.2
   eslint-plugin-harlanzw: ^0.2.0
+  lint-staged: ^16.3.2
   obuild: ^0.4.24
+  simple-git-hooks: ^2.13.1
   typescript: ^6.0.0
   vitest: ^4.0.18
 
@@ -40,7 +42,9 @@ catalog:
   bumpp: ^10.4.1
   eslint: ^9.39.2
   eslint-plugin-harlanzw: ^0.2.0
+  lint-staged: ^16.3.2
   obuild: ^0.4.24
+  simple-git-hooks: ^2.13.1
   typescript: ^6.0.0
   vitest: ^4.0.18
   # add runtime deps shared across packages here

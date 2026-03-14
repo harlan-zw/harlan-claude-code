@@ -139,56 +139,57 @@ See `references/` for detailed templates:
 5. [ ] `.gitignore` - standard patterns
 6. [ ] ESLint config - antfu + `eslint-plugin-harlanzw`. Package: `eslint.config.mjs`; Site: `eslint.config.js`
 7. [ ] `tsconfig.json` - Package: `module: preserve`, `moduleDetection: force`; Site: `extends .nuxt/tsconfig.json`
+8. [ ] Git hooks - `simple-git-hooks` + `lint-staged` in devDeps, `postinstall` runs `simple-git-hooks`, `pre-commit` runs `lint-staged`
 
 ### Package-only (when in `*/pkg/*`)
 
-8. [ ] `vitest.config.ts` - coverage config, projects if unit + e2e
-9. [ ] `tsconfig.json` - add `types: ["node", "vitest/globals"]`
-10. [ ] `build.config.ts` - obuild with explicit entry points
-11. [ ] Package exports - ESM-only (`.d.mts` + `.mjs`), no CJS
-12. [ ] Package scripts - `obuild`, `dev:prepare`, `test:attw`, `lint:fix`, `prepack`, `release`
-13. [ ] `.github/workflows/release.yml` - action versions, `bumpp --output=CHANGELOG.md`
+9. [ ] `vitest.config.ts` - coverage config, projects if unit + e2e
+10. [ ] `tsconfig.json` - add `types: ["node", "vitest/globals"]`
+11. [ ] `build.config.ts` - obuild with explicit entry points
+12. [ ] Package exports - ESM-only (`.d.mts` + `.mjs`), no CJS
+13. [ ] Package scripts - `obuild`, `dev:prepare`, `test:attw`, `lint:fix`, `prepack`, `release`
+14. [ ] `.github/workflows/release.yml` - action versions, `bumpp --output=CHANGELOG.md`
 
 ### Site-only (when in `*/sites/*` or `*/site/*`)
 
-8. [ ] `package.json` - `private: true`, `engines.node` set to latest stable even-numbered Node (e.g. `>=22.0.0`, `>=24.0.0`), no `exports`/`main`/`types`/`files`
-9. [ ] Scripts - `dev` (nuxi dev), `build` (nuxi prepare && nuxi build), `lint`, `lint:fix`, `typecheck` (nuxt typecheck)
-10. [ ] `pnpm.overrides` - `vite` set to `^8.0.0`
-11. [ ] `nuxt.config.ts` - `future.compatibilityVersion: 5`, `compatibilityDate`, standard module stack
-12. [ ] `tsconfig.json` - just `{ "extends": "./.nuxt/tsconfig.json" }`
-13. [ ] `eslint.config.js` - antfu config with `node/prefer-global/process` and `node/prefer-global/buffer` off
-14. [ ] `.npmrc` - `shamefully-hoist=true`
-15. [ ] `.gitignore` - includes `.nuxt/`, `.output/`, `.data/`, `.wrangler/`, `wrangler.toml`
-16. [ ] `.editorconfig` - 2-space indent, LF, UTF-8, trim trailing whitespace (except `.md`)
-17. [ ] `content.config.ts` - Zod schemas for content collections (if using `@nuxt/content`)
-18. [ ] `app/` directory - Nuxt 4 structure (`app.vue`, `pages/`, `layouts/`, `components/`, `composables/`)
+9. [ ] `package.json` - `private: true`, `engines.node` set to latest stable even-numbered Node (e.g. `>=22.0.0`, `>=24.0.0`), no `exports`/`main`/`types`/`files`
+10. [ ] Scripts - `dev` (nuxi dev), `build` (nuxi prepare && nuxi build), `postinstall` (nuxt prepare && simple-git-hooks), `lint`, `lint:fix`, `typecheck` (nuxt typecheck)
+11. [ ] `pnpm.overrides` - `vite` set to `^8.0.0`
+12. [ ] `nuxt.config.ts` - `future.compatibilityVersion: 5`, `compatibilityDate`, standard module stack
+13. [ ] `tsconfig.json` - just `{ "extends": "./.nuxt/tsconfig.json" }`
+14. [ ] `eslint.config.js` - antfu config with `node/prefer-global/process` and `node/prefer-global/buffer` off
+15. [ ] `.npmrc` - `shamefully-hoist=true`
+16. [ ] `.gitignore` - includes `.nuxt/`, `.output/`, `.data/`, `.wrangler/`, `wrangler.toml`
+17. [ ] `.editorconfig` - 2-space indent, LF, UTF-8, trim trailing whitespace (except `.md`)
+18. [ ] `content.config.ts` - Zod schemas for content collections (if using `@nuxt/content`)
+19. [ ] `app/` directory - Nuxt 4 structure (`app.vue`, `pages/`, `layouts/`, `components/`, `composables/`)
 
 ### Additional Nuxt Module Checklist
 
 When `@nuxt/module-builder` detected, also check (extends Package checklist):
 
 **Structure:**
-14. [ ] `src/module.ts` - main module entry exists
-15. [ ] `src/runtime/app/` - client/SSR code directory
-16. [ ] `src/runtime/server/` - Nitro server code directory
-17. [ ] `src/types.ts` - module options types
-18. [ ] `playground/` - nuxt.config.ts, app.vue, pages/
-19. [ ] `test/fixtures/basic/` - nuxt.config.ts
+15. [ ] `src/module.ts` - main module entry exists
+16. [ ] `src/runtime/app/` - client/SSR code directory
+17. [ ] `src/runtime/server/` - Nitro server code directory
+18. [ ] `src/types.ts` - module options types
+19. [ ] `playground/` - nuxt.config.ts, app.vue, pages/
+20. [ ] `test/fixtures/basic/` - nuxt.config.ts
 
 **Config:**
-20. [ ] `pnpm-workspace.yaml` - add `nuxt:` catalog
-21. [ ] `package.json` - nuxt module exports, peerDependencies
-22. [ ] `tsconfig.json` - extends `.nuxt/tsconfig.json`
-23. [ ] `vitest.config.ts` - use `defineVitestProject` for e2e
-24. [ ] `build.config.ts` - nuxt externals including `#imports`
-25. [ ] `eslint.config.mjs` - ignore fixtures/playground
-26. [ ] `.gitignore` - nuxt build dirs
+21. [ ] `pnpm-workspace.yaml` - add `nuxt:` catalog
+22. [ ] `package.json` - nuxt module exports, peerDependencies
+23. [ ] `tsconfig.json` - extends `.nuxt/tsconfig.json`
+24. [ ] `vitest.config.ts` - use `defineVitestProject` for e2e
+25. [ ] `build.config.ts` - nuxt externals including `#imports`
+26. [ ] `eslint.config.mjs` - ignore fixtures/playground
+27. [ ] `.gitignore` - nuxt build dirs
 
 **Scripts:**
-27. [ ] `typecheck` - uses `nuxt typecheck` (not `tsc`)
-28. [ ] `dev:prepare` - prepares module + playground
-29. [ ] `prepare:fixtures` - prepares test fixtures
-30. [ ] `.github/workflows/test.yml` - includes prepare step
+28. [ ] `typecheck` - uses `nuxt typecheck` (not `tsc`)
+29. [ ] `dev:prepare` - prepares module + playground
+30. [ ] `prepare:fixtures` - prepares test fixtures
+31. [ ] `.github/workflows/test.yml` - includes prepare step
 
 ## Sync Process (Parallelized)
 

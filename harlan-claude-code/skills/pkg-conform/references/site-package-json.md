@@ -23,11 +23,23 @@
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi prepare && nuxi build",
+    "postinstall": "nuxt prepare && simple-git-hooks",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "test": "vitest",
     "test:run": "vitest run"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,ts,mjs,cjs,vue}": [
+      "pnpm exec eslint --fix"
+    ],
+    "*.{js,ts,mjs,cjs,vue,json,yml,md,html,css}": [
+      "pnpm exec prettier --write"
+    ]
   },
   "pnpm": {
     "overrides": {
@@ -46,8 +58,10 @@
     "@vueuse/nuxt": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-harlanzw": "catalog:",
+    "lint-staged": "catalog:",
     "motion-v": "catalog:",
     "nuxt": "catalog:",
+    "simple-git-hooks": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -33,6 +33,63 @@ export default defineNuxtConfig({
 - `compatibilityDate` set to a recent date
 - Standard module stack: `@nuxtjs/seo`, `@nuxt/ui`, `@nuxt/content`, `@nuxt/fonts`, `@nuxt/image`, `@nuxt/scripts`, `@vueuse/nuxt`, `motion-v`
 - Nitro preset matches deploy target (cloudflare-durable, vercel, etc.)
+- Enable `experimental.typedPages: true` for type-safe routing
+
+### Route rules & caching
+
+Use helper functions for DRY ISR/caching config:
+
+```ts
+// Common pattern for ISR routes
+const routeRules = {
+  '/api/badge/**': { cache: { maxAge: 60 } },
+  '/api/downloads/**': { cache: { maxAge: 60 } },
+  '/_content/**': { cache: { maxAge: 86400 } }, // 1 day
+  '/icons/**': { cache: { maxAge: 604800 } }, // 7 days
+}
+```
+
+## vitest.config.ts
+
+Multi-project config with unit + Nuxt environment:
+
+```ts
+import { fileURLToPath } from 'node:url'
+import { defineVitestProject } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url))
+
+export default defineConfig({
+  test: {
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/unit/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      await defineVitestProject({
+        test: {
+          name: 'nuxt',
+          include: ['test/nuxt/**/*.test.ts'],
+          environment: 'nuxt',
+          environmentOptions: {
+            nuxt: {
+              rootDir,
+            },
+          },
+        },
+      }),
+    ],
+    coverage: {
+      enabled: true,
+      provider: 'v8',
+    },
+  },
+})
+```
 
 ## tsconfig.json
 

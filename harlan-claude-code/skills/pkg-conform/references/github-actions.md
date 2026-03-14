@@ -130,6 +130,70 @@ jobs:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 ```
 
+## .github/workflows/ci.yml (Site)
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --filter . --ignore-scripts
+      - run: pnpm lint
+
+  typecheck:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm build
+      - run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install
+      - run: pnpm test:run
+```
+
+### Key site CI patterns
+
+- **Concurrency control**: `cancel-in-progress: true` avoids wasting resources on superseded runs
+- **ARM runners**: `ubuntu-24.04-arm` is more cost-effective than `ubuntu-latest`
+- **Parallel jobs**: Separate lint/typecheck/test jobs run concurrently
+- **Selective install**: Lint-only jobs use `pnpm install --filter . --ignore-scripts` to skip expensive hooks
+
 ## Action Versions (latest)
 
 - `actions/checkout@v6`
