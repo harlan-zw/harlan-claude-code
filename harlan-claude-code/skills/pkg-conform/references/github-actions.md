@@ -1,9 +1,9 @@
 # GitHub Actions
 
-## .github/workflows/test.yml
+## .github/workflows/ci.yml (Package)
 
 ```yaml
-name: Test
+name: CI
 
 on:
   push:
@@ -11,35 +11,61 @@ on:
       - '**/README.md'
       - 'docs/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  lint:
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
-
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
           cache: pnpm
-
       - run: pnpm i
+      - run: pnpm lint
 
-      - name: Lint
-        run: pnpm lint
+  typecheck:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm i
+      - run: pnpm typecheck
 
-      - name: Typecheck
-        run: pnpm typecheck
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm i
+      - run: pnpm build
 
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test --run
+  test:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm i
+      - run: pnpm test --run
 ```
 
 ## .github/workflows/release.yml
@@ -60,7 +86,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
         with:
@@ -103,7 +129,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v6
         with:
@@ -187,12 +213,23 @@ jobs:
       - run: pnpm test:run
 ```
 
-### Key site CI patterns
+## CI Rules
 
-- **Concurrency control**: `cancel-in-progress: true` avoids wasting resources on superseded runs
-- **ARM runners**: `ubuntu-24.04-arm` is more cost-effective than `ubuntu-latest`
-- **Parallel jobs**: Separate lint/typecheck/test jobs run concurrently
-- **Selective install**: Lint-only jobs use `pnpm install --filter . --ignore-scripts` to skip expensive hooks
+### Runner
+
+- Always use `ubuntu-24.04-arm` — never `ubuntu-latest`
+- 4 vCPUs on public repos (vs 2 on x64), ~37% cheaper on private repos
+- Most Node.js native deps ship `linux-arm64-gnu` binaries; WASM deps are platform-independent
+
+### Job structure
+
+- **Parallel jobs**: Split lint, typecheck, build, test into separate jobs — wall-clock time = slowest job, not sum
+- **Concurrency control**: Always add `concurrency` with `cancel-in-progress: true` to avoid wasting resources on superseded runs
+- **Selective install**: Lint-only jobs in monorepos/sites can use `pnpm install --filter . --ignore-scripts`
+
+### Caching
+
+- Always set `cache: pnpm` on `actions/setup-node` — caches pnpm store across runs (~30-60s savings on warm cache)
 
 ## Action Versions (latest)
 
