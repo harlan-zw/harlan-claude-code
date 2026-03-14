@@ -25,6 +25,19 @@ Check for `package.json` in cwd to determine new vs existing.
 Check for `packages:` in `pnpm-workspace.yaml` to detect monorepo vs single repo.
 Check for `@nuxt/module-builder` in devDependencies to detect Nuxt module → apply Nuxt-specific patterns.
 
+### Project Type Detection
+
+Determine project type from the **absolute path** of the working directory:
+
+| Path pattern | Type | Description |
+|-------------|------|-------------|
+| `*/pkg/*` | **Package** | Published library/module — needs exports, build, release |
+| `*/sites/*` or `*/site/*` | **Site** | Nuxt app — private, no exports, deploy not publish |
+
+If path doesn't match either pattern, fall back to heuristics: `private: true` + `nuxt` in deps → Site, otherwise Package.
+
+**IMPORTANT:** The project type determines which rules apply. Do NOT apply Package-only rules (exports, obuild, test:attw, prepack, release) to Sites, and do NOT apply Site-only rules (nuxi scripts, generate, preview) to Packages.
+
 ---
 
 ## UnJS Conventions
@@ -50,92 +63,17 @@ Always prefer UnJS ecosystem packages over Node.js builtins:
 
 ## Package.json
 
-### Single repo
+### Package (single repo / monorepo)
 
-```json
-{
-  "name": "my-package",
-  "type": "module",
-  "version": "0.0.0",
-  "packageManager": "pnpm@10.28.2",
-  "description": "",
-  "author": {
-    "name": "Harlan Wilton",
-    "email": "harlan@harlanzw.com",
-    "url": "https://harlanzw.com/"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/harlan-zw/my-package"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    }
-  },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "files": ["dist"],
-  "scripts": {
-    "build": "obuild",
-    "dev:prepare": "obuild --stub",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:attw": "attw --pack",
-    "prepack": "pnpm run build",
-    "release": "pnpm build && bumpp --output=CHANGELOG.md"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@arethetypeswrong/cli": "catalog:",
-    "@types/node": "catalog:",
-    "obuild": "catalog:",
-    "bumpp": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-harlanzw": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  }
-}
-```
+See `references/pkg-package-json.md` for single repo and monorepo root templates.
 
-### Monorepo root
+### Site (Nuxt app)
 
-```json
-{
-  "type": "module",
-  "private": true,
-  "packageManager": "pnpm@10.28.2",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/harlan-zw/my-monorepo"
-  },
-  "scripts": {
-    "build": "pnpm run -r build",
-    "lint": "eslint .",
-    "typecheck": "pnpm run -r typecheck",
-    "test": "vitest",
-    "test:attw": "pnpm -r --parallel --filter=./packages/** run test:attw",
-    "release": "pnpm build && bumpp --output=CHANGELOG.md packages/*/package.json"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@arethetypeswrong/cli": "catalog:",
-    "@types/node": "catalog:",
-    "bumpp": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-harlanzw": "catalog:",
-    "obuild": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  }
-}
-```
+See `references/site-package-json.md` for template, optional scripts, and rules.
+
+See `references/site-structure.md` for Nuxt 4 directory layout.
+
+See `references/site-configs.md` for nuxt.config.ts, tsconfig, eslint, .npmrc, .gitignore templates.
 
 ---
 
@@ -163,39 +101,24 @@ test/
 | Server runtime | `src/runtime/server/` | H3, Nitro | `addServerHandler()`, `addServerPlugin()` |
 | Shared | `src/runtime/shared/` | Pure JS only | import via alias |
 
-### Quick Reference
+See `references/nuxt-module-template.md` for full module.ts template with registration examples.
 
-```ts
-// Build-time (src/module.ts)
-import { addImports, addPlugin, addServerHandler, addServerImportsDir, addServerPlugin, createResolver, defineNuxtModule } from '@nuxt/kit'
-
-// App composable (auto-imported in Vue)
-addImports({ name: 'useMyModule', from: resolve('./runtime/app/composables/useMyModule') })
-
-// App plugin
-addPlugin({ src: resolve('./runtime/app/plugins/init'), mode: 'all' })
-
-// Server composables (auto-imported in Nitro)
-addServerImportsDir(resolve('./runtime/server/composables'))
-
-// Nitro plugin (runs on server startup)
-addServerPlugin(resolve('./runtime/server/plugins/init'))
-
-// API route
-addServerHandler({ route: '/api/my-module', handler: resolve('./runtime/server/routes/api') })
-
-// H3 middleware
-addServerHandler({ middleware: true, handler: resolve('./runtime/server/middleware/context') })
-```
+See `references/nuxt-module-structure.md` for directory layout and runtime rules.
 
 ---
 
 ## References
 
 See `references/` for detailed templates:
+- `references/pkg-package-json.md` - single repo and monorepo package.json templates
 - `references/catalogs.md` - pnpm workspace catalogs
-- `references/configs.md` - config file templates (eslint, vitest, tsconfig, obuild)
+- `references/configs.md` - package config file templates (eslint, vitest, tsconfig, obuild)
 - `references/github-actions.md` - CI/CD workflows
+
+**Site references** (when project type is Site):
+- `references/site-package-json.md` - package.json template, rules, optional scripts
+- `references/site-structure.md` - Nuxt 4 directory layout and conventions
+- `references/site-configs.md` - nuxt.config.ts, tsconfig, eslint, npmrc, editorconfig, gitignore
 
 **Nuxt module references** (when `@nuxt/module-builder` detected):
 - `references/nuxt-module-structure.md` - directory layout and runtime rules
@@ -207,49 +130,70 @@ See `references/` for detailed templates:
 
 ## Sync Checklist
 
-When syncing existing project:
+### Shared (all project types)
 
 1. [ ] `pnpm-workspace.yaml` - default catalog, `ignoredBuiltDependencies`, `shellEmulator`
 2. [ ] `package.json` - `type: module`, migrate deps to `catalog:`, add `packageManager`
 3. [ ] `.github/workflows/test.yml` - action versions (checkout@v6, setup-node@v6)
-4. [ ] `.github/workflows/release.yml` - action versions, `bumpp --output=CHANGELOG.md`
-5. [ ] `.editorconfig` - standard config
-6. [ ] `.gitignore` - standard patterns
-7. [ ] `eslint.config.mjs` - antfu config with `eslint-plugin-harlanzw` configs and standard rule overrides
+4. [ ] `.editorconfig` - standard config
+5. [ ] `.gitignore` - standard patterns
+6. [ ] ESLint config - antfu + `eslint-plugin-harlanzw`. Package: `eslint.config.mjs`; Site: `eslint.config.js`
+7. [ ] `tsconfig.json` - Package: `module: preserve`, `moduleDetection: force`; Site: `extends .nuxt/tsconfig.json`
+
+### Package-only (when in `*/pkg/*`)
+
 8. [ ] `vitest.config.ts` - coverage config, projects if unit + e2e
-9. [ ] `tsconfig.json` - `module: preserve`, `moduleDetection: force`, `types: ["node", "vitest/globals"]`
+9. [ ] `tsconfig.json` - add `types: ["node", "vitest/globals"]`
 10. [ ] `build.config.ts` - obuild with explicit entry points
 11. [ ] Package exports - ESM-only (`.d.mts` + `.mjs`), no CJS
-12. [ ] Package scripts - `obuild`, `dev:prepare`, `test:attw`, `lint:fix`
+12. [ ] Package scripts - `obuild`, `dev:prepare`, `test:attw`, `lint:fix`, `prepack`, `release`
+13. [ ] `.github/workflows/release.yml` - action versions, `bumpp --output=CHANGELOG.md`
+
+### Site-only (when in `*/sites/*` or `*/site/*`)
+
+8. [ ] `package.json` - `private: true`, `engines.node` set to latest stable even-numbered Node (e.g. `>=22.0.0`, `>=24.0.0`), no `exports`/`main`/`types`/`files`
+9. [ ] Scripts - `dev` (nuxi dev), `build` (nuxi prepare && nuxi build), `lint`, `lint:fix`, `typecheck` (nuxt typecheck)
+10. [ ] `pnpm.overrides` - `vite` set to `^8.0.0`
+11. [ ] `nuxt.config.ts` - `future.compatibilityVersion: 5`, `compatibilityDate`, standard module stack
+12. [ ] `tsconfig.json` - just `{ "extends": "./.nuxt/tsconfig.json" }`
+13. [ ] `eslint.config.js` - antfu config with `node/prefer-global/process` and `node/prefer-global/buffer` off
+14. [ ] `.npmrc` - `shamefully-hoist=true`
+15. [ ] `.gitignore` - includes `.nuxt/`, `.output/`, `.data/`, `.wrangler/`, `wrangler.toml`
+16. [ ] `.editorconfig` - 2-space indent, LF, UTF-8, trim trailing whitespace (except `.md`)
+17. [ ] `content.config.ts` - Zod schemas for content collections (if using `@nuxt/content`)
+18. [ ] `app/` directory - Nuxt 4 structure (`app.vue`, `pages/`, `layouts/`, `components/`, `composables/`)
 
 ### Additional Nuxt Module Checklist
 
-When `@nuxt/module-builder` detected, also check:
+When `@nuxt/module-builder` detected, also check (extends Package checklist):
 
 **Structure:**
-13. [ ] `src/module.ts` - main module entry exists
-14. [ ] `src/runtime/app/` - client/SSR code directory
-15. [ ] `src/runtime/server/` - Nitro server code directory
-16. [ ] `src/types.ts` - module options types
-17. [ ] `playground/` - nuxt.config.ts, app.vue, pages/
-18. [ ] `test/fixtures/basic/` - nuxt.config.ts
+14. [ ] `src/module.ts` - main module entry exists
+15. [ ] `src/runtime/app/` - client/SSR code directory
+16. [ ] `src/runtime/server/` - Nitro server code directory
+17. [ ] `src/types.ts` - module options types
+18. [ ] `playground/` - nuxt.config.ts, app.vue, pages/
+19. [ ] `test/fixtures/basic/` - nuxt.config.ts
 
 **Config:**
-19. [ ] `pnpm-workspace.yaml` - add `nuxt:` catalog
-20. [ ] `package.json` - nuxt module exports, peerDependencies
-21. [ ] `tsconfig.json` - extends `.nuxt/tsconfig.json`
-22. [ ] `vitest.config.ts` - use `defineVitestProject` for e2e
-23. [ ] `build.config.ts` - nuxt externals including `#imports`
-24. [ ] `eslint.config.mjs` - ignore fixtures/playground
-25. [ ] `.gitignore` - nuxt build dirs
+20. [ ] `pnpm-workspace.yaml` - add `nuxt:` catalog
+21. [ ] `package.json` - nuxt module exports, peerDependencies
+22. [ ] `tsconfig.json` - extends `.nuxt/tsconfig.json`
+23. [ ] `vitest.config.ts` - use `defineVitestProject` for e2e
+24. [ ] `build.config.ts` - nuxt externals including `#imports`
+25. [ ] `eslint.config.mjs` - ignore fixtures/playground
+26. [ ] `.gitignore` - nuxt build dirs
 
 **Scripts:**
-26. [ ] `typecheck` - uses `nuxt typecheck` (not `tsc`)
-27. [ ] `dev:prepare` - prepares module + playground
-28. [ ] `prepare:fixtures` - prepares test fixtures
-29. [ ] `.github/workflows/test.yml` - includes prepare step
+27. [ ] `typecheck` - uses `nuxt typecheck` (not `tsc`)
+28. [ ] `dev:prepare` - prepares module + playground
+29. [ ] `prepare:fixtures` - prepares test fixtures
+30. [ ] `.github/workflows/test.yml` - includes prepare step
 
 ## Sync Process (Parallelized)
+
+### Phase 0: Detect Project Type
+Determine from cwd path whether this is a **Package** (`*/pkg/*`) or **Site** (`*/sites/*`, `*/site/*`).
 
 ### Phase 1: Parallel Config Review
 Spawn these IN PARALLEL (single message, multiple tool calls):
@@ -258,10 +202,20 @@ Spawn these IN PARALLEL (single message, multiple tool calls):
 Task(Explore): "Read and compare: pnpm-workspace.yaml, package.json deps. Report differences from standards."
 Task(Explore): "Read and compare: .github/workflows/*.yml. Check action versions against v6 standards."
 Task(Explore): "Read and compare: eslint.config.js, vitest.config.ts, tsconfig.json. Report missing options."
-Task(Explore): "Read and compare: build.config.ts, .editorconfig, .gitignore. Report missing settings."
+Task(Explore): "Read and compare: .editorconfig, .gitignore. Report missing settings."
 ```
 
-**If Nuxt module**, add in parallel:
+**If Package**, add in parallel:
+```
+Task(Explore): "Read and compare: build.config.ts, package exports, release scripts. Report missing settings."
+```
+
+**If Site**, add in parallel:
+```
+Task(Explore): "Read and compare: nuxt.config.ts, app structure (pages/, layouts/, components/). Report missing settings."
+```
+
+**If Nuxt module** (Package + `@nuxt/module-builder`), add in parallel:
 ```
 Task(Explore): "Review src/module.ts: check registration methods, resolver usage, module options. Report issues."
 Task(Explore): "Review src/runtime/app/: check composables export, plugins mode, imports registration."
@@ -270,21 +224,31 @@ Task(Explore): "Review playground/ and test/fixtures/: check nuxt.config, prepar
 ```
 
 ### Phase 2: Apply Changes
-Based on parallel review results, apply necessary updates.
+Based on parallel review results, apply necessary updates using the appropriate checklist (Package or Site).
 
 ### Phase 3: Parallel Verification
-Run verification commands IN PARALLEL:
 
+**Package** verification:
 ```
 Bash(background): pnpm install
 Bash(background): pnpm lint
 Bash(background): pnpm typecheck
 ```
-
 Then sequentially (depends on install):
 ```
 Bash: pnpm build
 Bash: pnpm test --run
+```
+
+**Site** verification:
+```
+Bash(background): pnpm install
+Bash(background): pnpm lint
+Bash(background): pnpm typecheck  # Uses nuxt typecheck
+```
+Then sequentially:
+```
+Bash: pnpm build  # nuxi build
 ```
 
 **Nuxt module** verification:
