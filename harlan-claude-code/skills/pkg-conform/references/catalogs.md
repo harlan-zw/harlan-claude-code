@@ -16,7 +16,7 @@ catalog:
   eslint: ^9.39.2
   eslint-plugin-harlanzw: ^0.2.0
   obuild: ^0.4.24
-  typescript: ^5.9.3
+  typescript: ^6.0.0
   vitest: ^4.0.18
 
 ignoredBuiltDependencies:
@@ -41,7 +41,7 @@ catalog:
   eslint: ^9.39.2
   eslint-plugin-harlanzw: ^0.2.0
   obuild: ^0.4.24
-  typescript: ^5.9.3
+  typescript: ^6.0.0
   vitest: ^4.0.18
   # add runtime deps shared across packages here
 

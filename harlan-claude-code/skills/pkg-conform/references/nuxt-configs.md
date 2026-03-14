@@ -18,7 +18,7 @@ catalogs:
 
   # Vue build
   dev-build:
-    typescript: ^5.9.3
+    typescript: ^6.0.0
     unbuild: ^3.6.1
     vue-tsc: ^3.2.2
     bumpp: ^10.3.2
