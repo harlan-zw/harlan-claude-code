@@ -63,6 +63,10 @@ Only after foundation and consistency are solid. Read references based on what t
 
 Read ALL references when asked to "make it better" or "polish everything".
 
+## Reka UI
+
+For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use [Reka UI](https://reka-ui.com/docs/overview/installation) — unstyled, accessible Vue primitives you can style with Tailwind to match your design system.
+
 ## Rules
 
 - **Keep what works** — don't change what's already distinctive

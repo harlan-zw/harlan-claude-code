@@ -26,6 +26,10 @@ Commit to a BOLD aesthetic direction before coding. Avoid "AI slop" — generic 
 
 Every interface must be: **Distinctive, Memorable, Cohesive, Production-grade, Intentional.**
 
+## Reka UI
+
+For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use [Reka UI](https://reka-ui.com/docs/overview/installation) — unstyled, accessible Vue primitives you can style with Tailwind to match your design system.
+
 ## Gotchas
 
 - **Banned fonts**: NEVER Inter, Roboto, Arial, system-ui. Avoid Space Grotesk, Geist, DM Sans. These are overused defaults that scream "AI generated."

@@ -35,6 +35,10 @@ Use the project's semantic tokens (`bg-muted`, `text-default`, `border-default`)
 | Navigation | [components/navigation.md](references/components/navigation.md) — Header, sidebar, breadcrumbs, command palette, tabs |
 | Feedback / overlays | [components/feedback.md](references/components/feedback.md) — Toasts, modals, confirmations, dropdowns, UEmpty |
 
+## Reka UI
+
+For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use [Reka UI](https://reka-ui.com/docs/overview/installation) — unstyled, accessible Vue primitives you can style with Tailwind to match your design system.
+
 ## After Building
 
 Verify the page is consistent with the design system:
