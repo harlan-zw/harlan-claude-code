@@ -125,19 +125,34 @@ EOF
 
 Output the PR URL when done.
 
-## Step 6: Monitor CI
+## Step 6: Monitor CI & Review Comments
 
-After creating or updating a PR, spawn a **background agent** to monitor CI checks:
+After creating or updating a PR, enter a **fix loop** — keep watching until CI is green and all review comments are addressed.
 
-```
-Agent (background): "Monitor CI checks for PR #NUMBER in OWNER/REPO.
-Poll with: gh pr checks NUMBER --watch --fail-fast
-If checks fail, report which check failed and the error.
-If all checks pass, report success.
-Use --interval 30 for polling."
-```
+### Loop
 
-This gives the user CI feedback without blocking the conversation.
+1. **Wait for CI** — poll checks until they resolve:
+   ```bash
+   gh pr checks NUMBER --watch --fail-fast --interval 30
+   ```
+
+2. **Fetch review comments** — check for CodeRabbit, CodeQL, or any reviewer feedback:
+   ```bash
+   gh pr view NUMBER --json reviews,comments --jq '.reviews[].body, .comments[].body'
+   gh api repos/OWNER/REPO/pulls/NUMBER/comments --jq '.[].body'
+   ```
+
+3. **Evaluate**:
+   - **CI green + no unresolved comments** → done, report success, exit loop
+   - **CI failed** → read the failing check logs (`gh run view RUN_ID --log-failed`), fix the code, commit, push, go to 1
+   - **Review comments exist** (CodeRabbit suggestions, CodeQL security alerts, human reviews) → address each comment, commit fixes, push, go to 1
+
+### Guidelines
+
+- Fix issues in **new commits** (don't amend) so reviewers can see incremental fixes.
+- After each push, restart from step 1 of the loop.
+- If a review comment is a question or non-actionable, reply to it via `gh api` and move on — don't block the loop.
+- If stuck after 3 failed attempts on the same issue, stop the loop and ask the user for guidance.
 
 ## Step 7: Cleanup (after merge or user says "finish")
 
