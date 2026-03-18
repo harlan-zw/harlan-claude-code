@@ -15,8 +15,8 @@ git branch --show-current
 **If on `main`** → isolate work into a new branch via `wt` (git worktree manager).
 
 `wt` creates parallel worktrees so you can work on branches without touching the main checkout. Key commands:
-- `wt switch --create <branch>` — create new branch + worktree from current HEAD (changes shell cwd)
-- `wt switch <branch>` — switch into an existing worktree (changes shell cwd)
+- `wt switch --create BRANCH` — create new branch + worktree from current HEAD (changes shell cwd)
+- `wt switch BRANCH` — switch into an existing worktree (changes shell cwd)
 - `wt switch main` — switch back to main worktree
 
 Steps:
@@ -26,7 +26,7 @@ Steps:
    ```bash
    git diff > /tmp/pr-changes.patch
    git diff --cached > /tmp/pr-staged.patch
-   wt switch --create <branch-name>
+   wt switch --create BRANCH_NAME
    git apply /tmp/pr-changes.patch 2>/dev/null
    git apply /tmp/pr-staged.patch 2>/dev/null
    ```
@@ -69,8 +69,8 @@ From the last 20 open issues, match titles against the branch name and commit me
 ```markdown
 ### 🔗 Linked issue
 
-Resolves #<number>
-<!-- or "Related to #<number>" if not a full fix -->
+Resolves #NUMBER
+<!-- or "Related to #NUMBER" if not a full fix -->
 
 ### ❓ Type of change
 
@@ -109,16 +109,16 @@ git push -u origin HEAD
 
 **If PR exists** → update it:
 ```bash
-gh pr edit <number> --title "<title>" --body "$(cat <<'EOF'
-<body>
+gh pr edit NUMBER --title "TITLE" --body "$(cat <<'EOF'
+BODY
 EOF
 )"
 ```
 
 **If no PR** → create it:
 ```bash
-gh pr create --title "<title>" --body "$(cat <<'EOF'
-<body>
+gh pr create --title "TITLE" --body "$(cat <<'EOF'
+BODY
 EOF
 )"
 ```
@@ -130,8 +130,8 @@ Output the PR URL when done.
 After creating or updating a PR, spawn a **background agent** to monitor CI checks:
 
 ```
-Agent (background): "Monitor CI checks for PR #<number> in <owner>/<repo>.
-Poll with: gh pr checks <number> --watch --fail-fast
+Agent (background): "Monitor CI checks for PR #NUMBER in OWNER/REPO.
+Poll with: gh pr checks NUMBER --watch --fail-fast
 If checks fail, report which check failed and the error.
 If all checks pass, report success.
 Use --interval 30 for polling."

@@ -35,6 +35,28 @@ export default defineAppConfig({
 
 ---
 
+## Color Science: OKLCH
+
+Use OKLCH for custom color values — it's perceptually uniform (equal lightness steps look equal, unlike HSL). Reduce chroma as you approach white/black.
+
+```css
+/* OKLCH: lightness (0-100%), chroma (0-0.4+), hue (0-360) */
+--color-accent: oklch(60% 0.15 250);
+--color-accent-light: oklch(85% 0.08 250);  /* Less chroma near white */
+```
+
+### Tinted Neutrals
+
+Never use pure gray — add a tiny hint of your brand hue (chroma 0.01) to all neutrals. Creates subconscious cohesion. Never use pure black (`#000`) for large areas.
+
+```css
+/* Warm neutrals */
+--neutral-100: oklch(95% 0.01 60);
+--neutral-900: oklch(15% 0.01 60);
+```
+
+---
+
 ## Semantic Token Overrides
 
 Override Nuxt UI's `--ui-*` variables in `app/assets/css/main.css` to define your visual identity:
@@ -55,10 +77,19 @@ Override Nuxt UI's `--ui-*` variables in `app/assets/css/main.css` to define you
   --ui-bg: #0a0a0a;
   --ui-text: rgba(255, 255, 255, 0.9);
   --ui-text-muted: rgba(255, 255, 255, 0.6);
+  /* Reduce body font weight in dark mode — light-on-dark text appears heavier */
 }
 ```
 
 These are the levers. Every Nuxt UI component reads from them — change here, change everywhere.
+
+### Dark Mode Is Not Inverted Light Mode
+
+| Light Mode | Dark Mode |
+|------------|-----------|
+| Shadows for depth | Lighter surfaces for depth (no shadows) |
+| Vibrant accents | Desaturate accents slightly |
+| White backgrounds | Never pure black — use dark gray (oklch 12-18%) |
 
 ---
 
@@ -89,7 +120,21 @@ Override Tailwind's font family tokens:
 
 `--font-display` is the one custom addition — Tailwind doesn't have it by default, and it's useful for hero/headline fonts.
 
-See `nuxt-frontend-polish` typography reference for font pairing rules and recommended pairings.
+### Font Alternatives to Overused Defaults
+
+| Instead of... | Try |
+|---------------|-----|
+| Inter | Instrument Sans, Plus Jakarta Sans, Outfit |
+| Roboto | Onest, Figtree, Urbanist |
+| Open Sans | Source Sans 3, Nunito Sans |
+
+See `nuxt-frontend-polish` typography reference for pairing rules, OpenType features, and fluid vs fixed type guidance.
+
+### Accessibility
+
+- Always use `rem`/`em` for font sizes — respects user preferences
+- Never disable zoom — fix layouts instead
+- Minimum 16px body text, 44px+ tap targets
 
 ---
 

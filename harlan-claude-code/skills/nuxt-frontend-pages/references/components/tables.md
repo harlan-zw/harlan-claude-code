@@ -97,6 +97,12 @@ const columns = [
 
 ---
 
+## Typography in Tables
+
+Use `font-variant-numeric: tabular-nums` (Tailwind: `tabular-nums`) on any column with numbers — digits align in columns. Apply to price, count, date, and ID columns.
+
+---
+
 ## Dashboard Table Principles
 
 From Linear's approach:
@@ -105,3 +111,4 @@ From Linear's approach:
 - **Batch operations** — checkbox column + bulk action bar on select
 - **Inline editing** — click to edit, don't navigate away
 - **Relative timestamps** — "2h ago" not "2024-01-05 14:32"
+- **Responsive**: Tables transform to stacked cards on mobile — use `UTable`'s responsive handling or hide low-priority columns

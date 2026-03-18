@@ -18,6 +18,15 @@
 | Accent | {{color}} | {{reason — e.g. "amber — warm counterpoint for CTAs"}} |
 | Extended | {{any registered theme colors}} | {{reason}} |
 
+- **Neutral tinting**: {{e.g. "all grays tinted toward brand hue (chroma 0.01) for subconscious cohesion" | "using Nuxt UI's built-in stone neutrals which are already warm-tinted"}}
+- **60-30-10 split**: {{e.g. "60% stone neutrals, 30% text/borders, 10% amber accent on CTAs only"}}
+
+### Contrast & Accessibility
+
+- **Body text contrast**: {{e.g. "7:1+ against bg-default — exceeds AA"}}
+- **Dark mode adjustments**: {{e.g. "accents desaturated 10%, body weight reduced to 350, no pure black backgrounds"}}
+- **Known risks**: {{e.g. "muted text on colored backgrounds — verify 4.5:1 minimum" | "none identified"}}
+
 ## Typography
 
 | Role | Font | Why |
@@ -26,10 +35,14 @@
 | Display (`--font-display`) | {{font or "not used"}} | {{reason}} |
 | Mono (`--font-mono`) | {{font or "default"}} | {{reason}} |
 
+- **Type system**: {{fixed rem scale | fluid clamp() — e.g. "fixed rem — this is a dashboard/app UI, not marketing"}}
+- **OpenType features**: {{e.g. "tabular-nums on all data tables, small-caps on status labels" | "none needed"}}
+
 ## Icons
 
 - **Collection**: {{e.g. lucide, heroicons, phosphor}}
 - **Why**: {{e.g. "thin 2px strokes match restrained aesthetic"}}
+- **Color rule**: {{e.g. "monochrome only — color reserved for semantic states (success/error/warning)"}}
 
 ## Component Rules
 
@@ -39,12 +52,28 @@
 - {{e.g. "Cards: glass effect with backdrop-blur-xl, never hard borders"}}
 - {{e.g. "Radius: rounded-2xl globally, rounded-full only for avatars"}}
 - {{e.g. "Inputs: bottom-border only, no box styling"}}
+- {{e.g. "Focus rings: 2px primary-500 with 2px offset on all interactive elements"}}
+- {{e.g. "Error messages: below field, 3-part structure (what/why/fix), never blame user"}}
 
 ## Spatial & Motion
 
+- **Spacing system**: {{e.g. "4pt base grid: 4, 8, 12, 16, 24, 32, 48, 64px"}}
 - **Spacing philosophy**: {{e.g. "generous ma spacing — sections separated by py-24 md:py-32"}}
 - **Transition speed**: {{e.g. "300-600ms with ease-zen — contemplative, not snappy"}}
-- **Animation style**: {{e.g. "fade up + scale from 0.95, stagger 100ms between siblings"}}
+- **Animation style**: {{e.g. "fade up + scale from 0.95, stagger 100ms between siblings, cap at 500ms total"}}
+- **Reduced motion**: {{e.g. "crossfade fallback for all spatial animations, functional animations preserved"}}
+
+## Responsive Strategy
+
+- **Approach**: {{e.g. "mobile-first, 3 breakpoints (sm/md/lg)" | "desktop-only dashboard"}}
+- **Input method**: {{e.g. "pointer:coarse enlarges touch targets to 48px, hover effects only with hover:hover"}}
+- **Navigation adaptation**: {{e.g. "hamburger → horizontal → full sidebar" | "always sidebar with collapse"}}
+
+## Voice & Tone
+
+- **Button labels**: {{e.g. "verb-object pairs: 'Save changes', 'Delete project', never 'OK' or 'Submit'"}}
+- **Error style**: {{e.g. "empathetic, 3-part (what/why/fix): 'Email isn't valid — include an @ symbol'"}}
+- **Empty states**: {{e.g. "acknowledge → explain value → provide action"}}
 
 ## Avoid
 
@@ -55,6 +84,9 @@
 - {{e.g. "Any warm background colors — breaks the cold frost atmosphere"}}
 - {{e.g. "Rounded corners below xl — too subtle for glass panels"}}
 - {{e.g. "Colorful icons — monochrome only, color reserved for semantic states"}}
+- {{e.g. "Pure black (#000) or pure gray — all neutrals tinted toward brand"}}
+- {{e.g. "Bounce/elastic easing — use exponential ease-out or springs"}}
+- {{e.g. "Nesting cards inside cards — use spacing and dividers for inner hierarchy"}}
 
 ## Custom Utilities
 

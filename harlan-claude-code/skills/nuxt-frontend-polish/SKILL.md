@@ -58,11 +58,13 @@ Only after foundation and consistency are solid. Read references based on what t
 
 | Symptom | Reference |
 |---------|-----------|
-| Feels flat/static | [interactions.md](references/interactions.md) — hover, focus, loading, spring CSS |
-| No entrance animations | [motion.md](references/motion.md) — motion-v, scroll reveals, stagger, transitions |
-| Typography feels generic | [typography.md](references/typography.md) — font pairing, weight extremes, scale |
-| Layout cramped or boring | [spatial.md](references/spatial.md) — whitespace, grids, layering, backgrounds |
-| Colors dull or inconsistent | [color.md](references/color.md) — dominant+accent, dark mode, glows |
+| Feels flat/static | [interactions.md](references/interactions.md) — 8 states, hover, focus, loading, spring CSS |
+| No entrance animations | [motion.md](references/motion.md) — motion-v, scroll reveals, stagger, perceived performance |
+| Typography feels generic | [typography.md](references/typography.md) — font pairing, OpenType, vertical rhythm, fluid type |
+| Layout cramped or boring | [spatial.md](references/spatial.md) — spacing system, hierarchy, container queries, backgrounds |
+| Colors dull or inconsistent | [color.md](references/color.md) — OKLCH, tinted neutrals, contrast, dark mode |
+| Not responsive enough | [responsive.md](references/responsive.md) — mobile-first, input detection, safe areas, images |
+| Copy unclear or generic | [ux-writing.md](references/ux-writing.md) — button labels, errors, empty states, microcopy |
 
 Read ALL references when asked to "make it better" or "polish everything".
 

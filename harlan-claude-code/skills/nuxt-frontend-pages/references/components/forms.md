@@ -11,8 +11,8 @@ Nuxt UI form components with Zod validation.
 import { z } from 'zod'
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  name: z.string().min(2, 'Too short'),
+  email: z.string().email('Email address isn\'t valid — include an @ symbol'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   role: z.enum(['admin', 'user', 'viewer'])
 })
 
@@ -100,7 +100,10 @@ Group related fields visually:
 
 ## Validation UX
 
-- Show errors after blur, not on every keystroke
+- **Placeholders aren't labels** — they disappear on input. Always use `UFormField` with `label` prop
+- **Validate on blur**, not every keystroke (exception: password strength)
+- **Error messages need three parts**: what happened, why, how to fix — "Too short" → "Name must be at least 2 characters"
+- Never blame the user — "Invalid email" → "Email address isn't valid"
 - Mark required fields with label suffix, not asterisk
 - Success state: brief toast, not inline message
 - Disable submit button when `loading` is true

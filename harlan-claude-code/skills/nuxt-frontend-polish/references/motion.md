@@ -158,8 +158,68 @@ const { scrollY } = useScroll()
 
 ---
 
+## Duration Rules
+
+Timing matters more than easing:
+
+| Duration | Use Case | Examples |
+|----------|----------|---------|
+| 100-150ms | Instant feedback | Button press, toggle, color change |
+| 200-300ms | State changes | Menu open, tooltip, hover |
+| 300-500ms | Layout changes | Accordion, modal, drawer |
+| 500-800ms | Entrance animations | Page load, hero reveals |
+
+Exit animations should be ~75% of entrance duration.
+
+---
+
+## Easing Without Springs
+
+When CSS springs aren't available, use exponential curves — they mimic real physics:
+
+```css
+/* Quart out — smooth, refined (recommended default) */
+--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+/* Expo out — snappy, confident */
+--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+```
+
+**Avoid bounce and elastic curves.** They feel dated and amateurish. Real objects decelerate smoothly — they don't bounce when they stop. Overshoot draws attention to the animation instead of the content.
+
+---
+
+## Reduced Motion
+
+Not optional. Vestibular disorders affect ~35% of adults over 40.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: fade-in 200ms ease-out; /* Crossfade instead of motion */ }
+}
+```
+
+Preserve functional animations (progress bars, spinners, focus indicators) — just remove spatial movement.
+
+---
+
+## Perceived Performance
+
+Nobody cares how fast your site is — just how fast it *feels*.
+
+- **80ms threshold**: Our brains buffer input for ~80ms. Anything under feels instant. Target this for micro-interactions.
+- **Preemptive start**: Begin transitions immediately while loading (skeleton UI). Users perceive work happening.
+- **Optimistic UI**: Update immediately, handle failures gracefully. Use for low-stakes actions (likes, follows); avoid for payments or destructive operations.
+- **Ease-in toward completion** makes tasks feel shorter (peak-end effect weights final moments).
+- Too-fast responses can decrease perceived value — users may distrust instant results for complex operations.
+
+---
+
 ## Performance
 
-- Prefer `transform` and `opacity` (GPU-composited)
+- Only animate `transform` and `opacity` — everything else causes layout recalculation
+- For height animations (accordions), use `grid-template-rows: 0fr → 1fr` instead of animating `height`
+- Don't use `will-change` preemptively — only when animation is imminent (`:hover`, `.animating`)
+- For scroll-triggered animations, use Intersection Observer; unobserve after animating once
 - Limit parallax layers to 2-3 max
-- Always respect `prefers-reduced-motion`
+- Cap total stagger time — 10 items at 50ms = 500ms max. For many items, reduce per-item delay

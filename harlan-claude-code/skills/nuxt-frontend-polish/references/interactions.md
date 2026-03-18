@@ -4,6 +4,25 @@ Small UI details that make a design feel polished and alive.
 
 ---
 
+## The Eight Interactive States
+
+Every interactive element needs these states designed:
+
+| State | When | Visual Treatment |
+|-------|------|------------------|
+| Default | At rest | Base styling |
+| Hover | Pointer over (not touch) | Subtle lift, color shift |
+| Focus | Keyboard/programmatic focus | Visible ring (see below) |
+| Active | Being pressed | Pressed in, darker |
+| Disabled | Not interactive | Reduced opacity, no pointer |
+| Loading | Processing | Spinner, skeleton |
+| Error | Invalid state | Red border, icon, message |
+| Success | Completed | Green check, confirmation |
+
+**Common miss**: Designing hover without focus, or vice versa. Keyboard users never see hover states.
+
+---
+
 ## Hover States
 
 Every interactive element needs a visible hover response. CSS transitions are fine here — no motion library needed.
@@ -160,3 +179,57 @@ toast.add({ title: 'Saved', icon: 'i-lucide-check', color: 'success' })
 ```vue
 <header class="sticky top-0 z-50 backdrop-blur-lg bg-default/80 border-b border-default">
 ```
+
+---
+
+## Form Design
+
+- **Placeholders aren't labels** — they disappear on input. Always use visible `<label>` elements
+- **Validate on blur**, not every keystroke (exception: password strength)
+- Place errors **below** fields with `aria-describedby` connecting them
+- Use Nuxt UI's `UForm` + Zod — handles validation UX correctly out of the box
+
+---
+
+## Destructive Actions: Undo > Confirm
+
+Undo is better than confirmation dialogs — users click through confirmations mindlessly:
+
+1. Remove from UI immediately
+2. Show undo toast (`toast.add({ title: 'Deleted', actions: [{ label: 'Undo', click: restore }] })`)
+3. Actually delete after toast expires
+
+Use confirmation only for truly irreversible (account deletion), high-cost, or batch operations.
+
+---
+
+## Keyboard Navigation
+
+### Roving Tabindex
+
+For component groups (tabs, menus, radio groups): one item is tabbable, arrow keys move within. Nuxt UI handles this in `UTabs`, `URadioGroup`, etc. — but if building custom components with Reka UI, implement this pattern.
+
+### Skip Links
+
+Provide `<a href="#main-content">Skip to main content</a>` for keyboard users. Hide off-screen, show on focus.
+
+---
+
+## Gesture Discoverability
+
+Swipe-to-delete and similar gestures are invisible. Always:
+- Partially reveal the action (peek from edge)
+- Provide a visible fallback (menu with "Delete")
+
+Never rely on gestures as the only way to perform an action.
+
+---
+
+## Anti-Patterns
+
+- Removing focus indicators without replacement (`outline: none` alone)
+- Using placeholder text as labels
+- Touch targets < 44x44px
+- Generic error messages ("Something went wrong")
+- Custom controls without ARIA/keyboard support
+- Hover-only functionality (touch users can't hover)

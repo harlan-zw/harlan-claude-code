@@ -81,17 +81,21 @@ const open = ref(false)
 <UModal v-model:open="confirmOpen">
   <div class="p-6 text-center">
     <UIcon name="i-lucide-alert-triangle" class="text-4xl text-warning mb-4" />
-    <h3 class="text-lg font-semibold">Delete project?</h3>
-    <p class="text-muted mt-2">This action cannot be undone.</p>
+    <h3 class="text-lg font-semibold">Delete "{{ project.name }}"?</h3>
+    <p class="text-muted mt-2">All files and settings will be permanently removed.</p>
     <div class="flex justify-center gap-3 mt-6">
-      <UButton variant="outline" @click="confirmOpen = false">Cancel</UButton>
-      <UButton color="error" @click="confirmDelete">Delete</UButton>
+      <UButton variant="outline" @click="confirmOpen = false">Keep project</UButton>
+      <UButton color="error" @click="confirmDelete">Delete project</UButton>
     </div>
   </div>
 </UModal>
 ```
 
-**Rule**: Prefer "Undo" toasts over confirmation dialogs. Only use confirmation for truly irreversible destructive actions.
+**Rules**:
+- Prefer "Undo" toasts over confirmation dialogs — users click through confirmations mindlessly
+- Only use confirmation for truly irreversible, high-cost, or batch operations
+- Button labels must be verb-object pairs — "Delete project" not "OK", "Keep project" not "Cancel"
+- Explain specific consequences — "All files and settings will be permanently removed" not "This action cannot be undone"
 
 ---
 
