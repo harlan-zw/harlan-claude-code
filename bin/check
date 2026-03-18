@@ -11,11 +11,17 @@ pkg_scripts=""
 [ -f "package.json" ] && pkg_scripts=$(jq -r '.scripts // {} | keys[]' package.json 2>/dev/null)
 has_script() { echo "$pkg_scripts" | grep -qx "$1"; }
 
+# Interactive terminal detection
+is_tty=false
+[ -t 1 ] && is_tty=true
+
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"; kill 0 2>/dev/null' EXIT
 
 pids=()
 labels=()
+# Track which line each label is on (for in-place updates)
+declare -A label_line
 
 run_check() {
   local label="$1"; shift
@@ -66,20 +72,69 @@ if [ ${#pids[@]} -eq 0 ]; then
   exit 0
 fi
 
-for pid in "${pids[@]}"; do
-  wait "$pid" 2>/dev/null
+# Print initial status lines
+current_line=0
+for i in "${!labels[@]}"; do
+  label_line["${labels[$i]}"]=$current_line
+  echo "◦ ${labels[$i]} ..."
+  ((current_line++))
+done
+total_lines=$current_line
+
+# Move cursor up N lines and overwrite
+update_line() {
+  local label="$1" text="$2"
+  local line_idx=${label_line[$label]}
+  local up=$((total_lines - line_idx))
+  # Move up, clear line, write, move back down
+  printf "\033[%dA\r\033[2K%s\n\033[%dB" "$up" "$text" "$((up - 1))"
+}
+
+# Plain mode for non-TTY
+update_line_plain() {
+  local label="$1" text="$2"
+  echo "$text"
+}
+
+update=${is_tty:+update_line}
+update=${update:-update_line_plain}
+
+# Poll for completion, update status as each finishes
+errors=""
+remaining=("${!pids[@]}")
+while [ ${#remaining[@]} -gt 0 ]; do
+  for idx in "${remaining[@]}"; do
+    if ! kill -0 "${pids[$idx]}" 2>/dev/null; then
+      wait "${pids[$idx]}" 2>/dev/null
+      label="${labels[$idx]}"
+      if [ -f "$tmpdir/${label}.fail" ]; then
+        errors+="${label} "
+        $update "$label" "✗ ${label} FAILED"
+      else
+        $update "$label" "✓ ${label} passed"
+      fi
+      # Remove from remaining
+      new_remaining=()
+      for r in "${remaining[@]}"; do
+        [ "$r" != "$idx" ] && new_remaining+=("$r")
+      done
+      remaining=("${new_remaining[@]}")
+      break
+    fi
+  done
+  [ ${#remaining[@]} -gt 0 ] && sleep 0.1
 done
 
-errors=""
+# Move past status block
+echo ""
+
+# Print output for failed checks
 for label in "${labels[@]}"; do
   if [ -f "$tmpdir/${label}.fail" ]; then
-    errors+="${label} "
-    echo "--- ${label} FAILED ---"
-  else
-    echo "--- ${label} PASSED ---"
+    echo "--- ${label} ---"
+    cat "$tmpdir/${label}.log" 2>/dev/null
+    echo ""
   fi
-  cat "$tmpdir/${label}.log" 2>/dev/null
-  echo ""
 done
 
 [ ${#skipped[@]} -gt 0 ] && echo "SKIPPED: ${skipped[*]}"
