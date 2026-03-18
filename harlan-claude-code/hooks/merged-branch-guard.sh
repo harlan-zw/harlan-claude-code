@@ -16,9 +16,7 @@ if ! [[ "$command" =~ ^git[[:space:]]+(push|commit|rebase|cherry-pick|merge|rese
 fi
 
 deny() {
-  cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"$1"}}
-EOF
+  jq -nc --arg reason "$1" '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$reason}}'
   exit 0
 }
 

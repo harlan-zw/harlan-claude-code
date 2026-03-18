@@ -23,10 +23,7 @@ mark_suggested() {
 }
 
 suggest() {
-  local msg="$1"
-  cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","decision":"followup_message","message":"$msg"}}
-EOF
+  jq -nc --arg msg "$1" '{"hookSpecificOutput":{"hookEventName":"PostToolUse","decision":"followup_message","message":$msg}}'
   exit 0
 }
 

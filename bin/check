@@ -1,0 +1,93 @@
+#!/bin/bash
+# Run lint, typecheck, and tests in parallel
+# Install: ln -sf "$(pwd)/bin/check" ~/.local/bin/check
+# Skip checks: CHECK_SKIP=eslint,typecheck,test check
+
+skip="${CHECK_SKIP:-}"
+should_skip() { [[ ",$skip," == *",$1,"* ]]; }
+
+# Read package.json scripts once
+pkg_scripts=""
+[ -f "package.json" ] && pkg_scripts=$(jq -r '.scripts // {} | keys[]' package.json 2>/dev/null)
+has_script() { echo "$pkg_scripts" | grep -qx "$1"; }
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"; kill 0 2>/dev/null' EXIT
+
+pids=()
+labels=()
+
+run_check() {
+  local label="$1"; shift
+  ("$@" > "$tmpdir/${label}.log" 2>&1 || echo "FAILED" > "$tmpdir/${label}.fail") &
+  pids+=($!)
+  labels+=("$label")
+}
+
+skipped=()
+
+# eslint
+if should_skip eslint; then
+  skipped+=("eslint")
+elif [ -f "node_modules/.bin/eslint" ]; then
+  run_check eslint ./node_modules/.bin/eslint . --fix
+else
+  skipped+=("eslint")
+fi
+
+# typecheck — prefer nuxi > vue-tsc > tsc > pnpm script
+if should_skip typecheck; then
+  skipped+=("typecheck")
+elif { [ -f "nuxt.config.ts" ] || [ -f "nuxt.config.js" ]; } && [ -f "node_modules/.bin/nuxi" ]; then
+  run_check typecheck ./node_modules/.bin/nuxi typecheck
+elif [ -f "node_modules/.bin/vue-tsc" ]; then
+  run_check typecheck ./node_modules/.bin/vue-tsc --noEmit
+elif [ -f "node_modules/.bin/tsc" ] && { [ -f "tsconfig.json" ] || [ -f "tsconfig.app.json" ]; }; then
+  run_check typecheck ./node_modules/.bin/tsc --noEmit
+elif has_script typecheck; then
+  run_check typecheck pnpm typecheck
+else
+  skipped+=("typecheck")
+fi
+
+# test — prefer vitest direct > pnpm script
+if should_skip test; then
+  skipped+=("test")
+elif [ -f "node_modules/.bin/vitest" ]; then
+  run_check test ./node_modules/.bin/vitest run
+elif has_script test; then
+  run_check test pnpm test
+else
+  skipped+=("test")
+fi
+
+if [ ${#pids[@]} -eq 0 ]; then
+  echo "No checks to run"
+  exit 0
+fi
+
+for pid in "${pids[@]}"; do
+  wait "$pid" 2>/dev/null
+done
+
+errors=""
+for label in "${labels[@]}"; do
+  if [ -f "$tmpdir/${label}.fail" ]; then
+    errors+="${label} "
+    echo "--- ${label} FAILED ---"
+  else
+    echo "--- ${label} PASSED ---"
+  fi
+  cat "$tmpdir/${label}.log" 2>/dev/null
+  echo ""
+done
+
+[ ${#skipped[@]} -gt 0 ] && echo "SKIPPED: ${skipped[*]}"
+
+if [ -n "$errors" ]; then
+  echo "FAILED: ${errors}"
+  exit 1
+fi
+
+echo "All checks passed"
+exit 0

@@ -9,6 +9,7 @@ Claude Code plugin for Nuxt/Vue/TypeScript workflows. No build step - pure bash 
 ## Commands
 
 ```bash
+check              # Parallel lint + typecheck + test (installed to ~/.local/bin)
 pnpm lint          # ESLint check
 pnpm lint:fix      # ESLint autofix
 pnpm release patch|minor|major  # Bump version, tag, push
@@ -32,7 +33,8 @@ scripts/release.ts            # Version bump script (syncs plugin.json, marketpl
 **Hook lifecycle**:
 - `SessionStart`: Detect project type (Nuxt Module/App, UnJS, Vue, Node), show git info, warn if not pnpm
 - `PreToolUse` (Bash): Block npm/yarn/npx (`pnpm-only.sh`), run parallel lint+typecheck+test on commit/push (`pre-commit-push.sh`)
-- `PostToolUse` (Write|Edit): Auto-fix eslint, suggest typecheck, run related vitest
+- `PostToolUse` (Write|Edit): Auto-fix eslint on edited file
+- `PreToolUse` (Bash): On push/PR, runs `check` (parallel lint+typecheck+test) and blocks on failure
 
 **Disable hooks per-project**: Create `.claude/hooks.json` with `{"disabled": ["typecheck", "vitest"]}`
 

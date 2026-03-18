@@ -46,16 +46,6 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/eslint.sh",
             "timeout": 30000
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.sh",
-            "timeout": 60000
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/vitest.sh",
-            "timeout": 120000
           }
         ]
       },

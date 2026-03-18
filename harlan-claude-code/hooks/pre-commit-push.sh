@@ -3,9 +3,7 @@ input=$(cat)
 command=$(echo "$input" | jq -r '.tool_input.command // empty')
 
 deny() {
-  cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"$1"}}
-EOF
+  jq -nc --arg reason "$1" '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":$reason}}'
   exit 0
 }
 
@@ -16,36 +14,13 @@ if [[ "$command" =~ ^git[[:space:]]+commit ]]; then
 EOF
 fi
 
-# run checks only on push/pr
-[[ ! "$command" =~ ^git[[:space:]]+push ]] && [[ ! "$command" =~ ^gh[[:space:]]+pr[[:space:]]+create ]] && exit 0
+# run checks only on push
+[[ ! "$command" =~ ^git[[:space:]]+push ]] && exit 0
 
-# Run checks in parallel for speed
-tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT
+# Run all checks in parallel via check.sh
+check_output=$("$(dirname "$0")/check.sh" 2>&1)
+check_exit=$?
 
-# eslint (background)
-if [ -f "node_modules/.bin/eslint" ]; then
-  (./node_modules/.bin/eslint . --fix 2>&1 || echo "FAILED" > "$tmpdir/eslint") &
-fi
-
-# typecheck (background)
-if [ -f "package.json" ] && grep -q '"typecheck"' package.json 2>/dev/null; then
-  (pnpm typecheck 2>&1 || echo "FAILED" > "$tmpdir/typecheck") &
-fi
-
-# test (background)
-if [ -f "package.json" ] && grep -q '"test"' package.json 2>/dev/null; then
-  (pnpm test 2>&1 || echo "FAILED" > "$tmpdir/test") &
-fi
-
-wait
-
-# Collect errors
-errors=""
-[ -f "$tmpdir/eslint" ] && errors+="eslint failed; "
-[ -f "$tmpdir/typecheck" ] && errors+="typecheck failed; "
-[ -f "$tmpdir/test" ] && errors+="tests failed; "
-
-if [ -n "$errors" ]; then
-  deny "Pre-push checks failed: ${errors}Fix issues before pushing."
+if [ $check_exit -ne 0 ]; then
+  deny "Pre-push checks failed: ${check_output}"
 fi
