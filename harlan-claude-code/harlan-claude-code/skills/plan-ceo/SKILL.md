@@ -1,8 +1,8 @@
 ---
 name: plan-ceo
 description: >
-  Strategic Product & Scope Review. Use this skill when planning a new feature, 
-  architecting a change, or reviewing a project's strategy. It challenges premises, 
+  Strategic Product & Scope Review. Use this skill when planning a new feature,
+  architecting a change, or reviewing a project's strategy. It challenges premises,
   maps ambition modes, and ensures zero silent failures.
 user_invocable: true
 context: fork
