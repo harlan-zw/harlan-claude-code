@@ -125,16 +125,27 @@ EOF
 
 Output the PR URL when done.
 
-## Step 6: Cleanup (after merge or user says "finish")
+## Step 6: Monitor CI
+
+After creating or updating a PR, spawn a **background agent** to monitor CI checks:
+
+```
+Agent (background): "Monitor CI checks for PR #<number> in <owner>/<repo>.
+Poll with: gh pr checks <number> --watch --fail-fast
+If checks fail, report which check failed and the error.
+If all checks pass, report success.
+Use --interval 30 for polling."
+```
+
+This gives the user CI feedback without blocking the conversation.
+
+## Step 7: Cleanup (after merge or user says "finish")
 
 If the PR was created from a worktree (Step 0), clean up:
 
 ```bash
 wt switch main
-wt delete <branch-name>
+wt delete BRANCH_NAME
 ```
 
 `wt delete` removes the worktree directory and deletes the local branch.
-
-</branch>
-</branch>
