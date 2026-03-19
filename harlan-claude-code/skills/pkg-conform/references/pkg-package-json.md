@@ -37,11 +37,7 @@
     "test": "vitest",
     "test:attw": "attw --pack",
     "prepack": "pnpm run build",
-    "postinstall": "simple-git-hooks",
     "release": "pnpm build && bumpp --output=CHANGELOG.md"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
     "*.{js,ts,mjs,cjs,vue}": [
@@ -57,7 +53,6 @@
     "bumpp": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-harlanzw": "catalog:",
-    "simple-git-hooks": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
@@ -82,11 +77,7 @@
     "typecheck": "pnpm run -r typecheck",
     "test": "vitest",
     "test:attw": "pnpm -r --parallel --filter=./packages/** run test:attw",
-    "postinstall": "simple-git-hooks",
     "release": "pnpm build && bumpp --output=CHANGELOG.md packages/*/package.json"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
     "*.{js,ts,mjs,cjs,vue}": [
@@ -102,7 +93,6 @@
     "eslint-plugin-harlanzw": "catalog:",
     "lint-staged": "catalog:",
     "obuild": "catalog:",
-    "simple-git-hooks": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

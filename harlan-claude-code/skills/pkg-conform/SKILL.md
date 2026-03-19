@@ -48,7 +48,6 @@ If path doesn't match either pattern, fall back to heuristics: `private: true` +
 - **ESM-only exports trap** -- removing CJS exports breaks consumers that haven't migrated to ESM. For public packages, confirm the audience before dropping `.cjs`.
 - **`pnpm install` after catalog changes** -- lockfile must be regenerated. If you edit `pnpm-workspace.yaml` catalogs, always run `pnpm install` before running any other commands.
 - **Nuxt module `dev:prepare` order** -- must run before `typecheck` or `test`. Missing this causes confusing "module not found" errors from auto-generated types.
-- **`simple-git-hooks` needs reinstall** -- after adding `simple-git-hooks` to devDeps and configuring it, `pnpm install` must run to activate the hooks. The `postinstall` script handles this, but only if it exists.
 - **Site vs Package misdetection** -- path-based detection (`*/pkg/*` vs `*/sites/*`) can fail for unusual directory structures. Always verify the detected type before applying rules.
 
 ---
@@ -152,7 +151,7 @@ See `references/` for detailed templates:
 5. [ ] `.gitignore` - standard patterns
 6. [ ] ESLint config - antfu + `eslint-plugin-harlanzw`. Package: `eslint.config.mjs`; Site: `eslint.config.js`
 7. [ ] `tsconfig.json` - Package: `module: preserve`, `moduleDetection: force`; Site: `extends .nuxt/tsconfig.json`
-8. [ ] Git hooks - `simple-git-hooks` + `lint-staged` in devDeps, `postinstall` runs `simple-git-hooks`, `pre-commit` runs `lint-staged`
+8. [ ] Git hooks - `lint-staged` in devDeps, `pre-commit` runs `lint-staged`
 
 ### Package-only (when in `*/pkg/*`)
 
@@ -166,7 +165,7 @@ See `references/` for detailed templates:
 ### Site-only (when in `*/sites/*` or `*/site/*`)
 
 9. [ ] `package.json` - `private: true`, `engines.node` set to latest stable even-numbered Node (e.g. `>=22.0.0`, `>=24.0.0`), no `exports`/`main`/`types`/`files`
-10. [ ] Scripts - `dev` (nuxi dev), `build` (nuxi prepare && nuxi build), `postinstall` (nuxt prepare && simple-git-hooks), `lint`, `lint:fix`, `typecheck` (nuxt typecheck)
+10. [ ] Scripts - `dev` (nuxi dev), `build` (nuxi prepare && nuxi build), `postinstall` (nuxt prepare), `lint`, `lint:fix`, `typecheck` (nuxt typecheck)
 11. [ ] `pnpm.overrides` - `vite` set to `^8.0.0`
 12. [ ] `nuxt.config.ts` - `future.compatibilityVersion: 5`, `compatibilityDate`, standard module stack
 13. [ ] `tsconfig.json` - just `{ "extends": "./.nuxt/tsconfig.json" }`

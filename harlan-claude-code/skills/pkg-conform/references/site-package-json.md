@@ -23,15 +23,12 @@
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi prepare && nuxi build",
-    "postinstall": "nuxt prepare && simple-git-hooks",
+    "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "nuxt typecheck",
     "test": "vitest",
     "test:run": "vitest run"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
     "*.{js,ts,mjs,cjs,vue}": [
@@ -61,7 +58,6 @@
     "lint-staged": "catalog:",
     "motion-v": "catalog:",
     "nuxt": "catalog:",
-    "simple-git-hooks": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
