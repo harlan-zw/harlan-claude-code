@@ -1,9 +1,29 @@
 ---
-description: Triage open issues by difficulty and impact
+description: Triage open issues by difficulty and impact. Use when user says "review issues", "triage issues", "what should I work on", "prioritize backlog", "rank issues", "find quick wins", or "what's high priority".
 user_invocable: true
 ---
 
 Triage all open issues and rank by difficulty/impact.
+
+## Gotchas
+
+- **GitHub API rate limits** -- `gh issue list` with `--limit 100`+ can hit rate limits on busy repos. If you get a 403, reduce the batch size or add `--label` filters.
+- **Stale issues** -- issues older than 6 months with no recent activity are likely stale. Flag them separately rather than ranking alongside active issues.
+- **Misleading labels** -- "good first issue" doesn't always mean low difficulty. Cross-check against the actual description before trusting the label.
+- **Body truncation** -- `gh issue list --json body` truncates long bodies. For issues that need deeper analysis, fetch individually: `gh issue view NUMBER --json body`.
+- **Duplicate issues** -- watch for multiple issues describing the same root cause. Group them and note the canonical issue number.
+- **Assigned != in progress** -- stale assignments are common. Check if the assignee has recent activity on the issue before skipping it.
+
+## Data Storage
+
+Track triage history to show deltas between runs:
+
+```bash
+# After triage, save results
+echo "$(date -I) REPO TOTAL_ISSUES QUICK_WINS HIGH_PRIORITY" >> "${CLAUDE_PLUGIN_DATA}/triage-history.log"
+```
+
+On subsequent runs, read the log and highlight what changed since last triage.
 
 ## Workflow
 
@@ -21,35 +41,14 @@ Triage all open issues and rank by difficulty/impact.
 
 3. **Parallel batch analysis** (8-10x faster than sequential)
    Split issues into batches of 10 and spawn parallel haiku agents.
-   If ≤10 issues, use a single agent.
+   If <=10 issues, use a single agent.
+
+   See [references/heuristics.md](references/heuristics.md) for the full difficulty/impact scales and signal weighting.
 
    ```
    # Spawn Task agents IN PARALLEL (single message, multiple tool calls)
    Task(model: haiku, prompt: "Analyze these issues: [JSON]. Return JSON array with: number, difficulty (1-5), impact (1-5), hasRepro (bool), needsCodebaseReview (bool), notes")
    ```
-
-   Each agent evaluates using these heuristics:
-
-   **Difficulty** (1-5):
-   - 1: typo, config, or docs change
-   - 2: single-file logic change
-   - 3: multi-file change, needs testing
-   - 4: architectural or cross-cutting concern
-   - 5: unknown scope, research needed — set `needsCodebaseReview: true`
-
-   **Impact** (1-5):
-   - 1: cosmetic, niche use case
-   - 2: minor improvement, few users affected
-   - 3: moderate user-facing value
-   - 4: significant pain point or common request
-   - 5: critical bug, data loss, or security issue
-
-   **Signals to factor in**:
-   - `comments` count — high count suggests community interest/severity
-   - `assignees` — if assigned, note in output (someone may already be working on it)
-   - `labels` — "good first issue" suggests low difficulty, "bug" in most cases higher impact than "enhancement"
-   - `createdAt` — old issues with no assignee may be stale or deprioritized
-   - Reproduction steps, stackblitz/codesandbox links, minimal repos → `hasRepro: true`
 
 4. **Merge results** from all agents into unified list
 
@@ -57,14 +56,14 @@ Triage all open issues and rank by difficulty/impact.
 
    | # | Title | Labels | Repro | Diff | Impact | Assigned | Notes |
    |---|-------|--------|-------|------|--------|----------|-------|
-   | 42 | Fix CSS regression | bug | ✓ | 1 | 3 | | 1-line fix |
+   | 42 | Fix CSS regression | bug | yes | 1 | 3 | | 1-line fix |
    | 17 | Add dark mode | enhancement | n/a | 2 | 4 | @dev | PR in progress |
 
-6. **Highlight quick wins** — low difficulty (1-2), decent impact (2+)
+6. **Highlight quick wins** -- low difficulty (1-2), decent impact (2+)
 
-7. **Highlight high priorities** — impact 4-5 regardless of difficulty
+7. **Highlight high priorities** -- impact 4-5 regardless of difficulty
 
-8. **Offer worktree setup** — prompt user with options:
+8. **Offer worktree setup** -- prompt user with options:
    - "Create worktrees for quick wins (difficulty 1-2, impact 2+)?"
    - "Create worktrees for high priorities (impact 4-5)?"
    - "Pick specific issues by number?"
@@ -77,6 +76,3 @@ Triage all open issues and rank by difficulty/impact.
 
    After creation, list worktrees with `wt list` so user can open them in separate sessions.
 
-</name>
-</n>
-</slug>

@@ -75,7 +75,7 @@ Never show an empty table. Use `UEmpty`:
 ```vue
 const columns = [
   { key: 'name', label: 'Project', sortable: true },
-  { key: 'updated', label: 'Last Updated', sortable: true }
+  { key: 'updated', label: 'Last Updated', sortable: true },
 ]
 ```
 

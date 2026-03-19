@@ -1,12 +1,32 @@
 ---
 name: tweet
-description: Draft, iterate, and polish tweets. Wraps screenshots in terminal window chrome for sharing.
+description: Draft, iterate, and polish tweets. Use when user says "tweet this", "draft a tweet", "post about this", "share on twitter", "write a tweet", or provides text to tweet. Wraps screenshots in terminal window chrome for sharing.
 user_invocable: true
 ---
 
 # Tweet Skill
 
 Help the user draft, refine, and finalize tweets for posting. When screenshots are provided, wrap them in a macOS-style terminal window for polished sharing.
+
+## Gotchas
+
+- **Character count is tricky** -- URLs always count as 23 chars (t.co wrapping). Emojis count as 2. Newlines count as 1. Don't trust naive `length` checks.
+- **Twitter crops images at 16:9 in timeline** -- the wrap script outputs 1600x900 for this reason. Non-16:9 images get cropped unpredictably.
+- **Don't over-polish** -- tweets that sound too perfect feel like marketing. Preserve the user's natural voice, just fix obvious issues.
+- **Thread vs single tweet** -- if the user hasn't asked for a thread, don't suggest one. Single tweets perform better unless there's genuinely too much for 280 chars.
+- **Screenshot dependencies** -- `sharp` and `@resvg/resvg-js` need to be installed. If they're not global, install to a temp dir, don't pollute the project.
+- **Hot takes can backfire** -- always flag the hot take variation as risky. The user should consciously opt in, not accidentally post something inflammatory.
+
+## Data Storage
+
+Track tweet history for voice consistency:
+
+```bash
+# After finalizing a tweet, log it
+echo "$(date -I) | FINAL_TWEET_TEXT" >> "${CLAUDE_PLUGIN_DATA}/tweet-history.log"
+```
+
+On subsequent runs, read recent history to maintain consistent voice and avoid repeating hooks/angles.
 
 ## Input
 
@@ -19,10 +39,10 @@ Help the user draft, refine, and finalize tweets for posting. When screenshots a
 ## Step 1: Analyze Input
 
 Determine what the user provided:
-- **Text only** → go to Step 2
-- **Screenshot only** → go to Step 3
-- **Both** → do Step 2 and Step 3 in parallel
-- **Nothing** → ask what they want to tweet about
+- **Text only** -> go to Step 2
+- **Screenshot only** -> go to Step 3
+- **Both** -> do Step 2 and Step 3 in parallel
+- **Nothing** -> ask what they want to tweet about
 
 ## Step 2: Tweet Text Iteration
 
@@ -53,7 +73,7 @@ For each variation show:
 ### Rules for Good Tweets
 - No hashtags unless the user explicitly includes them
 - No emojis unless the user's draft already uses them
-- Don't start with "I" Must
+- Don't start with "I"
 - Avoid corporate/marketing speak ("excited to announce", "thrilled to share")
 - Match the user's voice - if they're casual, stay casual
 - If referencing code/tech, be specific not vague
@@ -78,9 +98,9 @@ Use the Read tool to view the screenshot and understand its content. Check:
 
 Create a temporary Node.js script based on `templates/wrap-screenshot.mjs`. Customize:
 - `INPUT_PATH` - the screenshot file path
-- `OUTPUT_PATH` - same directory, append `-twitter` before extension (e.g., `img.png` → `img-twitter.png`)
+- `OUTPUT_PATH` - same directory, append `-twitter` before extension (e.g., `img.png` -> `img-twitter.png`)
 - `TITLE` - contextual title for the window bar based on screenshot content:
-  - Terminal screenshots: `claude — ~/project` or similar
+  - Terminal screenshots: `claude -- ~/project` or similar
   - Browser screenshots: URL or page title
   - Generic: filename or brief description
 
@@ -104,7 +124,7 @@ Read the output image to verify it looks correct. Show the user the result.
 
 ## Step 4: Final Output
 
-Present the final tweet text (if applicable) and the wrapped screenshot path (if applicable). Offer to:
+Present the final tweet text (if applicable) and the wrapped screenshot path (if applicable). Log to `${CLAUDE_PLUGIN_DATA}/tweet-history.log`. Offer to:
 - Make further adjustments
 - Generate additional variations
 - Wrap more screenshots

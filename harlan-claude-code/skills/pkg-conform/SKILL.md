@@ -23,7 +23,7 @@ Conform a package to standardized architecture, or scaffold a new one.
 
 Check for `package.json` in cwd to determine new vs existing.
 Check for `packages:` in `pnpm-workspace.yaml` to detect monorepo vs single repo.
-Check for `@nuxt/module-builder` in devDependencies to detect Nuxt module → apply Nuxt-specific patterns.
+Check for `@nuxt/module-builder` in devDependencies to detect Nuxt module -> apply Nuxt-specific patterns.
 
 ### Project Type Detection
 
@@ -31,12 +31,25 @@ Determine project type from the **absolute path** of the working directory:
 
 | Path pattern | Type | Description |
 |-------------|------|-------------|
-| `*/pkg/*` | **Package** | Published library/module — needs exports, build, release |
-| `*/sites/*` or `*/site/*` | **Site** | Nuxt app — private, no exports, deploy not publish |
+| `*/pkg/*` | **Package** | Published library/module -- needs exports, build, release |
+| `*/sites/*` or `*/site/*` | **Site** | Nuxt app -- private, no exports, deploy not publish |
 
-If path doesn't match either pattern, fall back to heuristics: `private: true` + `nuxt` in deps → Site, otherwise Package.
+If path doesn't match either pattern, fall back to heuristics: `private: true` + `nuxt` in deps -> Site, otherwise Package.
 
 **IMPORTANT:** The project type determines which rules apply. Do NOT apply Package-only rules (exports, obuild, test:attw, prepack, release) to Sites, and do NOT apply Site-only rules (nuxi scripts, generate, preview) to Packages.
+
+---
+
+## Gotchas
+
+- **Catalog version conflicts** -- when migrating deps to `catalog:`, check that the catalog version satisfies all consumers in the monorepo. A single `catalog:` entry shared across packages with different version requirements will break.
+- **obuild vs tsc** -- obuild doesn't do type-checking. If you remove `tsc` from the build, types won't be validated. Always keep `typecheck` as a separate script.
+- **`module: preserve` in tsconfig** -- this is correct for packages built with obuild, but breaks Nuxt apps that need `module: esnext` or defer to `.nuxt/tsconfig.json`. Don't apply package tsconfig rules to sites.
+- **ESM-only exports trap** -- removing CJS exports breaks consumers that haven't migrated to ESM. For public packages, confirm the audience before dropping `.cjs`.
+- **`pnpm install` after catalog changes** -- lockfile must be regenerated. If you edit `pnpm-workspace.yaml` catalogs, always run `pnpm install` before running any other commands.
+- **Nuxt module `dev:prepare` order** -- must run before `typecheck` or `test`. Missing this causes confusing "module not found" errors from auto-generated types.
+- **`simple-git-hooks` needs reinstall** -- after adding `simple-git-hooks` to devDeps and configuring it, `pnpm install` must run to activate the hooks. The `postinstall` script handles this, but only if it exists.
+- **Site vs Package misdetection** -- path-based detection (`*/pkg/*` vs `*/sites/*`) can fail for unusual directory structures. Always verify the detected type before applying rules.
 
 ---
 
