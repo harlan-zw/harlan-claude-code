@@ -86,33 +86,34 @@ From the last 20 open issues, match titles against the branch name and commit me
 
 See [references/conventional-commits.md](references/conventional-commits.md) for commit format rules.
 
-**Title:** Conventional commit format -- `feat:`, `fix:`, `docs:`, `chore:`, etc. Under 70 chars.
+**Title:** Conventional commit format -- `feat:`, `fix:`, `docs:`, `chore:`, etc. Under 70 chars. Use scopes where
+appropriate (e.g., `feat(auth):`, `fix(ui):`).
 
 **Body template:**
 
 ```markdown
-###  Linked issue
+### 🔗 Linked issue
 
 Resolves #NUMBER
 <!-- or "Related to #NUMBER" if not a full fix -->
 
-###  Type of change
+### ❓ Type of change
 
-- [ ]  Documentation
-- [ ]  Bug fix
-- [ ]  Enhancement
-- [ ] * New feature
-- [ ]  Chore
-- [ ]  Breaking change
+- [ ] 📖 Documentation
+- [ ] 🐞 Bug fix
+- [ ] 👌 Enhancement
+- [ ] ✨ New feature
+- [ ] 🧹 Chore
+- [ ] ⚠️ Breaking change
 
-###  Description
+### 📚 Description
 
-<!-- 2-3 sentences: what problem existed -> what we did -->
+<!-- 2-3 sentences: what problem existed → what we did -->
 ```
 
-Tick the relevant type checkbox. Fill in the description -- be concise, write like a human.
+Tick the relevant type checkbox. Fill in the description — be concise, write like a human.
 
-Only add `###  Breaking Changes` and `###  Migration` sections if actually breaking.
+Only add `### ⚠️ Breaking Changes` and `### 📝 Migration` sections if actually breaking.
 
 ## Step 4: Verify
 
