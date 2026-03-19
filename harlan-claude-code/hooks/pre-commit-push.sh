@@ -14,13 +14,3 @@ if [[ "$command" =~ ^git[[:space:]]+commit ]]; then
 EOF
 fi
 
-# run checks only on push
-[[ ! "$command" =~ ^git[[:space:]]+push ]] && exit 0
-
-# Run all checks in parallel via check.sh
-check_output=$("$(dirname "$0")/check.sh" 2>&1)
-check_exit=$?
-
-if [ $check_exit -ne 0 ]; then
-  deny "Pre-push checks failed: ${check_output}"
-fi

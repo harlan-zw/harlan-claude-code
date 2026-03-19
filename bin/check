@@ -16,7 +16,8 @@ is_tty=false
 [ -t 1 ] && is_tty=true
 
 tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"; kill 0 2>/dev/null' EXIT
+cleanup() { rm -rf "$tmpdir"; for p in "${pids[@]}"; do kill "$p" 2>/dev/null; done; }
+trap cleanup EXIT
 
 pids=()
 labels=()
