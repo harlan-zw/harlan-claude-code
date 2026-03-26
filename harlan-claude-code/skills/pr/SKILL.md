@@ -2,6 +2,7 @@
 name: pr
 description: Create, make, open, update, submit, or sync a PR / pull request. Use when user says "open a PR", "submit PR", "create pull request", "push this up", "send for review", "make a PR", or "sync PR".
 user_invocable: true
+context: fork
 ---
 
 Create or update a pull request for the current branch. Idempotent -- safe to run at any stage.

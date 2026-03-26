@@ -1,6 +1,7 @@
 ---
 description: Triage open issues by difficulty and impact. Use when user says "review issues", "triage issues", "what should I work on", "prioritize backlog", "rank issues", "find quick wins", or "what's high priority".
 user_invocable: true
+context: fork
 ---
 
 Triage all open issues and rank by difficulty/impact.

@@ -2,6 +2,7 @@
 name: release-notes
 description: Generate release notes for major/minor releases. Use when user says "release notes", "write release notes", "draft changelog", "prepare release announcement", "what changed since last release", or "generate upgrade guide".
 user_invocable: true
+context: fork
 argument-hint: "[version]"
 effort: high
 ---

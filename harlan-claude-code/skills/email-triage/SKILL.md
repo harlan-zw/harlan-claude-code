@@ -1,6 +1,7 @@
 ---
 description: Triage inbox emails with himalaya. Use when user says "check email", "triage email", "email triage", "check inbox", "process email", "email me", "what emails do I have", "clear inbox", "inbox zero", "follow ups", "awaiting reply", "who hasn't replied", or "chase up".
 user_invocable: true
+context: fork
 ---
 
 Triage inbox emails, classify by urgency, and batch action them (delete, move, draft reply, skip).
