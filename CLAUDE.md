@@ -38,7 +38,7 @@ scripts/release.ts            # Version bump script (syncs plugin.json, marketpl
 
 **Disable hooks per-project**: Create `.claude/hooks.json` with `{"disabled": ["typecheck", "vitest"]}`
 
-**Skills**: `pkg-conform` (conform/scaffold packages), `issue-triage` (batch analyze GitHub issues), `pr` (conventional commit PRs), `tweet` (draft + screenshot wrapper)
+**Skills**: `pkg-conform` (conform/scaffold packages), `issue-triage` (batch analyze GitHub issues), `pr` (conventional commit PRs), `tweet` (draft + screenshot wrapper), `social-presence` (content strategy, find tweetable moments from recent work, craft launch tweets), `nuxt-frontend-design` (full lifecycle: design system setup, page building, polish), `nuxt-frontend-review` (independent evaluator agent, runs as `context: fork` after frontend design)
 
 ## Adding Components
 
