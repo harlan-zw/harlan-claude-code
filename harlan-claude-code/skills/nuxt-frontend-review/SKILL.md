@@ -14,7 +14,7 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 
 ## Injected State
 
-!`jq '{schema_version, git_hash, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
+!`jq '{schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
 !`grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40 || echo "NO_CONTRACT"`
 !`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --stat "$GH" 2>/dev/null; else git diff --stat HEAD 2>/dev/null; fi || echo "NO_GIT"`
 !`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi | head -30`
@@ -77,6 +77,8 @@ app.config.ts
 You MUST confirm the app is actually working before handing off to the user. "Server started" is not enough.
 
 ### 2a. Start the server
+
+**Port selection**: use `dev_port` from the injected handoff JSON. This is the port the design skill used during the build. If `dev_port` is missing (older handoff), fall back to scanning the injected port list.
 
 The injected state above shows whether a server is running. If no dev server is running, detect and start one:
 

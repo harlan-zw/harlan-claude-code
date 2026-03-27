@@ -414,13 +414,14 @@ For builds spanning multiple pages or phases:
 
 ## After Implementation: Emit Handoff
 
-Before finishing, capture the current git state and write `.claude/context/build-handoff.json`:
+Before finishing, capture the current git state and write `.claude/context/build-handoff.json`. **`dev_port`**: record the port the dev server is running on (check `nuxt.config.ts` for `devServer.port`, or detect from the running process). This tells the review skill exactly where to verify.
 
 ```json
 {
   "schema_version": 2,
   "created": "<ISO 8601 date from `date -u +%Y-%m-%dT%H:%M:%SZ`>",
   "git_hash": "<current HEAD hash from `git rev-parse HEAD`>",
+  "dev_port": 3000,
   "pages_changed": ["app/pages/index.vue"],
   "components_created": ["app/components/StatsCard.vue"],
   "routes_to_test": ["/", "/dashboard"],
