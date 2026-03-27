@@ -337,6 +337,9 @@ categories: [{category}, ...]
 ### What was verified
 {list of verification steps completed}
 
+### Next Steps
+{Concrete fix commands or "ready to ship"}
+
 ### Decision Log
 For each hard rejection criterion and contract criterion, record: what you checked, what you found, and your verdict. If you initially considered something a possible issue then decided it was acceptable, record that reasoning here. This log enables calibration.
 ```
@@ -392,6 +395,19 @@ Re-review is not a differential check. A fix for Issue A can introduce Issue B. 
 ### Areas I'm less confident about
 - {Anything unverified}
 - {Chrome DevTools limitation note if applicable}
+
+### Next steps
+{Based on verdict, give the user a concrete command to run next.}
+
+**If FAIL or PARTIAL:**
+> Run `/nuxt-frontend-design` to fix. It detects the FAIL verdict and enters repair mode automatically.
+>
+> Then re-run `/nuxt-frontend-review` to verify.
+
+**If PASS:**
+> All criteria met. Ready to ship, or run `/nuxt-frontend-design polish` to refine further.
+
+{If any issues are design-system-level (not page-specific), call that out: "The contrast issues are design system tokens, not page code. Run `/nuxt-frontend-design` and it will fix tokens in `main.css`/`app.config.ts` before page code."}
 ```
 
 ### Rules for the checklist
@@ -408,10 +424,10 @@ Re-review is not a differential check. A fix for Issue A can introduce Issue B. 
 
 This skill runs as a forked agent. After the review:
 
-1. Fix issues in the main conversation (tell Claude: "Fix the FAIL items in `.claude/context/review-report.md`")
-2. Run `/nuxt-frontend-review` again to re-verify
+1. Run `/nuxt-frontend-design` to fix. It detects the FAIL verdict and enters repair mode with full design system context.
+2. Run `/nuxt-frontend-review` again to verify the fixes.
 
-Each invocation is a fresh evaluation pass. This is intentional: re-evaluating with fresh context prevents the reviewer from rationalizing away issues it already "accepted" in a prior pass.
+Each invocation is a fresh evaluation pass. Re-evaluating with fresh context prevents the reviewer from rationalizing away issues it already "accepted" in a prior pass.
 
 After testing, update `.claude/context/review-calibration.md` with any issues the reviewer missed or false flags it raised. Even if nothing was missed, write: "No missed issues in this pass on {date}." An empty calibration file signals the loop was never run.
 
