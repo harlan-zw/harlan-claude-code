@@ -16,13 +16,13 @@ Full lifecycle frontend skill: setup, build, polish. Detects the right phase aut
 !`[ -f app.config.ts ] && grep -q 'colors:' app.config.ts 2>/dev/null && echo "HAS_COLORS=true" || echo "HAS_COLORS=false"`
 !`[ -f app/assets/css/main.css ] && grep -q '@theme' app/assets/css/main.css 2>/dev/null && echo "HAS_THEME=true" || echo "HAS_THEME=false"`
 !`[ -f .claude/context/design-guidelines.md ] && echo "HAS_GUIDELINES=true" || echo "HAS_GUIDELINES=false"`
-!`[ -f .claude/context/build-handoff.json ] && echo "PRIOR_BUILD=true" && jq -r '.created // empty' .claude/context/build-handoff.json 2>/dev/null || echo "PRIOR_BUILD=false"`
-!`[ -f .claude/context/review-report.md ] && echo "PRIOR_REVIEW=true" && grep -m1 '^verdict:' .claude/context/review-report.md 2>/dev/null || echo "PRIOR_REVIEW=false"`
+!`if [ -f .claude/context/build-handoff.json ]; then echo "PRIOR_BUILD=true"; echo "PRIOR_BUILD_DATE=$(jq -r '.created // empty' .claude/context/build-handoff.json 2>/dev/null)"; else echo "PRIOR_BUILD=false"; fi`
+!`if [ -f .claude/context/review-report.md ]; then V=$(grep -m1 '^verdict:' .claude/context/review-report.md 2>/dev/null); echo "PRIOR_REVIEW=true"; [ -n "$V" ] && echo "$V"; else echo "PRIOR_REVIEW=false"; fi`
 !`[ -f .claude/context/build-progress.md ] && echo "PAGES_BUILT=$(grep -c '^## ' .claude/context/build-progress.md 2>/dev/null || echo 0)" || echo "PAGES_BUILT=0"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
-!`find app/pages -name '*.vue' 2>/dev/null | head -10 || echo "NO_PAGES"`
-!`ls ${CLAUDE_SKILL_DIR}/references/themes/ 2>/dev/null | sed 's/.md$//' || echo "NO_THEMES"`
-!`grep -q 'colors:' app.config.ts 2>/dev/null && grep -oP "neutral:\s*'\\K[^']+" app.config.ts 2>/dev/null | head -1 || echo "NO_NEUTRAL"`
+!`R=$(find app/pages -name '*.vue' 2>/dev/null | head -10); [ -n "$R" ] && echo "$R" || echo "NO_PAGES"`
+!`R=$(ls "${CLAUDE_SKILL_DIR}/references/themes/" 2>/dev/null | sed 's/.md$//'); [ -n "$R" ] && echo "$R" || echo "NO_THEMES"`
+!`if grep -q 'colors:' app.config.ts 2>/dev/null; then R=$(grep -E "neutral:" app.config.ts 2>/dev/null | head -1 | sed "s/.*neutral:[[:space:]]*['\"]//;s/['\"].*//" ); [ -n "$R" ] && echo "$R" || echo "NO_NEUTRAL"; else echo "NO_NEUTRAL"; fi`
 
 ## Phase Detection
 
@@ -359,6 +359,10 @@ If dev-browser is not installed, skip this step.
 - **Font loading flash**: register fonts via Nuxt Fonts, not CSS `@import`
 - **Container queries**: need `container-type: inline-size` on the parent
 - **Don't refactor while polishing**: polish is visual refinement, not code cleanup
+
+### After Polish: Emit Handoff
+
+After completing Phase 3 changes, follow the same "After Implementation: Emit Handoff" steps below. The review step applies to polish work too, not just new page builds. Skip only for trivially verifiable changes (single file, purely cosmetic token swaps with no new components, routes, or interactions).
 
 ---
 

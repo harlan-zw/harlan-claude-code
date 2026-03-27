@@ -15,10 +15,10 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 ## Injected State
 
 !`jq '{schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
-!`grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40 || echo "NO_CONTRACT"`
-!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --stat "$GH" 2>/dev/null; else git diff --stat HEAD 2>/dev/null; fi || echo "NO_GIT"`
-!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi | head -30`
-!`(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173') | head -5 || echo "NO_SERVER"`
+!`R=$(grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40); [ -n "$R" ] && echo "$R" || echo "NO_CONTRACT"`
+!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); R=$(if [ -n "$GH" ]; then git diff --stat "$GH" 2>/dev/null; else git diff --stat HEAD 2>/dev/null; fi); [ -n "$R" ] && echo "$R" || echo "NO_GIT"`
+!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); R=$(if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi); [ -n "$R" ] && echo "$R" | head -30 || echo "NO_CHANGED_FILES"`
+!`R=$(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173'); [ -n "$R" ] && echo "$R" | head -5 || echo "NO_SERVER"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
 !`cat .claude/context/review-calibration.md 2>/dev/null || echo "NO_CALIBRATION"`
 
@@ -162,19 +162,19 @@ Run ALL of these greps on the changed files. Report results for each, even if cl
 
 ```bash
 # Completeness
-grep -rn 'TODO\|FIXME\|placeholder\|Lorem\|Coming soon\|Sample' {changed_files}
+grep -rEn 'TODO|FIXME|placeholder|Lorem|Coming soon|Sample' {changed_files}
 
 # Design system compliance
-grep -rn '#[0-9a-fA-F]\{3,8\}' {changed_files}
-grep -rn 'rgb\|hsl\|rgba' {changed_files}
-grep -rn 'slate-\|gray-\|zinc-\|stone-' {changed_files}
+grep -rEn '#[0-9a-fA-F]{3,8}' {changed_files}
+grep -rEn 'rgb|hsl|rgba' {changed_files}
+grep -rEn 'slate-|gray-|zinc-|stone-' {changed_files}
 # Note: cross-reference hits against the project's chosen neutral color in app.config.ts. Exclude matches for the configured neutral.
 
 # Dark mode
-grep -rn 'bg-white\|text-black\|border-gray' {changed_files}
+grep -rEn 'bg-white|text-black|border-gray' {changed_files}
 
 # Font compliance
-grep -rn 'font-\(inter\|roboto\|arial\|system-ui\)' {changed_files}
+grep -rEn 'font-(inter|roboto|arial|system-ui)' {changed_files}
 ```
 
 Then evaluate these qualitatively (but each is still pass/fail):
