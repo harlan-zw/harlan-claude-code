@@ -17,7 +17,7 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 !`jq '{schema_version, git_hash, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
 !`grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40 || echo "NO_CONTRACT"`
 !`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --stat "$GH" 2>/dev/null; else git diff --stat HEAD 2>/dev/null; fi || echo "NO_GIT"`
-!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); FILES=$(if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi); echo "$FILES" | head -30; TOTAL=$(echo "$FILES" | grep -c . 2>/dev/null); TOTAL=${TOTAL:-0}; [ "$TOTAL" -gt 30 ] && echo "... and $((TOTAL - 30)) more files (truncated)"`
+!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi | head -30`
 !`(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173') | head -5 || echo "NO_SERVER"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
 !`cat .claude/context/review-calibration.md 2>/dev/null || echo "NO_CALIBRATION"`

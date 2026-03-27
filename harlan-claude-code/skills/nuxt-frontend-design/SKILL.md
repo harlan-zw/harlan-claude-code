@@ -2,7 +2,7 @@
 description: Build production frontend with Nuxt UI v4+. Full lifecycle design system setup, page building, polish. Trigger on "build page", "landing page", "dashboard", "apply theme", "setup design tokens", "polish", "refine", "add motion", "fix UX", "looks generic", "add form/table/nav/modal".
 user_invocable: true
 argument-hint: "[component/page/area]"
-model: sonnet
+model: opus
 effort: max
 ---
 
