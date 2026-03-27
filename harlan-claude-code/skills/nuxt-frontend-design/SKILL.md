@@ -232,9 +232,47 @@ Scan `.vue` files for violations:
 | Raw HTML elements | -> Nuxt UI components |
 | Guideline violations | -> follow documented constraints |
 
+### Audit Confirmation
+
+After completing the token and consistency audits, present findings to the user before making any changes. Format as a numbered list with categories:
+
+```
+**Audit findings:**
+
+Token issues (will fix):
+1. Hardcoded `bg-slate-100` in HeroSection.vue:42 → should use `bg-muted`
+2. ...
+
+Aesthetic observations (need your input):
+3. Hero text feels small for a landing page → increase size? [intentional / fix]
+4. Cards all use identical treatment → add hierarchy? [intentional / fix]
+5. ...
+```
+
+**Rules:**
+- **Token/consistency violations** (hardcoded colors, wrong fonts, broken dark mode): present as "will fix" since these are objectively wrong per the design system
+- **Aesthetic judgments** (sizing, hierarchy, rhythm, visual weight): present as observations requiring user input. Never assume these are problems.
+- **Already decided**: before presenting, read `## Design Decisions` in `.claude/context/design-guidelines.md`. Any observation already covered by an existing decision is settled. Do not re-ask. Only present NEW aesthetic observations the user hasn't ruled on yet. If all aesthetic observations are already covered, skip straight to fixing token issues and then Elevate.
+- Wait for user response before proceeding. The user will mark each aesthetic item as "intentional" or "fix".
+
+**After confirmation**, update `.claude/context/design-guidelines.md`:
+1. Add new "intentional" choices to `## Design Decisions` (append, don't duplicate existing entries)
+2. Remove any stale entries in `## Design Decisions` that the user just marked as "fix" (they've changed their mind)
+3. If no `## Design Decisions` section exists yet, create it
+
+Example:
+
+```markdown
+## Design Decisions
+- Hero uses text-3xl intentionally: minimal aesthetic for utility tool
+- Cards use uniform treatment: flat hierarchy is intentional
+```
+
+Only fix items the user approved. Skip everything marked "intentional".
+
 ### Elevate
 
-Only after foundation and consistency are solid. Read references based on symptoms:
+Only after foundation and consistency are solid AND audit confirmation is complete. Read references based on symptoms:
 
 | Symptom | Reference |
 |---------|-----------|

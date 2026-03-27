@@ -70,6 +70,8 @@ app/assets/css/main.css
 app.config.ts
 ```
 
+**Respect documented design decisions**: if `design-guidelines.md` contains a `## Design Decisions` section, those are intentional aesthetic choices confirmed by the user. Do not flag these as issues. For example, if the guidelines say "Hero uses text-3xl intentionally: minimal aesthetic for utility tool," do not report small hero text as a problem.
+
 ## Step 2: Start and Verify the Dev Environment
 
 You MUST confirm the app is actually working before handing off to the user. "Server started" is not enough.
@@ -127,7 +129,7 @@ Any ONE of these means FAIL. You must find **positive evidence** that each crite
 - **Unreadable text**: contrast ratio below 4.5:1 on any text element
 - **Layout break**: content overflows viewport or overlaps other content at any standard breakpoint (375px, 768px, 1280px)
 - **Missing state handling**: any async operation (data fetch, form submit, API call) must have loading and error handling
-- **Theme incoherence**: if the design guidelines specify a design principle (e.g., "depth over flatness") and the implementation contradicts it (e.g., flat shadows everywhere), that is a hard rejection
+- **Theme incoherence**: if the design guidelines specify a design principle (e.g., "depth over flatness") and the implementation contradicts it (e.g., flat shadows everywhere), that is a hard rejection. Exception: items listed under `## Design Decisions` in the guidelines are intentional and must not be flagged.
 
 If you catch yourself thinking "this is minor, it's fine," that is the signal to investigate further, not to skip it.
 
