@@ -13,7 +13,7 @@ Full lifecycle frontend skill: setup, build, polish. Detects the right phase aut
 ## Project State
 
 !`[ -f nuxt.config.ts ] && echo "IS_NUXT=true" || echo "IS_NUXT=false"`
-!`[ -f app.config.ts ] && grep -q 'colors:' app.config.ts 2>/dev/null && echo "HAS_COLORS=true" || echo "HAS_COLORS=false"`
+!`F=""; [ -f app.config.ts ] && F="app.config.ts"; [ -f app/app.config.ts ] && F="app/app.config.ts"; [ -n "$F" ] && grep -q 'colors:' "$F" 2>/dev/null && echo "HAS_COLORS=true" || echo "HAS_COLORS=false"`
 !`[ -f app/assets/css/main.css ] && grep -q '@theme' app/assets/css/main.css 2>/dev/null && echo "HAS_THEME=true" || echo "HAS_THEME=false"`
 !`[ -f .claude/context/design-guidelines.md ] && echo "HAS_GUIDELINES=true" || echo "HAS_GUIDELINES=false"`
 !`if [ -f .claude/context/build-handoff.json ]; then echo "PRIOR_BUILD=true"; echo "PRIOR_BUILD_DATE=$(jq -r '.created // empty' .claude/context/build-handoff.json 2>/dev/null)"; else echo "PRIOR_BUILD=false"; fi`
@@ -22,7 +22,7 @@ Full lifecycle frontend skill: setup, build, polish. Detects the right phase aut
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
 !`R=$(find app/pages -name '*.vue' 2>/dev/null | head -10); [ -n "$R" ] && echo "$R" || echo "NO_PAGES"`
 !`R=$(ls "${CLAUDE_SKILL_DIR}/references/themes/" 2>/dev/null | sed 's/.md$//'); [ -n "$R" ] && echo "$R" || echo "NO_THEMES"`
-!`if grep -q 'colors:' app.config.ts 2>/dev/null; then R=$(grep -E "neutral:" app.config.ts 2>/dev/null | head -1 | sed "s/.*neutral:[[:space:]]*['\"]//;s/['\"].*//" ); [ -n "$R" ] && echo "$R" || echo "NO_NEUTRAL"; else echo "NO_NEUTRAL"; fi`
+!`F=""; [ -f app.config.ts ] && F="app.config.ts"; [ -f app/app.config.ts ] && F="app/app.config.ts"; if [ -n "$F" ] && grep -q 'colors:' "$F" 2>/dev/null; then R=$(grep -E "neutral:" "$F" 2>/dev/null | head -1 | sed "s/.*neutral:[[:space:]]*['\"]//;s/['\"].*//" ); [ -n "$R" ] && echo "$R" || echo "NO_NEUTRAL"; else echo "NO_NEUTRAL"; fi`
 
 ## Phase Detection
 
