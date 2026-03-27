@@ -94,7 +94,7 @@ Commit to a specific aesthetic direction that serves the content before coding. 
 5. **Component theming**: global overrides via `app.config.ts` slots/variants
 6. **Extended colors**: registering custom theme colors in `nuxt.config.ts`
 
-**Principle**: Use existing Tailwind (`shadow-md`, `rounded-xl`) and Nuxt UI (`bg-muted`, `text-default`) tokens. Only create custom `@theme` tokens for things truly unique to the design.
+**Principle: Override, Don't Invent.** Always use Nuxt UI's existing design tokens (`bg-muted`, `text-default`, `--ui-bg`, `--ui-radius`, etc.) and Tailwind's built-in utilities (`shadow-md`, `rounded-xl`). Customize the design system by **overriding** these tokens in `app.config.ts` and `main.css`, not by creating new custom tokens. Only introduce a genuinely new `@theme` token when no existing Nuxt UI or Tailwind token covers the concept. If you find yourself naming a new token, first check whether an existing `--ui-*` variable or Tailwind utility already serves that purpose.
 
 ### References
 
@@ -166,7 +166,7 @@ app.config.ts                         -> colors, component theme overrides, defa
 nuxt.config.ts                        -> fonts, colorMode, ui.theme.colors
 ```
 
-Use the project's semantic tokens, fonts, and component overrides. Never hardcode colors, shadows, or radii that bypass the design system.
+Use the project's semantic tokens, fonts, and component overrides. Never hardcode colors, shadows, or radii that bypass the design system. When you need a design variation, override an existing Nuxt UI token rather than introducing a new custom token.
 
 ### References
 
@@ -214,7 +214,7 @@ Check that the design system is complete. Missing tokens cause inconsistency dow
 | Fonts | `@theme` `--font-*` | At least `--font-sans` defined? Display/mono if used? |
 | Semantic overrides | `:root` / `.dark` `--ui-*` | `--ui-bg`, `--ui-text`, `--ui-border` customized? |
 | Component overrides | `app.config.ts` `ui.*` | Key components themed? `defaultVariants` set? |
-| Unnecessary tokens | `@theme` | Custom tokens that duplicate Tailwind builtins? Remove them. |
+| Unnecessary tokens | `@theme` | Custom tokens that duplicate Tailwind builtins or Nuxt UI `--ui-*` variables? Remove them and use the existing token instead. New tokens should only exist when no Nuxt UI or Tailwind equivalent covers the concept. |
 
 **If tokens are missing**: fix them first.
 

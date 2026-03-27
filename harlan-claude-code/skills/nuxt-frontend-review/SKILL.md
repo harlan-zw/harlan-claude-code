@@ -132,6 +132,7 @@ Any ONE of these means FAIL. You must find **positive evidence** that each crite
 - **Layout break**: content overflows viewport or overlaps other content at any standard breakpoint (375px, 768px, 1280px)
 - **Missing state handling**: any async operation (data fetch, form submit, API call) must have loading and error handling
 - **Theme incoherence**: if the design guidelines specify a design principle (e.g., "depth over flatness") and the implementation contradicts it (e.g., flat shadows everywhere), that is a hard rejection. Exception: items listed under `## Design Decisions` in the guidelines are intentional and must not be flagged.
+- **Unnecessary custom tokens**: custom `@theme` tokens or CSS custom properties that duplicate existing Nuxt UI `--ui-*` variables or Tailwind utilities. The design system should override Nuxt UI's tokens, not invent parallel ones. Check `main.css` for custom tokens and verify each one has no Nuxt UI or Tailwind equivalent.
 
 If you catch yourself thinking "this is minor, it's fine," that is the signal to investigate further, not to skip it.
 
@@ -169,6 +170,10 @@ grep -rEn '#[0-9a-fA-F]{3,8}' {changed_files}
 grep -rEn 'rgb|hsl|rgba' {changed_files}
 grep -rEn 'slate-|gray-|zinc-|stone-' {changed_files}
 # Note: cross-reference hits against the project's chosen neutral color in app.config.ts. Exclude matches for the configured neutral.
+
+# Unnecessary custom tokens (should override Nuxt UI tokens, not create new ones)
+grep -rEn '^\s*--[a-z]' app/assets/css/main.css | grep -v '\-\-ui-' | grep -v '\-\-font-' | grep -v '\-\-color-'
+# Each custom token found must be justified: flag any that duplicate a --ui-* variable or Tailwind utility
 
 # Dark mode
 grep -rEn 'bg-white|text-black|border-gray' {changed_files}
