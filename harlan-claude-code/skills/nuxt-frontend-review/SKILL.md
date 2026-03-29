@@ -15,10 +15,10 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 ## Injected State
 
 !`jq '{schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
-!`R=$(grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40); [ -n "$R" ] && echo "$R" || echo "NO_CONTRACT"`
-!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); R=$(if [ -n "$GH" ]; then git diff --stat "$GH" 2>/dev/null; else git diff --stat HEAD 2>/dev/null; fi); [ -n "$R" ] && echo "$R" || echo "NO_GIT"`
-!`GH=$(jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null); R=$(if [ -n "$GH" ]; then git diff --name-only "$GH" -- '*.vue' '*.ts' '*.css' 2>/dev/null; else git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null; fi); [ -n "$R" ] && echo "$R" | head -30 || echo "NO_CHANGED_FILES"`
-!`R=$(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173'); [ -n "$R" ] && echo "$R" | head -5 || echo "NO_SERVER"`
+!`grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40 | grep . || echo "NO_CONTRACT"`
+!`jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null | xargs -I{} git diff --stat {} 2>/dev/null | grep . || git diff --stat HEAD 2>/dev/null | grep . || echo "NO_GIT"`
+!`jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null | xargs -I{} git diff --name-only {} -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || echo "NO_CHANGED_FILES"`
+!`{ lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173'; } | head -5 | grep . || echo "NO_SERVER"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
 !`cat .claude/context/review-calibration.md 2>/dev/null || echo "NO_CALIBRATION"`
 
