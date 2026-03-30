@@ -12,18 +12,18 @@ Full lifecycle frontend skill: setup, build, polish. Detects the right phase aut
 
 ## Project State
 
-!`[ -f nuxt.config.ts ] && echo "IS_NUXT=true" || echo "IS_NUXT=false"`
-!`F=""; [ -f app.config.ts ] && F="app.config.ts"; [ -f app/app.config.ts ] && F="app/app.config.ts"; [ -n "$F" ] && grep -q 'colors:' "$F" 2>/dev/null && echo "HAS_COLORS=true" || echo "HAS_COLORS=false"`
-!`for f in app/assets/css/main.css app/css/main.css app/css/global.css app/assets/css/global.css; do [ -f "$f" ] && grep -q '@theme' "$f" 2>/dev/null && echo "HAS_THEME=true" && exit 0; done; echo "HAS_THEME=false"`
-!`[ -f .claude/context/design-guidelines.md ] && echo "HAS_GUIDELINES=true" || echo "HAS_GUIDELINES=false"`
-!`ls -t .claude/context/jobs/ 2>/dev/null | head -10 | grep . || echo "NO_JOBS"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && echo "LATEST_JOB=$JOB" && [ -f ".claude/context/jobs/$JOB/build-handoff.json" ] && echo "PRIOR_BUILD=true" && jq -r '"PRIOR_BUILD_DATE=" + (.created // "unknown")' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null || echo "PRIOR_BUILD=false"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-report.md" ] && echo "PRIOR_REVIEW=true" && grep -m1 '^verdict:' ".claude/context/jobs/$JOB/review-report.md" 2>/dev/null || echo "PRIOR_REVIEW=false"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/build-progress.md" ] && printf "PAGES_BUILT=" && grep -c '^## ' ".claude/context/jobs/$JOB/build-progress.md" 2>/dev/null || echo "PAGES_BUILT=0"`
-!`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
-!`find app/pages -name '*.vue' 2>/dev/null | head -10 | grep . || echo "NO_PAGES"`
-!`ls "${CLAUDE_SKILL_DIR}/references/themes/" 2>/dev/null | sed 's/.md$//' | grep . || echo "NO_THEMES"`
-!`F=""; [ -f app.config.ts ] && F="app.config.ts"; [ -f app/app.config.ts ] && F="app/app.config.ts"; if [ -n "$F" ] && grep -q 'colors:' "$F" 2>/dev/null; then grep -E "neutral:" "$F" 2>/dev/null | head -1 | sed "s/.*neutral:[[:space:]]*['\"]//;s/['\"].*//" | grep . || echo "NO_NEUTRAL"; else echo "NO_NEUTRAL"; fi`
+!`if [ -f nuxt.config.ts ]; then echo "IS_NUXT=true"; else echo "IS_NUXT=false"; fi`
+!`bash -c 'F=""; if [ -f app.config.ts ]; then F="app.config.ts"; fi; if [ -f app/app.config.ts ]; then F="app/app.config.ts"; fi; if [ -n "$F" ] && grep -q "colors:" "$F" 2>/dev/null; then echo "HAS_COLORS=true"; else echo "HAS_COLORS=false"; fi'`
+!`bash -c 'for f in app/assets/css/main.css app/css/main.css app/css/global.css app/assets/css/global.css; do if [ -f "$f" ] && grep -q "@theme" "$f" 2>/dev/null; then echo "HAS_THEME=true"; exit 0; fi; done; echo "HAS_THEME=false"'`
+!`if [ -f .claude/context/design-guidelines.md ]; then echo "HAS_GUIDELINES=true"; else echo "HAS_GUIDELINES=false"; fi`
+!`bash -c 'OUT=$(ls -t .claude/context/jobs/ 2>/dev/null | head -10); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_JOBS"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then echo "LATEST_JOB=$JOB"; if [ -f ".claude/context/jobs/$JOB/build-handoff.json" ]; then echo "PRIOR_BUILD=true"; jq -r "\"PRIOR_BUILD_DATE=\" + (.created // \"unknown\")" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null; else echo "PRIOR_BUILD=false"; fi; else echo "PRIOR_BUILD=false"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-report.md" ]; then echo "PRIOR_REVIEW=true"; grep -m1 "^verdict:" ".claude/context/jobs/$JOB/review-report.md" 2>/dev/null; else echo "PRIOR_REVIEW=false"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/build-progress.md" ]; then printf "PAGES_BUILT="; grep -c "^## " ".claude/context/jobs/$JOB/build-progress.md" 2>/dev/null; else echo "PAGES_BUILT=0"; fi'`
+!`if command -v dev-browser >/dev/null 2>&1; then echo "DEV_BROWSER=true"; else echo "DEV_BROWSER=false"; fi`
+!`bash -c 'OUT=$(find app/pages -name "*.vue" 2>/dev/null | head -10); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_PAGES"; fi'`
+!`bash -c 'OUT=$(ls "${CLAUDE_SKILL_DIR}/references/themes/" 2>/dev/null | sed "s/.md$//"); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_THEMES"; fi'`
+!`bash -c 'F=""; if [ -f app.config.ts ]; then F="app.config.ts"; fi; if [ -f app/app.config.ts ]; then F="app/app.config.ts"; fi; if [ -n "$F" ] && grep -q "colors:" "$F" 2>/dev/null; then N=$(grep -E "neutral:" "$F" 2>/dev/null | head -1 | sed "s/.*neutral:[[:space:]]*['"'"'\"]//" | sed "s/['"'"'\"].*//" ); if [ -n "$N" ]; then echo "$N"; else echo "NO_NEUTRAL"; fi; else echo "NO_NEUTRAL"; fi'`
 
 ## Phase Detection
 

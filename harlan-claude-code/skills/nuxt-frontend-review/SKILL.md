@@ -13,14 +13,14 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 
 ## Injected State
 
-!`ls -t .claude/context/jobs/ 2>/dev/null | head -10 | grep . || echo "NO_JOBS"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && echo "LATEST_JOB=$JOB" && jq '{job_id, schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null || echo "NO_HANDOFF"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && grep -E '^\[C[0-9]+\]' ".claude/context/jobs/$JOB/build-contract.md" 2>/dev/null | head -40 | grep . || echo "NO_CONTRACT"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && jq -r '.git_hash // empty' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null | xargs -I{} git diff --stat {} 2>/dev/null | grep . || git diff --stat HEAD 2>/dev/null | grep . || echo "NO_GIT"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && jq -r '.git_hash // empty' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null | xargs -I{} git diff --name-only {} -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || echo "NO_CHANGED_FILES"`
-!`{ lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173'; } | head -5 | grep . || echo "NO_SERVER"`
-!`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
-!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && cat ".claude/context/jobs/$JOB/review-calibration.md" 2>/dev/null || echo "NO_CALIBRATION"`
+!`bash -c 'OUT=$(ls -t .claude/context/jobs/ 2>/dev/null | head -10); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_JOBS"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then echo "LATEST_JOB=$JOB"; if [ -f ".claude/context/jobs/$JOB/build-handoff.json" ]; then jq "{job_id, schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null; else echo "NO_HANDOFF"; fi; else echo "NO_HANDOFF"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then OUT=$(grep -E "^\[C[0-9]+\]" ".claude/context/jobs/$JOB/build-contract.md" 2>/dev/null | head -40); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_CONTRACT"; fi; else echo "NO_CONTRACT"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then HASH=$(jq -r ".git_hash // empty" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null); if [ -n "$HASH" ]; then OUT=$(git diff --stat "$HASH" 2>/dev/null); fi; if [ -z "$OUT" ]; then OUT=$(git diff --stat HEAD 2>/dev/null); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_GIT"; fi; else echo "NO_GIT"; fi'`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then HASH=$(jq -r ".git_hash // empty" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null); if [ -n "$HASH" ]; then OUT=$(git diff --name-only "$HASH" -- "*.vue" "*.ts" "*.css" 2>/dev/null | head -30); fi; if [ -z "$OUT" ]; then OUT=$(git diff --name-only HEAD -- "*.vue" "*.ts" "*.css" 2>/dev/null | head -30); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_CHANGED_FILES"; fi; else echo "NO_CHANGED_FILES"; fi'`
+!`bash -c 'OUT=$(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null | head -5); if [ -z "$OUT" ]; then OUT=$(ss -tlnp 2>/dev/null | grep -E ":300[0-2]|:4000|:5173" | head -5); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_SERVER"; fi'`
+!`if command -v dev-browser >/dev/null 2>&1; then echo "DEV_BROWSER=true"; else echo "DEV_BROWSER=false"; fi`
+!`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-calibration.md" ]; then cat ".claude/context/jobs/$JOB/review-calibration.md"; else echo "NO_CALIBRATION"; fi'`
 
 ## Job Resolution
 
