@@ -1,8 +1,7 @@
 ---
-description: Review and verify frontend changes after implementation. Starts the dev server, verifies it works, evaluates against acceptance criteria, and presents the user with clickable URLs and a testing checklist. Runs as an independent evaluator agent with fresh context. Trigger on "review", "check my work", "verify", "did it work", "test the frontend", "run the review".
+description: Adversarial frontend review. Trigger on "review", "check my work", "verify", "test the frontend". Evaluates against contract criteria, runs dev server, presents verdict with testing checklist. Accepts job ID for parallel builds.
 user_invocable: true
-argument-hint: "[pages or components that changed]"
-context: fork
+argument-hint: "[job-id] [inline]"
 model: opus
 effort: high
 allowed-tools: Read, Bash, Glob, Grep
@@ -14,13 +13,26 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 
 ## Injected State
 
-!`jq '{schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' .claude/context/build-handoff.json 2>/dev/null || echo "NO_HANDOFF"`
-!`grep -E '^\[C[0-9]+\]' .claude/context/build-contract.md 2>/dev/null | head -40 | grep . || echo "NO_CONTRACT"`
-!`jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null | xargs -I{} git diff --stat {} 2>/dev/null | grep . || git diff --stat HEAD 2>/dev/null | grep . || echo "NO_GIT"`
-!`jq -r '.git_hash // empty' .claude/context/build-handoff.json 2>/dev/null | xargs -I{} git diff --name-only {} -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || echo "NO_CHANGED_FILES"`
+!`ls -t .claude/context/jobs/ 2>/dev/null | head -10 | grep . || echo "NO_JOBS"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && echo "LATEST_JOB=$JOB" && jq '{job_id, schema_version, git_hash, dev_port, pages_changed, routes_to_test, theme_name, components_created, design_system_changes, contract_criteria_status, self_assessment, has_client_animations, dark_mode_relevant, known_limitations}' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null || echo "NO_HANDOFF"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && grep -E '^\[C[0-9]+\]' ".claude/context/jobs/$JOB/build-contract.md" 2>/dev/null | head -40 | grep . || echo "NO_CONTRACT"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && jq -r '.git_hash // empty' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null | xargs -I{} git diff --stat {} 2>/dev/null | grep . || git diff --stat HEAD 2>/dev/null | grep . || echo "NO_GIT"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && jq -r '.git_hash // empty' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null | xargs -I{} git diff --name-only {} -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || git diff --name-only HEAD -- '*.vue' '*.ts' '*.css' 2>/dev/null | head -30 | grep . || echo "NO_CHANGED_FILES"`
 !`{ lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null || ss -tlnp 2>/dev/null | grep -E ':300[0-2]|:4000|:5173'; } | head -5 | grep . || echo "NO_SERVER"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
-!`cat .claude/context/review-calibration.md 2>/dev/null || echo "NO_CALIBRATION"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && cat ".claude/context/jobs/$JOB/review-calibration.md" 2>/dev/null || echo "NO_CALIBRATION"`
+
+## Job Resolution
+
+`$ARGUMENTS` may contain a job ID (e.g., `/nuxt-frontend-review landing-0331-1423`). Match it against the injected job list.
+
+- If `$ARGUMENTS` contains a string matching a job directory name: use that job
+- If no match or no arguments: use the latest job (LATEST_JOB from injected state)
+- If NO_JOBS: warn "No job directories found. Run `/nuxt-frontend-design` first to create a build with job tracking." Fall back to git diff HEAD for a lightweight review without contract grading.
+
+Set `JOB_DIR` = `.claude/context/jobs/{resolved-job-id}` and use it for all artifact reads/writes throughout this review.
+
+**Inline mode**: this skill runs in the current conversation context by default. **Tradeoff**: inline review shares the generator's context, which can introduce self-evaluation bias (the reviewer "remembers" the generator's reasoning and may be more lenient). For high-stakes reviews or when you suspect leniency, start a new conversation for independent evaluation with fresh context.
 
 ## Scope Check
 
@@ -38,7 +50,7 @@ The git diff stats were injected above. If <= 2 files changed AND all are `.vue`
 
 ### 1a-bis. Schema version check
 
-If the handoff JSON was injected, verify `schema_version` is `2`. If different or missing, warn: "Handoff schema version mismatch; design and review skills may be out of sync." Proceed with available fields but note this in the report.
+If the handoff JSON was injected, verify `schema_version` is `3`. If different or missing, warn: "Handoff schema version mismatch; design and review skills may be out of sync." Proceed with available fields but note this in the report.
 
 ### 1b. Read the theme reference FIRST (independent expectations)
 
@@ -51,8 +63,8 @@ Form your own expectations from the theme spec BEFORE reading the generator's in
 The handoff JSON key fields and contract criteria IDs were injected above as summaries. Read the full files now for complete context:
 
 ```
-Read: .claude/context/build-handoff.json  -> full handoff with next_steps, known_limitations
-Read: .claude/context/build-contract.md   -> full criteria with GIVEN/WHEN/THEN details, design expectations
+Read: {JOB_DIR}/build-handoff.json  -> full handoff with next_steps, known_limitations
+Read: {JOB_DIR}/build-contract.md   -> full criteria with GIVEN/WHEN/THEN details, design expectations
 ```
 
 Use the contract as your primary grading rubric. The contract defines what "done" means; the handoff tells you where to look.
@@ -318,7 +330,7 @@ If the handoff indicates `has_client_animations: true`, add: "Client-side animat
 
 ## Step 5: Write Review Report and Present
 
-**First**, run `mkdir -p .claude/context`. Then write `.claude/context/review-report.md` with all findings. The file MUST start with a structured preamble (machine-readable by the design skill), followed by the human-readable report:
+**First**, run `mkdir -p {JOB_DIR}`. Then write `{JOB_DIR}/review-report.md` with all findings. The file MUST start with a structured preamble (machine-readable by the design skill), followed by the human-readable report:
 
 ```markdown
 ---
@@ -405,14 +417,14 @@ Re-review is not a differential check. A fix for Issue A can introduce Issue B. 
 {Based on verdict, give the user a concrete command to run next.}
 
 **If FAIL or PARTIAL:**
-> Run `/nuxt-frontend-design` to fix. It detects the FAIL verdict and enters repair mode automatically.
+> Run `/nuxt-frontend-design {JOB_ID}` to fix. It detects the FAIL verdict and enters repair mode automatically.
 >
-> Then re-run `/nuxt-frontend-review` to verify.
+> Then re-run `/nuxt-frontend-review {JOB_ID}` to verify.
 
 **If PASS:**
 > All criteria met. Ready to ship, or run `/nuxt-frontend-design polish` to refine further.
 
-{If any issues are design-system-level (not page-specific), call that out: "The contrast issues are design system tokens, not page code. Run `/nuxt-frontend-design` and it will fix tokens in `main.css`/`app.config.ts` before page code."}
+{If any issues are design-system-level (not page-specific), call that out: "The contrast issues are design system tokens, not page code. Run `/nuxt-frontend-design {JOB_ID}` and it will fix tokens in `main.css`/`app.config.ts` before page code."}
 ```
 
 ### Rules for the checklist
@@ -427,14 +439,14 @@ Re-review is not a differential check. A fix for Issue A can introduce Issue B. 
 
 ## For the User: Feedback Loop
 
-This skill runs as a forked agent. After the review:
+After the review:
 
-1. Run `/nuxt-frontend-design` to fix. It detects the FAIL verdict and enters repair mode with full design system context.
-2. Run `/nuxt-frontend-review` again to verify the fixes.
+1. Run `/nuxt-frontend-design {job-id}` to fix. It detects the FAIL verdict and enters repair mode with full design system context.
+2. Run `/nuxt-frontend-review {job-id}` again to verify the fixes (use the same job ID).
 
-Each invocation is a fresh evaluation pass. Re-evaluating with fresh context prevents the reviewer from rationalizing away issues it already "accepted" in a prior pass.
+For independent evaluation with fresh context, start a new conversation. Re-evaluating with fresh context prevents the reviewer from rationalizing away issues it already "accepted" in a prior pass.
 
-After testing, update `.claude/context/review-calibration.md` with any issues the reviewer missed or false flags it raised. Even if nothing was missed, write: "No missed issues in this pass on {date}." An empty calibration file signals the loop was never run.
+After testing, update `{JOB_DIR}/review-calibration.md` with any issues the reviewer missed or false flags it raised. Even if nothing was missed, write: "No missed issues in this pass on {date}." An empty calibration file signals the loop was never run.
 
 ### Calibration: Known Leniency Traps
 

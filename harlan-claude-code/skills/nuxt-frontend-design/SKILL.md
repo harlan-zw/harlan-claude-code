@@ -1,5 +1,5 @@
 ---
-description: Build production frontend with Nuxt UI v4+. Full lifecycle design system setup, page building, polish. Trigger on "build page", "landing page", "dashboard", "apply theme", "setup design tokens", "polish", "refine", "add motion", "fix UX", "looks generic", "add form/table/nav/modal".
+description: Build frontend with Nuxt UI v4+. Trigger on "build page", "landing page", "dashboard", "setup design tokens", "polish", "refine", "add motion", "fix UX", "looks generic". Full lifecycle: design system setup, page building, polish.
 user_invocable: true
 argument-hint: "[component/page/area]"
 model: opus
@@ -16,9 +16,10 @@ Full lifecycle frontend skill: setup, build, polish. Detects the right phase aut
 !`F=""; [ -f app.config.ts ] && F="app.config.ts"; [ -f app/app.config.ts ] && F="app/app.config.ts"; [ -n "$F" ] && grep -q 'colors:' "$F" 2>/dev/null && echo "HAS_COLORS=true" || echo "HAS_COLORS=false"`
 !`for f in app/assets/css/main.css app/css/main.css app/css/global.css app/assets/css/global.css; do [ -f "$f" ] && grep -q '@theme' "$f" 2>/dev/null && echo "HAS_THEME=true" && exit 0; done; echo "HAS_THEME=false"`
 !`[ -f .claude/context/design-guidelines.md ] && echo "HAS_GUIDELINES=true" || echo "HAS_GUIDELINES=false"`
-!`if [ -f .claude/context/build-handoff.json ]; then echo "PRIOR_BUILD=true"; jq -r '"PRIOR_BUILD_DATE=" + (.created // "unknown")' .claude/context/build-handoff.json 2>/dev/null; else echo "PRIOR_BUILD=false"; fi`
-!`if [ -f .claude/context/review-report.md ]; then echo "PRIOR_REVIEW=true"; grep -m1 '^verdict:' .claude/context/review-report.md 2>/dev/null || true; else echo "PRIOR_REVIEW=false"; fi`
-!`if [ -f .claude/context/build-progress.md ]; then printf "PAGES_BUILT="; grep -c '^## ' .claude/context/build-progress.md 2>/dev/null || echo 0; else echo "PAGES_BUILT=0"; fi`
+!`ls -t .claude/context/jobs/ 2>/dev/null | head -10 | grep . || echo "NO_JOBS"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && echo "LATEST_JOB=$JOB" && [ -f ".claude/context/jobs/$JOB/build-handoff.json" ] && echo "PRIOR_BUILD=true" && jq -r '"PRIOR_BUILD_DATE=" + (.created // "unknown")' ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null || echo "PRIOR_BUILD=false"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-report.md" ] && echo "PRIOR_REVIEW=true" && grep -m1 '^verdict:' ".claude/context/jobs/$JOB/review-report.md" 2>/dev/null || echo "PRIOR_REVIEW=false"`
+!`JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/build-progress.md" ] && printf "PAGES_BUILT=" && grep -c '^## ' ".claude/context/jobs/$JOB/build-progress.md" 2>/dev/null || echo "PAGES_BUILT=0"`
 !`command -v dev-browser >/dev/null 2>&1 && echo "DEV_BROWSER=true" || echo "DEV_BROWSER=false"`
 !`find app/pages -name '*.vue' 2>/dev/null | head -10 | grep . || echo "NO_PAGES"`
 !`ls "${CLAUDE_SKILL_DIR}/references/themes/" 2>/dev/null | sed 's/.md$//' | grep . || echo "NO_THEMES"`
@@ -38,7 +39,7 @@ Check: HAS_COLORS=true AND HAS_THEME=true AND HAS_GUIDELINES=true? -> if all fal
 Check: $ARGUMENTS names a specific theme AND design system is incomplete or uses a different theme?
   -> Phase 1 with that theme. If design system already uses that theme, skip to next check.
 Check: PRIOR_REVIEW=true with FAIL verdict?
-  -> Read the FULL .claude/context/review-report.md (not just the verdict line). For each [HARD REJECT] and [RUBRIC] item, fix the issue at the referenced file:line. After fixing all items, re-emit the handoff with updated contract_criteria_status.
+  -> Read the FULL `{JOB_DIR}/review-report.md` (not just the verdict line). For each [HARD REJECT] and [RUBRIC] item, fix the issue at the referenced file:line. After fixing all items, re-emit the handoff with updated contract_criteria_status.
 Check: $ARGUMENTS asks to build new pages?                         -> Phase 2 (Build)
 Check: $ARGUMENTS asks to refine/polish?                           -> Phase 3 (Polish)
 Check: existing pages need improvement?                            -> Phase 3 (Polish)
@@ -49,13 +50,39 @@ Default (no arguments, design system exists):                      -> Phase 3 (a
 
 **Cross-phase rule:** If Phase 1 was completed in THIS conversation, do not proceed to Phase 2 in the same conversation. Emit the handoff and tell the user: "Design system ready. Start a new conversation and run `/nuxt-frontend-design {page}` to build with fresh context."
 
+## Job ID
+
+Every Phase 2 or Phase 3 invocation gets a unique job ID. This namespaces all build artifacts so parallel design jobs don't collide.
+
+**Generate the job ID:**
+```bash
+JOB_ID="$(echo "$ARGUMENTS" | tr ' ' '-' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]//g' | cut -c1-20)-$(date +%m%d-%H%M)"
+mkdir -p ".claude/context/jobs/$JOB_ID"
+```
+
+This produces IDs like `landing-page-0331-1423` or `dashboard-0331-1445`. Tell the user the job ID immediately: "Job ID: `{JOB_ID}`"
+
+**Repair pass**: if PRIOR_REVIEW has a FAIL verdict and `$ARGUMENTS` contains a job ID matching an existing job directory, reuse that job ID instead of generating a new one. Read the review report from that job's directory.
+
+**Phase 1 only**: no job ID needed (design system artifacts are shared, not job-scoped).
+
+All job-specific artifacts go to `.claude/context/jobs/{JOB_ID}/`:
+- `build-contract.md`
+- `build-progress.md`
+- `build-handoff.json`
+
+Design system artifacts remain shared at `.claude/context/`:
+- `design-guidelines.md`
+
+Use `JOB_DIR=.claude/context/jobs/{JOB_ID}` throughout.
+
 ---
 
 ## Pre-Implementation: Define Acceptance Criteria
 
 Before writing any code in Phase 2 or Phase 3, your FIRST response must be the contract. Do not open any `.vue` files or write any component code until the user approves.
 
-Run `mkdir -p .claude/context` then emit to `.claude/context/build-contract.md`:
+Run `mkdir -p {JOB_DIR}` then emit to `{JOB_DIR}/build-contract.md`:
 
 1. **What will be built**: list every component, page, and interaction
 2. **Testable behaviors**: assign each criterion a stable ID (C1, C2, ...). Use this format:
@@ -140,20 +167,11 @@ Compose pages and UI patterns with Nuxt UI v4+ components. **Requires a design s
 
 ### Artifact Cleanup
 
-Before starting a new build, check for stale artifacts from a previous session. If `PRIOR_BUILD=true` and `PRIOR_REVIEW` is not FAIL (i.e., not a fix pass), archive old artifacts:
-
-```bash
-mkdir -p .claude/context/archive
-for f in build-contract.md build-progress.md build-handoff.json; do
-  [ -f ".claude/context/$f" ] && mv ".claude/context/$f" ".claude/context/archive/${f%.md}-$(date +%Y%m%d).${f##*.}"
-done
-```
-
-This prevents stale contracts, progress files, and handoffs from confusing phase detection or scope gates.
+Stale artifact cleanup is no longer needed. Each job gets its own directory under `.claude/context/jobs/{JOB_ID}/`, so previous jobs' artifacts cannot collide.
 
 ### Build Recovery
 
-If `build-progress.md` exists but `build-handoff.json` does not, a previous build was interrupted. Read `build-progress.md` to determine which pages completed and which contract criteria remain. Resume from the last incomplete page rather than starting over.
+If `{JOB_DIR}/build-progress.md` exists but `{JOB_DIR}/build-handoff.json` does not, a previous build was interrupted. Read `build-progress.md` to determine which pages completed and which contract criteria remain. Resume from the last incomplete page rather than starting over.
 
 ### Read the Foundation
 
@@ -374,7 +392,7 @@ For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use
 
 For builds spanning multiple pages or phases:
 
-1. **Checkpoint after each page**: write `.claude/context/build-progress.md` BEFORE starting the next page. Use `## {Page Name}` as the heading for each entry (this format is counted by the injected `PAGES_BUILT`). List files created/modified, contract criteria satisfied (by ID), and criteria remaining. You cannot open a new page file until this is written.
+1. **Checkpoint after each page**: write `{JOB_DIR}/build-progress.md` BEFORE starting the next page. Use `## {Page Name}` as the heading for each entry (this format is counted by the injected `PAGES_BUILT`). List files created/modified, contract criteria satisfied (by ID), and criteria remaining. You cannot open a new page file until this is written.
 2. **Browser sanity check** (if DEV_BROWSER=true): after writing the checkpoint, run a quick mechanical verification. This is NOT qualitative self-evaluation, only pass/fail structural checks. Fix any failures before proceeding to the next page.
 
     ```bash
@@ -408,21 +426,22 @@ For builds spanning multiple pages or phases:
 
     If dev-browser is not installed, skip this step. Do not attempt qualitative assessment of your own visual output.
 
-3. **Intermediate review**: after the first page in a multi-page build, suggest: "Page 1 complete. For best results, run `/nuxt-frontend-review` now before continuing to page 2." This catches systemic issues (wrong tokens, broken shared components) before they propagate.
+3. **Intermediate review**: after the first page in a multi-page build, suggest: "Page 1 complete. For best results, run `/nuxt-frontend-review {JOB_ID}` now before continuing to page 2." This catches systemic issues (wrong tokens, broken shared components) before they propagate.
 4. **Cross-page consistency check**: before starting page N+1, re-read the files from page N. Confirm: same number of states handled, same level of interaction detail, same use of design tokens. If page N+1 scope feels smaller than page N, that is context degradation. Stop and emit the handoff.
 5. **Scope gate**: the injected `PAGES_BUILT` count is your source of truth.
    - If PAGES_BUILT >= 2 and next page is complex (forms, tables, multi-step flows): STOP. Emit handoff.
    - If PAGES_BUILT >= 3: STOP unconditionally. Emit handoff.
    - Tell the user: "Start a new conversation and run `/nuxt-frontend-design {next page}` to continue."
-6. **No silent scope reduction**: if you cannot confirm every contract criterion is met, flag incomplete items explicitly in `build-progress.md` and the handoff artifact.
+6. **No silent scope reduction**: if you cannot confirm every contract criterion is met, flag incomplete items explicitly in `{JOB_DIR}/build-progress.md` and the handoff artifact.
 
 ## After Implementation: Emit Handoff
 
-Before finishing, capture the current git state and write `.claude/context/build-handoff.json`. **`dev_port`**: record the port the dev server is running on (check `nuxt.config.ts` for `devServer.port`, or detect from the running process). This tells the review skill exactly where to verify.
+Before finishing, capture the current git state and write `{JOB_DIR}/build-handoff.json`. **`dev_port`**: record the port the dev server is running on (check `nuxt.config.ts` for `devServer.port`, or detect from the running process). This tells the review skill exactly where to verify.
 
 ```json
 {
-  "schema_version": 2,
+  "schema_version": 3,
+  "job_id": "{JOB_ID}",
   "created": "<ISO 8601 date from `date -u +%Y-%m-%dT%H:%M:%SZ`>",
   "git_hash": "<current HEAD hash from `git rev-parse HEAD`>",
   "dev_port": 3000,
@@ -432,7 +451,7 @@ Before finishing, capture the current git state and write `.claude/context/build
   "design_system_changes": false,
   "design_guidelines_path": ".claude/context/design-guidelines.md",
   "theme_name": "frost",
-  "contract_path": ".claude/context/build-contract.md",
+  "contract_path": "{JOB_DIR}/build-contract.md",
   "contract_criteria_status": {
     "C1": "met",
     "C2": "met",
@@ -452,12 +471,12 @@ Before finishing, capture the current git state and write `.claude/context/build
 
 **Self-assessment honesty rule**: do not rate confidence higher than your weakest area justifies. If `weakest_area` describes something that would be a hard rejection criterion (broken feature, missing state, layout break), confidence must be "low".
 
-After emitting the handoff, summarize what was written: "Wrote build contract (N criteria), handoff (confidence: X, weakest: Y), and progress tracker to `.claude/context/`."
+After emitting the handoff, summarize what was written: "Wrote build contract (N criteria), handoff (confidence: X, weakest: Y), and progress tracker to `.claude/context/jobs/{JOB_ID}/`."
 
-Then tell the user to run the review:
+Then tell the user to run the review with the job ID:
 
 ```
-/nuxt-frontend-review
+/nuxt-frontend-review {JOB_ID}
 ```
 
 **Skip the review for trivially verifiable changes** where ALL of these are true: single file changed, purely cosmetic (colors, spacing, copy), no new components/routes/interactions, no structural layout changes. For skipped reviews, still verify the dev server runs and curl the affected route.
