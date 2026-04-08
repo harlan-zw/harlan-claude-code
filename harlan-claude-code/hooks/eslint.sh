@@ -20,14 +20,30 @@ elif command -v eslint &>/dev/null; then
 fi
 [ -z "$ESLINT" ] && exit 0
 
-# run --fix with unused-imports disabled (don't auto-remove, code may be partial)
-# prefer-const disabled - let vars may be reassigned in code not yet written
-"$ESLINT" "$file_path" --fix \
-  --rule 'unused-imports/no-unused-imports: off' \
-  --rule 'unused-imports/no-unused-vars: off' \
-  --rule 'prefer-const: off' 2>&1 | grep -v "could not find plugin" || true
+# rules to soften during editing (code may be partial/incomplete)
+# unused-imports: don't auto-remove, code may reference them later
+# prefer-const: let vars may be reassigned in code not yet written
+# vue template rules: template may be structurally incomplete mid-edit
+PARTIAL_RULES=(
+  'unused-imports/no-unused-imports'
+  'unused-imports/no-unused-vars'
+  'prefer-const'
+  'vue/no-parsing-error'
+  'vue/valid-template-root'
+  'vue/no-multiple-template-root'
+  'vue/comment-directive'
+)
 
-# then report unused imports/vars as warnings only (no fix)
-"$ESLINT" "$file_path" \
-  --rule 'unused-imports/no-unused-imports: warn' \
-  --rule 'unused-imports/no-unused-vars: warn' 2>&1 | grep -v "could not find plugin" || true
+# build --rule flags: off for fix pass, warn for report pass
+FIX_FLAGS=()
+WARN_FLAGS=()
+for rule in "${PARTIAL_RULES[@]}"; do
+  FIX_FLAGS+=(--rule "$rule: off")
+  WARN_FLAGS+=(--rule "$rule: warn")
+done
+
+# run --fix with partial rules disabled
+"$ESLINT" "$file_path" --fix "${FIX_FLAGS[@]}" 2>&1 | grep -v "could not find plugin" || true
+
+# then report partial rules as warnings only (no fix)
+"$ESLINT" "$file_path" "${WARN_FLAGS[@]}" 2>&1 | grep -v "could not find plugin" || true
