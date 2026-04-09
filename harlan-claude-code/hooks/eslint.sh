@@ -24,6 +24,9 @@ fi
 # unused-imports: don't auto-remove, code may reference them later
 # prefer-const: let vars may be reassigned in code not yet written
 # vue template rules: template may be structurally incomplete mid-edit
+# import/first: misfires on Vue SFCs with two <script> blocks (one for
+#   exported types, one for setup) — autofix concatenates them and moves
+#   the setup imports above the exports, corrupting the file.
 PARTIAL_RULES=(
   'unused-imports/no-unused-imports'
   'unused-imports/no-unused-vars'
@@ -32,6 +35,7 @@ PARTIAL_RULES=(
   'vue/valid-template-root'
   'vue/no-multiple-template-root'
   'vue/comment-directive'
+  'import/first'
 )
 
 # build --rule flags: off for fix pass, warn for report pass
