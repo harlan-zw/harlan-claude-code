@@ -1,0 +1,31 @@
+{
+  "name": "@harlan-claude-code/ripast",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "ripast": "./cli.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@volar/language-service": "^2.4.28",
+    "@volar/typescript": "^2.4.28",
+    "@vue/compiler-sfc": "^3.5.13",
+    "@vue/language-core": "^3.2.7",
+    "@vue/language-service": "^3.2.7",
+    "citty": "^0.1.6",
+    "diff": "^8.0.2",
+    "magic-string": "^0.30.11",
+    "oxc-parser": "^0.106.0",
+    "oxc-walker": "^0.7.0",
+    "ts-morph": "^27.0.1",
+    "typescript": "^5.6.3",
+    "volar-service-typescript": "^0.0.70",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-uri": "^3.0.8"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
