@@ -93,7 +93,16 @@ Use `focus-visible` not `focus` — prevents showing ring on click, only on keyb
 
 ## Button Feedback
 
-### Press Effect
+Every pressable surface must respond to press within one frame. Missing press feedback is the single biggest "feels cheap" signal in a UI.
+
+Two valid press shapes — pick one per project and apply consistently. The theme file's `Motion` or `Key Patterns` line dictates which:
+
+- **Scale** (0.95–0.98) — feels like the surface compresses. Default for flat / glass / digital themes (frost, zen, neon, devtool). Anything larger than 0.95 reads as a bug.
+- **TranslateY 1px** — feels like the surface depresses into the page. Mandatory for tactile themes where scale would look wrong (clay, kinetic-paper, teenage-engineering, blueprint).
+
+Never mix both on the same element.
+
+### Scale Press
 ```css
 .press {
   transition: transform 100ms ease;
@@ -103,12 +112,61 @@ Use `focus-visible` not `focus` — prevents showing ring on click, only on keyb
 }
 ```
 
-### Haptic Press (translate down)
+### Translate Press (tactile themes)
 ```css
 .haptic:active {
   transform: translateY(1px);
 }
 ```
+
+### Asymmetric Press/Release
+
+When the press represents a deliberate commitment (hold-to-delete, long-press menu, scrub), make the press slow and linear so the user has time to decide, and the release fast and eased so the system responds immediately. Slow where the user is deciding; fast where the system is responding.
+
+```css
+.hold-button:active .fill {
+  transition: clip-path 2s linear;          /* deliberate, user is deciding */
+  clip-path: inset(0 0 0 0);
+}
+.hold-button .fill {
+  transition: clip-path 200ms ease-out;     /* snap back on release */
+  clip-path: inset(0 100% 0 0);
+}
+```
+
+---
+
+## Origin-Aware Popovers
+
+Popovers, dropdowns, tooltips, menus — any overlay anchored to a trigger — must scale in *from that trigger*, not from the centre of the overlay. The default `transform-origin: center` is almost always wrong here. Whether a single user notices is irrelevant; across a session the aggregate effect is the difference between "feels designed" and "feels assembled".
+
+**Modals are the exception.** Modals are not anchored to a trigger — they appear centred in the viewport — so they keep `transform-origin: center`.
+
+Reka UI exposes the trigger origin as a CSS variable. Use it:
+
+```css
+[data-reka-popper-content-wrapper] > * {
+  transform-origin: var(--reka-popper-transform-origin);
+}
+```
+
+For Nuxt UI's `UPopover`, `UTooltip`, `UDropdownMenu` — the underlying Reka primitive sets this variable; extend the existing `app.config.ts` slot styles rather than writing one-off classes.
+
+---
+
+## Tooltip Skip-Delay After First
+
+Tooltips should delay ~400ms before appearing so mousing across a toolbar doesn't light up every icon. But once one tooltip is open, the next one hovered should appear instantly with no animation. This is how real toolbars feel responsive without forcing the user to stop and wait between adjacent elements.
+
+Reka's `TooltipProvider` (and therefore `UTooltip`) handles this via `skip-delay-duration`:
+
+```vue
+<UApp :tooltip="{ delayDuration: 400, skipDelayDuration: 300 }">
+  <!-- skipDelay: within 300ms of closing one tooltip, the next opens instantly -->
+</UApp>
+```
+
+Set `skip-delay-duration` to around `delay-duration - 100ms`. Leaving it at the default (0) defeats the pattern.
 
 ---
 

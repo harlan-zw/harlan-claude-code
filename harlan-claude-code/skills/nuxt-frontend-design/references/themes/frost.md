@@ -1,3 +1,44 @@
+---
+name: Frost
+description: Premium dark glassmorphism with luminous purple-blue gradients bleeding through translucent glass panels
+colors:
+  primary: "#a855f7"
+  secondary: "#3b82f6"
+  accent: "#22d3ee"
+  neutral: "#0a0a0a"
+  surface: "#0f0f14"
+  elevated: "#14141e"
+typography:
+  sans:
+    fontFamily: Satoshi
+    fontSize: 1rem
+    lineHeight: 1.5
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 0.875rem
+rounded:
+  sm: 6px
+  md: 12px
+  lg: 16px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: 12px
+  button-primary-hover:
+    backgroundColor: "#b46cf9"
+  card-default:
+    backgroundColor: "#ffffff0d"
+    textColor: "#ffffffe6"
+    rounded: "{rounded.lg}"
+    padding: 24px
+  input-default:
+    backgroundColor: "#ffffff0d"
+    textColor: "#ffffffe6"
+    rounded: "{rounded.md}"
+---
+
 # Frost Theme
 
 Premium dark glassmorphism. Deep blacks with luminous purple-blue gradients bleeding through translucent glass panels.
@@ -7,6 +48,8 @@ Premium dark glassmorphism. Deep blacks with luminous purple-blue gradients blee
 **Mode**: Dark only
 **Fonts**: Satoshi (sans) + JetBrains Mono (code)
 **Icons**: `heroicons` outline — clean 1.5px strokes glow beautifully against dark glass
+**Principle**: luminous restraint over busy contrast — the glass does the work, decoration fights it
+**Motion**: 200-300ms with `ease-out-quart`; glow intensifies on hover rather than translating
 
 ---
 
@@ -84,6 +127,11 @@ export default defineNuxtConfig({
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
+/* Opacity-only animation is safe under reduced-motion, but honour the preference explicitly */
+@media (prefers-reduced-motion: reduce) {
+  .glow-pulse { animation: none; opacity: 0.75; }
+}
 ```
 
 ## App Config
@@ -124,7 +172,9 @@ export default defineAppConfig({
 })
 ```
 
-## Blur Reference
+## Key Patterns
+
+### Blur Levels
 
 | Component | Level |
 |-----------|-------|
@@ -134,7 +184,7 @@ export default defineAppConfig({
 | Nav | `backdrop-blur-lg` (16px) |
 | Overlays | `backdrop-blur-sm` (4px) |
 
-## Border Opacity
+### Border Opacity
 
 - Default: `border-white/8`
 - Hover: `border-white/12`

@@ -12,7 +12,9 @@ Tailwind CSS and Nuxt UI provide a complete token system. Your design system sho
 3. **Use `app.config.ts`** for component-level theming (slots, variants)
 4. **Only create custom `@theme` tokens** for things truly unique to your design (e.g., theme-specific gradients, glass effects, mesh backgrounds)
 
-Do NOT create `--shadow-soft`, `--radius-card`, `--color-surface` etc. — Tailwind has `shadow-sm/md/lg/xl`, `rounded-sm/md/lg/xl/2xl`, and Nuxt UI has `bg-default/muted/elevated`.
+Do NOT create generic duplicates like `--shadow-soft`, `--radius-card`, `--color-surface` — Tailwind has `shadow-sm/md/lg/xl`, `rounded-sm/md/lg/xl/2xl`, and Nuxt UI has `bg-default/muted/elevated`.
+
+**Theme signature tokens are allowed.** If a theme's identity depends on a distinctive shadow, radius, or surface style that Tailwind's defaults cannot express (e.g. `--shadow-brutal` for blueprint, `--shadow-clay` for clay, `--shadow-paper` for kinetic-paper, `--shadow-glass` for frost), define it. The rule forbids *generic* duplicates, not theme-specific voice.
 
 ---
 
@@ -77,11 +79,12 @@ Override Nuxt UI's `--ui-*` variables in `app/assets/css/main.css` to define you
   --ui-bg: #0a0a0a;
   --ui-text: rgba(255, 255, 255, 0.9);
   --ui-text-muted: rgba(255, 255, 255, 0.6);
-  /* Reduce body font weight in dark mode — light-on-dark text appears heavier */
 }
 ```
 
 These are the levers. Every Nuxt UI component reads from them — change here, change everywhere.
+
+See [polish/color.md](polish/color.md) for WCAG contrast minimums, dangerous combinations, and dark-mode body weight reduction (light-on-dark text appears heavier).
 
 ### Dark Mode Is Not Inverted Light Mode
 
@@ -128,7 +131,7 @@ Override Tailwind's font family tokens:
 | Roboto | Onest, Figtree, Urbanist |
 | Open Sans | Source Sans 3, Nunito Sans |
 
-See `nuxt-frontend-polish` typography reference for pairing rules, OpenType features, and fluid vs fixed type guidance.
+See [polish/typography.md](polish/typography.md) for pairing rules, OpenType features, and fluid vs fixed type guidance.
 
 ### Accessibility
 
@@ -173,7 +176,7 @@ export default defineNuxtConfig({
 
 **Rules**:
 - Pick ONE collection per project — mixing icon styles breaks cohesion
-- Match stroke weight to your typography weight (thin fonts → thin icons, bold fonts → bold icons)
+- Match stroke weight to your typography weight (thin fonts → thin icons, bold fonts → bold icons). Exception: themes may deliberately mismatch for effect — e.g. thin icons against medium-weight text read as *restrained* (zen, kinetic-paper). Intentional mismatch is a stylistic commitment, not a mistake.
 - Dark themes: prefer outline/line icons (they glow well). Light themes: fills and duotone work
 - Use the `duotone` variant from Phosphor or `solid` from Heroicons for filled states (active nav, selected items)
 - **Icons should be monochrome** — use `text-current` or inherit from parent. Only apply color to icons semantically (success/error/warning states, brand accent on hover). Random colorful icons look like a toy dashboard

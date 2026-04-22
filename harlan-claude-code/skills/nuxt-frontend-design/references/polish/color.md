@@ -2,6 +2,8 @@
 
 Intentional color systems that create cohesive, distinctive interfaces.
 
+For deriving new tones from existing tokens (`color-mix`, axis-by-axis OKLCH stepping), see [css-toolkit.md](css-toolkit.md). Use derivation before inventing a new swatch.
+
 ---
 
 ## Use OKLCH, Not HSL

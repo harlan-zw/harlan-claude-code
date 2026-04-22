@@ -1,3 +1,47 @@
+---
+name: DevTool
+description: Technical schematic aesthetic inspired by voidzero with grid backgrounds, dashed borders, monospace annotations. Information density over breathing room for developers reading schematics.
+colors:
+  primary: "#0a0a0a"
+  secondary: "#1a1a1a"
+  accent: "#888888"
+  neutral: "#ffffff"
+typography:
+  sans:
+    fontFamily: IBM Plex Sans
+    fontSize: 1rem
+    lineHeight: 1.5
+  mono:
+    fontFamily: IBM Plex Mono
+    fontSize: 0.875rem
+rounded:
+  sm: 4px
+  md: 4px
+  lg: 4px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: 12px
+    borderStyle: none
+  button-primary-hover:
+    backgroundColor: "{colors.secondary}"
+    transform: translateY(-1px)
+  button-outline:
+    backgroundColor: transparent
+    borderStyle: dashed
+    borderColor: "#d0d0d0"
+    textColor: "{colors.primary}"
+  card-default:
+    backgroundColor: "{colors.neutral}"
+    borderStyle: dashed
+    borderColor: "#d0d0d0"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    padding: 24px
+---
+
 # DevTool Theme
 
 Technical schematic aesthetic inspired by voidzero. Grid backgrounds, dashed borders, monospace annotations.
@@ -7,6 +51,8 @@ Technical schematic aesthetic inspired by voidzero. Grid backgrounds, dashed bor
 **Mode**: Light (with dark sections)
 **Fonts**: IBM Plex Mono (code/labels) + IBM Plex Sans (body)
 **Icons**: `lucide` — clean consistent 2px strokes match the schematic precision
+**Principle**: information density over breathing room — this is a tool for users who read the schematic
+**Motion**: 80-150ms `linear` or `ease-out` for hover and press — fast enough to read as instant. Drop animation entirely for high-frequency, keyboard-triggered actions (command palette toggle, tab switches, keyboard shortcut targets) per the frequency rule. Reserve longer motion (>200ms) for rare events only (first-run, celebrations).
 
 ---
 

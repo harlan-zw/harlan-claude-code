@@ -1,3 +1,46 @@
+---
+name: Kinetic Paper
+description: Tactile paper objects with real weight, texture, and craft-inspired motion. Stationery, letterpress, origami, and handmade aesthetics.
+colors:
+  primary: "#C53D2F"
+  secondary: "#3B5998"
+  neutral: "#2C2C2C"
+  paper-white: "#FEFDFB"
+  paper-cream: "#F8F4ED"
+  paper-ivory: "#F2EDE3"
+  paper-kraft: "#D4C5A9"
+  ink-charcoal: "#2C2C2C"
+  ink-sepia: "#5C4A32"
+typography:
+  display:
+    fontFamily: Fraunces
+    fontSize: 1.5rem
+    lineHeight: 1.3
+  sans:
+    fontFamily: IBM Plex Sans
+    fontSize: 1rem
+    lineHeight: 1.5
+rounded:
+  sm: 2px
+  md: 2px
+  lg: 2px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.paper-white}"
+    rounded: "{rounded.md}"
+    padding: 12px
+    shadow: "0 2px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)"
+  button-primary-hover:
+    transform: translateY(-4px)
+    shadow: "0 4px 8px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.08), 0 16px 48px rgba(0,0,0,0.06)"
+  card-default:
+    backgroundColor: "{colors.paper-white}"
+    rounded: "{rounded.md}"
+    padding: 24px
+    shadow: "0 2px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)"
+---
+
 # Kinetic Paper Theme
 
 Tactile paper objects with real weight, texture, and craft-inspired motion.
@@ -7,6 +50,8 @@ Tactile paper objects with real weight, texture, and craft-inspired motion.
 **Mode**: Light (warm cream)
 **Fonts**: Fraunces (serif display) + IBM Plex Sans (body)
 **Icons**: `phosphor` thin — delicate 1px strokes feel hand-drawn and craft-like
+**Principle**: craft movement over digital slickness — paper has weight, folds, and rest positions
+**Motion**: 300-500ms spring (`bounce: 0.25`); elements settle like paper coming to rest. Fold/unfold transitions with `clip-path` or `rotate3d` are in scope; simple fades are not.
 
 ---
 

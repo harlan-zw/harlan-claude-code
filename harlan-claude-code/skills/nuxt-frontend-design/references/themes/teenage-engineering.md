@@ -1,3 +1,49 @@
+---
+name: Teenage Engineering
+description: Industrial hardware aesthetic with functional mechanical design, exposed structure, orange accents, and screw indicators
+colors:
+  primary: "#ffc003"
+  secondary: "#1270b8"
+  accent: "#ce2021"
+  neutral: "#1a1a1a"
+  surface: "#f5f5f5"
+  elevated: "#e5e5e5"
+  success: "#1aa167"
+typography:
+  sans:
+    fontFamily: Space Mono
+    fontSize: 1rem
+    lineHeight: 1.5
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 0.875rem
+rounded:
+  sm: 2px
+  md: 4px
+  lg: 4px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#0f0e12"
+    rounded: "{rounded.sm}"
+    padding: 12px
+    border: "1px solid #d4a500"
+  button-primary-hover:
+    backgroundColor: "#e6b300"
+    boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
+  card-default:
+    backgroundColor: "#f5f5f5"
+    textColor: "#0f0e12"
+    rounded: "{rounded.md}"
+    padding: 24px
+    border: "1px solid #bdbdbd"
+  input-default:
+    backgroundColor: "#ffffff"
+    textColor: "#0f0e12"
+    rounded: "{rounded.sm}"
+    border: "1px solid #bdbdbd"
+---
+
 # Teenage Engineering Theme
 
 Industrial hardware aesthetic. Functional, mechanical, exposed structure with orange accents and screw indicators.
@@ -7,6 +53,8 @@ Industrial hardware aesthetic. Functional, mechanical, exposed structure with or
 **Mode**: Light
 **Fonts**: Space Mono (technical) + JetBrains Mono (code)
 **Icons**: `tabler` — thick mechanical strokes match the industrial hardware feel
+**Principle**: deliberate utility over smoothness — this is hardware, not software-pretending-to-be
+**Motion**: 100-150ms, near-stepped `linear`; click feedback is mechanical (`translateY(1px)`), no bounce, no spring. Think switch-flip, not UI-easing.
 
 ---
 

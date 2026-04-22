@@ -10,12 +10,20 @@ effort: max
 
 Full lifecycle frontend skill: setup, build, polish. Detects the right phase automatically.
 
+## Craft Principles
+
+These justify the pedantry in the rest of the skill. Hold them while working; cite them when the user questions a rule.
+
+- **Taste is trained, not innate.** Good defaults come from reverse-engineering interfaces that feel right, not from invention. Before building a pattern, recall the best version of it you have seen and borrow the invariants (timing, origin, easing, rhythm). Generic output is a sign you skipped this step.
+- **Unseen details compound.** No single user consciously notices that a popover scales from its trigger, that a tooltip skips its delay on the second hover, or that a button releases faster than it presses. In aggregate these decisions are the difference between "feels designed" and "feels assembled". Most of this skill's rules exist for this reason.
+- **Beauty is leverage.** In a world where every product works, the one that feels best wins the user. Polish is not decoration — it is the only thing still up for grabs when the feature set is commoditised.
+
 ## Project State
 
 !`if [ -f nuxt.config.ts ]; then echo "IS_NUXT=true"; else echo "IS_NUXT=false"; fi`
 !`bash -c 'F=""; if [ -f app.config.ts ]; then F="app.config.ts"; fi; if [ -f app/app.config.ts ]; then F="app/app.config.ts"; fi; if [ -n "$F" ] && grep -q "colors:" "$F" 2>/dev/null; then echo "HAS_COLORS=true"; else echo "HAS_COLORS=false"; fi'`
 !`bash -c 'for f in app/assets/css/main.css app/css/main.css app/css/global.css app/assets/css/global.css; do if [ -f "$f" ] && grep -q "@theme" "$f" 2>/dev/null; then echo "HAS_THEME=true"; exit 0; fi; done; echo "HAS_THEME=false"'`
-!`if [ -f .claude/context/design-guidelines.md ]; then echo "HAS_GUIDELINES=true"; else echo "HAS_GUIDELINES=false"; fi`
+!`if [ -f DESIGN.md ]; then echo "HAS_GUIDELINES=true"; else echo "HAS_GUIDELINES=false"; fi`
 !`bash -c 'OUT=$(ls -t .claude/context/jobs/ 2>/dev/null | head -10); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_JOBS"; fi'`
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then echo "LATEST_JOB=$JOB"; if [ -f ".claude/context/jobs/$JOB/build-handoff.json" ]; then echo "PRIOR_BUILD=true"; jq -r "\"PRIOR_BUILD_DATE=\" + (.created // \"unknown\")" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null; else echo "PRIOR_BUILD=false"; fi; else echo "PRIOR_BUILD=false"; fi'`
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-report.md" ]; then echo "PRIOR_REVIEW=true"; grep -m1 "^verdict:" ".claude/context/jobs/$JOB/review-report.md" 2>/dev/null; else echo "PRIOR_REVIEW=false"; fi'`
@@ -71,8 +79,8 @@ All job-specific artifacts go to `.claude/context/jobs/{JOB_ID}/`:
 - `build-progress.md`
 - `build-handoff.json`
 
-Design system artifacts remain shared at `.claude/context/`:
-- `design-guidelines.md`
+Design system artifacts live at the project root:
+- `DESIGN.md` (human + machine-readable source of truth; compatible with `@google/design.md` linter)
 
 Use `JOB_DIR=.claude/context/jobs/{JOB_ID}` throughout.
 
@@ -104,6 +112,54 @@ This file becomes the review skill's grading rubric. Skip this step only for sin
 
 ---
 
+## Content & Asset Rules
+
+Apply across Phase 2 and Phase 3. Review skill treats violations as hard rejects.
+
+### Every Element Earns Its Place
+
+One thousand no's for every yes. Do not pad designs with placeholder sections, dummy stats, filler copy, or decorative content to fill space. If a section feels empty, solve it with layout, composition, or scale, not invented content.
+
+**Ask before adding material.** If you think another section, page, stat block, or copy block would strengthen the design, ask the user first. Do not unilaterally add content the contract did not name.
+
+Watch specifically for "data slop": rows of stat counters, icon grids, logo bars, testimonial strips, feature bullets added reflexively rather than because the content demanded it.
+
+### AI Slop Ban List
+
+Hard rejections unless the user explicitly asked for them:
+
+- Aggressive gradient backgrounds (purple/blue hero gradients, full-page meshes)
+- Cards with a coloured left-border accent stripe
+- Illustrations drawn inline with SVG shapes (use a real asset or a labelled placeholder)
+- Emoji in UI copy unless the brand system registers emoji as a token
+- Generic stat blocks ("10M+ users, 99.9% uptime, 24/7 support")
+- Overused sans stacks: Inter, Roboto, Open Sans, Lato, Montserrat, Arial, any bare `system-ui` / `sans-serif` fallback as the only font
+- SaaS-landing cliché serifs (Fraunces, Playfair, DM Serif) used *without commitment* — i.e. paired with a generic sans for body copy as decoration only. If the theme genuinely commits to an editorial / paper-craft / literary aesthetic (e.g. kinetic-paper, flow), an editorial serif is correct. The ban targets "add a serif heading for personality" tokenism, not earnest type systems.
+
+### Placeholder Over Fake
+
+A labelled placeholder always beats a bad attempt at the real thing.
+
+- Missing hero image: a neutral block with `600×400 hero image` text, not a hand-drawn SVG mountain
+- Missing avatars: `https://api.dicebear.com/9.x/initials/svg?seed={name}` or `https://ui-avatars.com/api/?name={name}`
+- Missing product screenshots: solid block sized to the real aspect ratio with a short label
+- Missing logos: `https://logo.clearbit.com/{domain}` when the brand is real, otherwise a labelled box
+
+Never leave broken `<img>` tags or unstyled fallback boxes. Placeholders must look intentional.
+
+**Scope**: placeholders are for internal tools, dashboards, and prototypes. Landing/marketing pages should prefer real product demos, screenshots, and named logos per [pages/landing.md](references/pages/landing.md) "Show, Don't Tell" — a labelled grey box on a hero kills the sale. Fall back to placeholders only when real assets genuinely don't exist yet.
+
+### Minimum Scales
+
+Surface these in the build contract as testable criteria.
+
+- Body copy ≥ 16px; never below 14px
+- Mobile tap targets ≥ 44×44px (buttons, links, icon triggers, form controls)
+- Form input height ≥ 40px on desktop, ≥ 44px on mobile
+- Contrast: WCAG AA for all text against its background
+
+---
+
 ## Phase 1: Design System Setup
 
 Establish the visual foundation. Only needed when no design system exists or a new theme is requested.
@@ -121,7 +177,9 @@ Commit to a specific aesthetic direction that serves the content before coding. 
 5. **Component theming**: global overrides via `app.config.ts` slots/variants
 6. **Extended colors**: registering custom theme colors in `nuxt.config.ts`
 
-**Principle: Override, Don't Invent.** Always use Nuxt UI's existing design tokens (`bg-muted`, `text-default`, `--ui-bg`, `--ui-radius`, etc.) and Tailwind's built-in utilities (`shadow-md`, `rounded-xl`). Customize the design system by **overriding** these tokens in `app.config.ts` and `main.css`, not by creating new custom tokens. Only introduce a genuinely new `@theme` token when no existing Nuxt UI or Tailwind token covers the concept. If you find yourself naming a new token, first check whether an existing `--ui-*` variable or Tailwind utility already serves that purpose.
+**Principle: Override, Don't Invent.** Always use Nuxt UI's existing design tokens (`bg-muted`, `text-default`, `--ui-bg`, `--ui-radius`, etc.) and Tailwind's built-in utilities (`shadow-md`, `rounded-xl`). Customize by **overriding** these tokens in `app.config.ts` and `main.css`, not by creating generic duplicates. If you find yourself naming a new token, first check whether an existing `--ui-*` variable or Tailwind utility already serves that purpose.
+
+**Theme signature tokens are the exception**: when a theme's voice depends on a distinctive effect Tailwind can't express (e.g. `--shadow-brutal`, `--shadow-clay`, `--shadow-paper`, `--shadow-glass`, mesh/glow variables), define it. The ban targets *generic* duplicates (`--shadow-soft`, `--radius-card`), not theme-specific voice.
 
 ### References
 
@@ -134,29 +192,32 @@ Available themes: frost, clay, blueprint, nebula, zen, neon, teenage-engineering
 
 Read EXACTLY ONE theme file: `${CLAUDE_SKILL_DIR}/references/themes/{chosen-theme}.md`. Never read multiple theme files for comparison. If the user didn't specify a theme, default to `frost` for dark mode projects, `zen` for light mode. Only ask if the choice is genuinely ambiguous.
 
-### After Setup: Emit Design Guidelines
+### After Setup: Emit DESIGN.md
 
-**Always** emit a design guidelines file after writing `app.config.ts`, `main.css`, and `nuxt.config.ts`:
+**Always** emit `DESIGN.md` at the project root after writing `app.config.ts`, `main.css`, and `nuxt.config.ts`:
 
-1. Read the template: [templates/design-guidelines.md](templates/design-guidelines.md)
-2. Fill in every section based on the decisions you just made, **no placeholders**
-3. Write to `.claude/context/design-guidelines.md` in the target project
-4. Verify: `grep -c 'placeholder\|TODO\|{' .claude/context/design-guidelines.md` must return 0
+1. **Collision guard**: if `DESIGN.md` already exists at root, ask the user before overwriting. Offer to merge (preserve existing `## Design Decisions` section) or abort.
+2. Read the template: [templates/DESIGN.md](templates/DESIGN.md)
+3. **YAML front matter**: the chosen theme file already has a DESIGN.md-compatible YAML block at the top. Copy that block as the starting point, then apply any user-specific customisations (brand name, swapped primary hex, additional registered colours, extra component surfaces). Prefer token refs (`{colors.primary}`, `{rounded.md}`) over restating hex/px values so the file has one source of truth.
+4. **Prose sections**: fill every section below the front matter based on the decisions you just made, **no placeholders**.
+5. Write to `DESIGN.md` at the project root.
+6. **Verify placeholders removed**: `grep -cE '\{\{|TODO|placeholder' DESIGN.md` must return 0. (Matches `{{...}}` placeholders only; single-brace `{colors.primary}` token refs are legitimate and must remain.)
+7. **Verify tokens lint**: `npx --yes @google/design.md lint DESIGN.md 2>/dev/null | jq -r '.summary.errors'` should return `0`. If the linter crashes (`raw.match is not a function`) because a component prop holds a float or `rgba()`, quote floats and convert `rgba()` to 8-digit hex in component properties. Contrast warnings on button-primary are informational at this stage; if the theme's signature colour intentionally trades 4.5:1 for aesthetic, document the exception under `## Design Decisions`.
 
-If modifying an existing design system, **update** the existing guidelines file.
+If modifying an existing design system, **update** `DESIGN.md` in place.
 
 ### Setup Recovery
 
 If Phase 1 fails mid-setup (build error, malformed config):
 1. Do NOT continue to Phase 2
 2. Read the error output and fix the config issue
-3. Verify all three indicators pass: `colors:` in app.config.ts, `@theme` in main.css, design-guidelines.md exists with no placeholders
-4. Never emit a design-guidelines.md with unfilled template sections
+3. Verify all three indicators pass: `colors:` in app.config.ts, `@theme` in main.css, `DESIGN.md` exists with no placeholders
+4. Never emit a `DESIGN.md` with unfilled template sections
 
 ### Setup Gotchas
 
 - **Font selection**: avoid the top 5 most common web fonts (Inter, Roboto, Open Sans, Lato, Montserrat) and system-ui. Choose fonts that reinforce the design principle.
-- **Button visibility**: Buttons MUST have visible backgrounds. Set `colors.primary` + `button.defaultVariants.variant: 'solid'` in `app.config.ts`.
+- **Button visibility**: Primary CTAs MUST have visible backgrounds. Set `colors.primary` + `button.defaultVariants.variant: 'solid'` in `app.config.ts`. Secondary actions (icon triggers, overflow menus, table row actions) can use `ghost` or `outline` — see [components/feedback.md](references/components/feedback.md) for patterns.
 - **No fake UI**: If it looks interactive, wire it up. Prefer realistic placeholder content (avatar services like ui-avatars.com) over empty or broken images.
 
 ---
@@ -178,7 +239,7 @@ If `{JOB_DIR}/build-progress.md` exists but `{JOB_DIR}/build-handoff.json` does 
 Read these files if not already in context from Phase 1:
 
 ```
-.claude/context/design-guidelines.md  -> aesthetic intent, component rules, avoid list, custom utilities
+DESIGN.md                             -> aesthetic intent, component rules, avoid list, custom utilities
 app/assets/css/main.css               -> @theme tokens, --ui-* overrides, custom classes
 app.config.ts                         -> colors, component theme overrides, defaultVariants
 nuxt.config.ts                        -> fonts, colorMode, ui.theme.colors
@@ -198,17 +259,37 @@ Load ONLY the reference matching what you're building. Do not load more than one
 | Data tables | [components/tables.md](references/components/tables.md) |
 | Navigation | [components/navigation.md](references/components/navigation.md) |
 | Feedback / overlays | [components/feedback.md](references/components/feedback.md) |
+| Stat cards, sparklines, empty states, typed toasts | [library.md](references/library.md) |
+
+**Before building stat cards, sparklines, or empty states from scratch**, check [references/library.md](references/library.md) — it ships copy-paste primitives (`UiStat`, `UiStats`, `UiSparkline`, `UiTrend`, `UiNoData`, `UiSkeleton`, `useAppToast`) already sanitized for drop-in use in any Nuxt UI v4 project.
+
+### When The User Asks For Variations
+
+If the contract asks for 2+ options of the same page/component, vary across concrete dimensions rather than producing near-duplicates. Pick at least three of:
+
+- **Scale**: hero type at 48px vs 96px vs 144px
+- **Fill vs outline**: solid surfaces vs bordered/ghost treatments
+- **Layout structure**: stacked vs split vs asymmetric grid
+- **Visual rhythm**: uniform cards vs feature + supporting mix
+- **Type treatment**: display serif vs utility sans, tight vs wide tracking
+- **Texture and layering**: flat vs shadowed vs offset/overlapping
+- **Density**: airy (large padding, few elements per row) vs compact
+
+Start the first variation by-the-book (matches existing patterns), then escalate: each successive variation should push further on one or two axes. Do not ship three variations that only differ in accent colour — that is the same design three times.
+
+Expose variation via route (`/pages/index-a.vue`, `/pages/index-b.vue`) or a `?variant=` query param with `v-if` blocks, so the user can A/B them in one tab.
 
 ### Build Gotchas
+
+Framework-specific traps that won't be obvious from grep:
 
 - **v4 component renames**: `ButtonGroup` -> `UFieldGroup`, `PageMarquee` -> `UMarquee`. Old names silently render nothing.
 - **`UPageHero` needs a parent section**: wrap in `UPageSection` or a max-width container.
 - **Form validation timing**: `UForm` with Zod validates on blur by default. Set `validate-on="input"` for inline.
 - **`UTable` empty state**: without an explicit `empty` slot, an empty table shows nothing.
-- **Dark mode**: semantic tokens adapt automatically. Hardcoded `bg-white` or `text-black` breaks dark mode.
-- **Error handling**: every async operation (data fetch, form submit, API call) must have both loading AND error states. Missing error handling is a hard rejection in review.
-- **Z-index and overflow**: elements hidden by overflow or z-index stacking are a hard rejection. Test overlays, dropdowns, and sticky headers.
-- **SSR content**: pages must render meaningful content server-side. Wrap client-only animations in `ClientOnly`, not entire page sections.
+- **SSR boundary**: wrap client-only animations in `ClientOnly`, not entire page sections.
+
+Review's hard rejection list (missing error states, invisible content, dark mode breaks, hardcoded colors, layout breaks) is the authoritative rubric; see `/nuxt-frontend-review`. The Content & Asset Rules section above covers filler/AI slop/placeholders/minimum scales.
 
 ---
 
@@ -236,19 +317,15 @@ Check that the design system is complete. Missing tokens cause inconsistency dow
 
 **If tokens are missing**: fix them first.
 
+### Observe Before Changing
+
+Polish modifies an existing voice. Before touching anything, read 2-3 key `.vue` files and note out loud what the current interface is saying: copy tone, shadow/card treatment, density, hover and focus states, animation style, rhythm between sections. The goal is to match and elevate that vocabulary, not replace it. If you cannot describe the existing voice in one sentence, you are not ready to polish.
+
 ### Audit Consistency
 
-Scan `.vue` files for violations:
+Scan `.vue` files for violations using review's mechanical checks as the authoritative list (hardcoded hex/rgb, `slate-`/`gray-`/`zinc-`/`stone-` except the configured neutral, `bg-white`/`text-black`, banned font families, custom `@theme` tokens that duplicate `--ui-*`). See `harlan-claude-code:nuxt-frontend-review` Step 3 "Evaluation rubric: mechanical checks" for the grep patterns. Any violation found here must be fixed before handoff — review will re-grade the same patterns and reject on hits.
 
-| Violation | Fix |
-|-----------|-----|
-| Hardcoded colors (`bg-slate-100`) | -> semantic tokens (`bg-muted`) |
-| Inconsistent shadows/radii | -> pick one per component type via `app.config.ts` |
-| Banned fonts | -> project's `--font-sans` / `--font-display` |
-| Mixed spacing | -> consistent rhythm |
-| Inline styles | -> Tailwind class or semantic token |
-| Raw HTML elements | -> Nuxt UI components |
-| Guideline violations | -> follow documented constraints |
+Beyond the mechanical list, also watch for: inconsistent shadow/radius choices across similar components (pick one per component type via `app.config.ts`), inline `style=` attributes, raw HTML where a Nuxt UI component exists, and any rule documented in `DESIGN.md` the implementation contradicts.
 
 ### Audit Confirmation
 
@@ -270,10 +347,10 @@ Aesthetic observations (need your input):
 **Rules:**
 - **Token/consistency violations** (hardcoded colors, wrong fonts, broken dark mode): present as "will fix" since these are objectively wrong per the design system
 - **Aesthetic judgments** (sizing, hierarchy, rhythm, visual weight): present as observations requiring user input. Never assume these are problems.
-- **Already decided**: before presenting, read `## Design Decisions` in `.claude/context/design-guidelines.md`. Any observation already covered by an existing decision is settled. Do not re-ask. Only present NEW aesthetic observations the user hasn't ruled on yet. If all aesthetic observations are already covered, skip straight to fixing token issues and then Elevate.
+- **Already decided**: before presenting, read `## Design Decisions` in `DESIGN.md`. Any observation already covered by an existing decision is settled. Do not re-ask. Only present NEW aesthetic observations the user hasn't ruled on yet. If all aesthetic observations are already covered, skip straight to fixing token issues and then Elevate.
 - Wait for user response before proceeding. The user will mark each aesthetic item as "intentional" or "fix".
 
-**After confirmation**, update `.claude/context/design-guidelines.md`:
+**After confirmation**, update `DESIGN.md`:
 1. Add new "intentional" choices to `## Design Decisions` (append, don't duplicate existing entries)
 2. Remove any stale entries in `## Design Decisions` that the user just marked as "fix" (they've changed their mind)
 3. If no `## Design Decisions` section exists yet, create it
@@ -301,66 +378,22 @@ Only after foundation and consistency are solid AND audit confirmation is comple
 | Colors dull or inconsistent | [polish/color.md](references/polish/color.md) |
 | Not responsive enough | [polish/responsive.md](references/polish/responsive.md) |
 | Copy unclear or generic | [polish/ux-writing.md](references/polish/ux-writing.md) |
+| Reaching for JS/custom tokens for native CSS work | [polish/css-toolkit.md](references/polish/css-toolkit.md) |
 
 When asked to "make it better" or "polish everything":
 1. Read `interactions.md` + `motion.md` + `color.md` (highest impact areas)
 2. Only read `spatial.md`, `typography.md`, `responsive.md`, `ux-writing.md` if the initial audit reveals issues in those areas
+3. Consult `css-toolkit.md` whenever you find yourself about to invent a new token, add a JS scroll observer, or hand-code a popover — the native CSS equivalent is usually one line
 
-### Visual Verification Loop (if DEV_BROWSER=true)
+### Verify the Route Still Loads
 
-Polish is visual by definition. When dev-browser is available, verify changes instead of guessing.
-
-**Before polishing**: capture a baseline screenshot of affected pages.
-
-```bash
-dev-browser --headless <<'SCRIPT'
-const page = await browser.getPage("baseline");
-await page.goto("http://localhost:{port}/{route}");
-await page.waitForLoadState("networkidle");
-const screenshot = await page.screenshot({ fullPage: true });
-await saveScreenshot(screenshot, "{route}-before-polish");
-SCRIPT
-```
-
-**After each polish area** (motion, interactions, responsive, color): re-capture and compare.
+After polish changes, confirm the dev server still serves the affected route without errors:
 
 ```bash
-dev-browser --headless <<'SCRIPT'
-const page = await browser.getPage("verify");
-await page.goto("http://localhost:{port}/{route}");
-await page.waitForLoadState("networkidle");
-
-// Verify motion: trigger entrance animations by scrolling
-await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
-await page.waitForTimeout(1000);
-await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" }));
-await page.waitForTimeout(1000);
-
-// Verify interactions: hover key elements
-const buttons = await page.locator("button:visible").all();
-for (const btn of buttons.slice(0, 5)) {
-  await btn.hover();
-  await page.waitForTimeout(200);
-}
-
-// Verify responsive: check at mobile breakpoint
-await page.setViewportSize({ width: 375, height: 812 });
-await page.waitForTimeout(500);
-const mobile = await page.screenshot({ fullPage: true });
-await saveScreenshot(mobile, "{route}-after-polish-mobile");
-
-// Reset to desktop
-await page.setViewportSize({ width: 1280, height: 720 });
-const desktop = await page.screenshot({ fullPage: true });
-await saveScreenshot(desktop, "{route}-after-polish-desktop");
-
-console.log(JSON.stringify({ verified: true }));
-SCRIPT
+curl -sf "http://localhost:{port}/{route}" > /dev/null && echo OK || echo FAIL
 ```
 
-This is mechanical verification only. Do not use screenshots for qualitative self-assessment ("this looks good"). Use them to confirm: animations trigger, hover states change visually, responsive layout holds at 375px. If something breaks, fix it before continuing.
-
-If dev-browser is not installed, skip this step.
+That is all the self-verification needed at this stage. Full visual + interaction verification is the review skill's job — don't duplicate it here. When handing off, tell the user to run `/nuxt-frontend-review {JOB_ID}`.
 
 ### Polish Rules
 
@@ -393,39 +426,7 @@ For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use
 For builds spanning multiple pages or phases:
 
 1. **Checkpoint after each page**: write `{JOB_DIR}/build-progress.md` BEFORE starting the next page. Use `## {Page Name}` as the heading for each entry (this format is counted by the injected `PAGES_BUILT`). List files created/modified, contract criteria satisfied (by ID), and criteria remaining. You cannot open a new page file until this is written.
-2. **Browser sanity check** (if DEV_BROWSER=true): after writing the checkpoint, run a quick mechanical verification. This is NOT qualitative self-evaluation, only pass/fail structural checks. Fix any failures before proceeding to the next page.
-
-    ```bash
-    dev-browser --headless <<'SCRIPT'
-    const page = await browser.getPage("sanity");
-    await page.goto("http://localhost:{port}/{route}");
-    await page.waitForLoadState("networkidle");
-
-    const errors = [];
-    page.on("console", msg => { if (msg.type() === "error") errors.push(msg.text()); });
-
-    const html = await page.content();
-    const hasNuxtError = html.includes("nuxt-error");
-    const hasContent = (await page.locator("#__nuxt").all()).length > 0;
-
-    // Quick responsive check
-    await page.setViewportSize({ width: 375, height: 812 });
-    await page.waitForTimeout(500);
-    const overflows = await page.evaluate(() =>
-      document.documentElement.scrollWidth > window.innerWidth
-    );
-
-    const screenshot = await page.screenshot({ fullPage: true });
-    await saveScreenshot(screenshot, "{page}-sanity");
-
-    console.log(JSON.stringify({ hasNuxtError, hasContent, consoleErrors: errors, mobileOverflows: overflows }));
-    SCRIPT
-    ```
-
-    **Pass criteria**: `hasContent: true`, `hasNuxtError: false`, zero console errors, `mobileOverflows: false`. If any fail, fix the issue before continuing. Log results to `build-progress.md` under the page heading as `Browser check: PASS` or `Browser check: FAIL (reason)`.
-
-    If dev-browser is not installed, skip this step. Do not attempt qualitative assessment of your own visual output.
-
+2. **Route smoke test**: after writing the checkpoint, curl the affected route to confirm no build break. `curl -sf "http://localhost:{port}/{route}" > /dev/null && echo OK || echo FAIL`. If FAIL, read the dev server logs and fix before proceeding. Full browser verification belongs to review; don't attempt qualitative self-assessment.
 3. **Intermediate review**: after the first page in a multi-page build, suggest: "Page 1 complete. For best results, run `/nuxt-frontend-review {JOB_ID}` now before continuing to page 2." This catches systemic issues (wrong tokens, broken shared components) before they propagate.
 4. **Cross-page consistency check**: before starting page N+1, re-read the files from page N. Confirm: same number of states handled, same level of interaction detail, same use of design tokens. If page N+1 scope feels smaller than page N, that is context degradation. Stop and emit the handoff.
 5. **Scope gate**: the injected `PAGES_BUILT` count is your source of truth.
@@ -440,7 +441,7 @@ Before finishing, capture the current git state and write `{JOB_DIR}/build-hando
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "job_id": "{JOB_ID}",
   "created": "<ISO 8601 date from `date -u +%Y-%m-%dT%H:%M:%SZ`>",
   "git_hash": "<current HEAD hash from `git rev-parse HEAD`>",
@@ -449,7 +450,6 @@ Before finishing, capture the current git state and write `{JOB_DIR}/build-hando
   "components_created": ["app/components/StatsCard.vue"],
   "routes_to_test": ["/", "/dashboard"],
   "design_system_changes": false,
-  "design_guidelines_path": ".claude/context/design-guidelines.md",
   "theme_name": "frost",
   "contract_path": "{JOB_DIR}/build-contract.md",
   "contract_criteria_status": {

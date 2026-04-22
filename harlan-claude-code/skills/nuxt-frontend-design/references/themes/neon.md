@@ -1,3 +1,50 @@
+---
+name: Neon
+description: Cyberpunk neon with glowing accents on deep black. Electric energy, high contrast, digital edge.
+colors:
+  primary: "#00FFFF"
+  secondary: "#FF00FF"
+  neutral: "#0a0a0a"
+typography:
+  display:
+    fontFamily: Syne
+    fontSize: 1rem
+  mono:
+    fontFamily: Fira Code
+    fontSize: 1rem
+  sans:
+    fontFamily: Fira Code
+    fontSize: 1rem
+rounded:
+  sm: 0px
+  md: 0px
+  lg: 0px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#000000"
+    rounded: "{rounded.md}"
+    padding: 12px
+  button-primary-hover:
+    boxShadow: "0 0 20px #00FFFF4d"
+  button-outline:
+    borderColor: "{colors.primary}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    borderWidth: 1px
+  card-default:
+    backgroundColor: "#111111"
+    borderColor: "#ffffff1a"
+    borderWidth: 1px
+    rounded: "{rounded.lg}"
+    padding: 24px
+  card-outline:
+    backgroundColor: "#111111"
+    borderColor: "{colors.primary}"
+    borderWidth: 1px
+    boxShadow: "0 0 20px #00FFFF1a"
+---
+
 # Neon Theme
 
 Cyberpunk neon with glowing accents on deep black. Electric energy, high contrast, digital edge.
@@ -7,6 +54,8 @@ Cyberpunk neon with glowing accents on deep black. Electric energy, high contras
 **Mode**: Dark only
 **Fonts**: Syne (display) + Fira Code (mono/body)
 **Icons**: `solar` bold — sharp geometric fills with neon glow via `drop-shadow` match the cyberpunk edge
+**Principle**: saturated energy over subtlety — nothing whispers, everything signals
+**Motion**: 120-180ms snappy `ease-out`; glow pulses and flicker are acceptable here (one of the few themes where they fit)
 
 ---
 
@@ -81,6 +130,11 @@ export default defineNuxtConfig({
   40% { transform: translate(2px, -2px); }
   60% { transform: translate(-1px, -1px); }
   80% { transform: translate(1px, 1px); }
+}
+
+/* Flicker and glitch are classic motion-sickness triggers — disable for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .neon-flicker, .glitch { animation: none; }
 }
 ```
 

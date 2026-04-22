@@ -1,3 +1,51 @@
+---
+name: Blueprint
+description: Neo-brutalist with thick borders, stark contrast, and hard offset shadows. Raw, honest, structural.
+colors:
+  primary: "#FFD600"
+  secondary: "#00FF94"
+  accent: "#0066FF"
+  error: "#FF3B3B"
+  neutral: "#FFFDF7"
+typography:
+  heading:
+    fontFamily: Archivo Black
+    fontSize: 1rem
+    lineHeight: 1.2
+  body:
+    fontFamily: Outfit
+    fontSize: 1rem
+    lineHeight: 1.5
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 0.875rem
+rounded:
+  sm: 0
+  md: 0
+  lg: 0
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#000000"
+    border: "3px solid black"
+    padding: 12px
+  button-primary-hover:
+    boxShadow: "6px 6px 0 black"
+    transform: "translateY(-2px)"
+  button-primary-active:
+    boxShadow: "2px 2px 0 black"
+    transform: "translateY(0)"
+  card-default:
+    backgroundColor: "#FFFFFF"
+    border: "3px solid black"
+    boxShadow: "4px 4px 0 black"
+    padding: 24px
+  badge-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#000000"
+    border: "2px solid black"
+---
+
 # Blueprint Theme
 
 Neo-brutalist with thick borders, stark contrast, and hard offset shadows. Raw, honest, structural.
@@ -7,6 +55,8 @@ Neo-brutalist with thick borders, stark contrast, and hard offset shadows. Raw, 
 **Mode**: Light (cream background)
 **Fonts**: Archivo Black (headings) + Outfit (body) + JetBrains Mono (code)
 **Icons**: `tabler` — thick 2px rounded strokes match the bold, structural weight
+**Principle**: honest structure over softness — every element announces what it is
+**Motion**: 150-200ms with `linear` or minimal `ease-out`. No springs, no bounce, no fades — movement is abrupt and mechanical because polish would undercut the brutalist thesis.
 
 ---
 

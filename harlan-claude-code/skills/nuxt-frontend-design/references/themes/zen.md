@@ -1,3 +1,73 @@
+---
+name: Zen
+description: Japanese minimalism with generous negative space, earth tones, and contemplative typography. Wabi-sabi sensibility meets kinetic serif typography with deliberate, slow motion.
+colors:
+  primary: "#2C2C2C"
+  accent: "#C53D2F"
+  cream: "#FAF7F2"
+  surface: "#F5F0E8"
+  sand: "#D4C5A9"
+  moss: "#7A8B69"
+  muted: "#8A8A8A"
+typography:
+  display:
+    fontFamily: Crimson Pro
+    fontSize: 2.5rem
+    fontWeight: 400
+    lineHeight: 1.2
+  sans:
+    fontFamily: IBM Plex Sans
+    fontSize: 1rem
+    fontWeight: 400
+    lineHeight: 1.6
+rounded:
+  sm: 2px
+  md: 4px
+  lg: 8px
+spacing:
+  ma-sm: 24px
+  ma-md: 48px
+  ma-lg: 80px
+  ma-xl: 128px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.cream}"
+    rounded: "{rounded.sm}"
+    padding: 12px 24px
+  button-primary-hover:
+    backgroundColor: "{colors.primary}"
+    boxShadow: 0 4px 12px rgba(44, 44, 44, 0.08)
+    transform: translateY(-2px)
+  button-outline:
+    backgroundColor: transparent
+    borderColor: "{colors.primary}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.sm}"
+    padding: 12px 24px
+  button-outline-hover:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.cream}"
+  card-default:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.sm}"
+    padding: 48px
+    boxShadow: 0 4px 12px rgba(44, 44, 44, 0.08)
+  card-outline:
+    backgroundColor: transparent
+    borderColor: "{colors.sand}"
+    rounded: "{rounded.sm}"
+    padding: 48px
+  input-default:
+    backgroundColor: transparent
+    borderColor: transparent
+    borderBottomColor: "{colors.sand}"
+    rounded: 0px
+    padding: 12px 0px
+  input-focus:
+    borderBottomColor: "{colors.primary}"
+---
+
 # Zen Theme
 
 Japanese minimalism with generous negative space, earth tones, and contemplative typography.
@@ -7,6 +77,8 @@ Japanese minimalism with generous negative space, earth tones, and contemplative
 **Mode**: Light
 **Fonts**: Crimson Pro (serif display) + IBM Plex Sans (body)
 **Icons**: `lucide` — thin 2px strokes match the restrained, minimal aesthetic
+**Principle**: contemplation over urgency — space and time are design elements
+**Motion**: 400-600ms with `ease-zen` (gentle); transitions are deliberate, never snappy. No bounce.
 
 ---
 

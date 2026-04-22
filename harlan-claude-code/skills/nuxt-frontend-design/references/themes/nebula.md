@@ -1,3 +1,46 @@
+---
+name: Nebula
+description: Aurora gradient mesh with cosmic depth. Cyan-violet gradients drifting through glass panels on void-black.
+colors:
+  primary: "#00DFD8"
+  secondary: "#8B5CF6"
+  accent: "#3B82F6"
+  neutral: "#0A0A0F"
+  surface: "#12121A"
+  elevated: "#1A1A24"
+typography:
+  sans:
+    fontFamily: Plus Jakarta Sans
+    fontSize: 1rem
+    lineHeight: 1.5
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 0.875rem
+rounded:
+  sm: 6px
+  md: 12px
+  lg: 16px
+components:
+  button-primary:
+    backgroundColor: "linear-gradient(to right, #00DFD8, #3B82F6)"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: 12px
+  button-primary-hover:
+    boxShadow: "0 0 30px rgba(0, 223, 216, 0.4)"
+  card-default:
+    backgroundColor: "#ffffff0d"
+    textColor: "#ffffffe6"
+    rounded: "{rounded.lg}"
+    padding: 24px
+    backdropFilter: blur(12px)
+  input-default:
+    backgroundColor: "#ffffff0d"
+    textColor: "#ffffffe6"
+    rounded: "{rounded.md}"
+    backdropFilter: blur(12px)
+---
+
 # Nebula Theme
 
 Aurora gradient mesh with cosmic depth. Cyan-violet gradients drifting through glass panels on void-black.
@@ -7,6 +50,8 @@ Aurora gradient mesh with cosmic depth. Cyan-violet gradients drifting through g
 **Mode**: Dark only
 **Fonts**: Plus Jakarta Sans (body) + JetBrains Mono (code)
 **Icons**: `solar` linear — geometric 1.5px lines feel modern and sharp against cosmic gradients
+**Principle**: atmospheric depth over literal clarity — the gradient mesh is the subject, content floats in it
+**Motion**: 400-800ms slow `ease-in-out`; parallax and drift dominate, state changes crossfade rather than snap
 
 ---
 
@@ -72,6 +117,11 @@ export default defineNuxtConfig({
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   33% { transform: translate(10px, -10px) rotate(1deg); }
   66% { transform: translate(-5px, 5px) rotate(-1deg); }
+}
+
+/* Drift is spatial — must be disabled for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-drift { animation: none; }
 }
 
 .text-gradient-nebula {

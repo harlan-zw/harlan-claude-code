@@ -68,6 +68,8 @@ Never show an empty table. Use `UEmpty`:
 </template>
 ```
 
+For filtered / searched tables where "reset filters" is the useful action, prefer [`UiNoData`](../../templates/components/UiNoData.vue) with an action preset — see [library.md](../library.md).
+
 ---
 
 ## Sortable Columns
@@ -94,6 +96,8 @@ const columns = [
 ```vue
 <UTable :columns="columns" :rows="projects" :loading="pending" />
 ```
+
+For row-level skeleton placeholders (e.g. inside a custom cell renderer or a non-table list) use [`UiSkeleton`](../../templates/components/UiSkeleton.vue) — deterministic widths via seeded pseudo-random, so SSR + client render identically. See [library.md](../library.md).
 
 ---
 

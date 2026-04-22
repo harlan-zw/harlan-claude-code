@@ -1,3 +1,46 @@
+---
+name: Clay
+description: Plump, playful claymorphism with soft pastels and sculpted shadows. Tactile warmth via triple-layer shadow system and springy interactions.
+colors:
+  primary: "#d6a2ff"
+  secondary: "#a7f3d0"
+  accent: "#fed7aa"
+  neutral: "#78716c"
+  surface: "#ffffff"
+  elevated: "#faf8f5"
+  tertiary: "#bae6fd"
+typography:
+  display:
+    fontFamily: Quicksand
+    fontSize: 1.5rem
+    lineHeight: 1.3
+  sans:
+    fontFamily: Nunito
+    fontSize: 1rem
+    lineHeight: 1.5
+rounded:
+  sm: 1rem
+  md: 1.5rem
+  lg: 2rem
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#1f2937"
+    rounded: "{rounded.md}"
+    padding: 12px 24px
+    shadow: "0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.05), 0 20px 40px rgba(0, 0, 0, 0.03)"
+  button-primary-hover:
+    shadow: "0 8px 12px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.06), 0 32px 64px rgba(0, 0, 0, 0.04)"
+  button-primary-active:
+    shadow: "0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04), inset 0 2px 4px rgba(0, 0, 0, 0.06)"
+    transform: translateY(2px)
+  card-default:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    shadow: "0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.05), 0 20px 40px rgba(0, 0, 0, 0.03)"
+    padding: 24px
+---
+
 # Clay Theme
 
 Plump, playful claymorphism with soft pastels and sculpted shadows. Like touching toy-like 3D objects.
@@ -7,6 +50,8 @@ Plump, playful claymorphism with soft pastels and sculpted shadows. Like touchin
 **Mode**: Light
 **Fonts**: Quicksand (display) + Nunito (body)
 **Icons**: `phosphor` duotone — soft two-tone fills feel playful and rounded like the clay aesthetic
+**Principle**: tactile warmth over minimalism — soft depth invites touching
+**Motion**: 300-400ms springy (`bounce: 0.2-0.25`); buttons press *down* with `translateY(1px)`, not scale
 
 ---
 

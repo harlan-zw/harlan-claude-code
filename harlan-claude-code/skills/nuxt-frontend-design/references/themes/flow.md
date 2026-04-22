@@ -1,3 +1,40 @@
+---
+name: Flow
+description: Liquid organic shapes with soft curves, ocean colors, and scrollytelling depth. Water-inspired design with continuous state morphing.
+colors:
+  primary: "#1a8fb5"
+  secondary: "#ff6b5a"
+  accent: "#ff6b5a"
+  neutral: "#0a3d4f"
+typography:
+  sans:
+    fontFamily: Manrope
+    fontSize: 1rem
+    lineHeight: 1.5
+  serif:
+    fontFamily: Playfair Display
+    fontSize: 1.5rem
+    lineHeight: 1.6
+rounded:
+  sm: 12px
+  md: 24px
+  lg: 40px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "#ffffff"
+    rounded: "{rounded.md}"
+    padding: 12px 24px
+  button-primary-hover:
+    backgroundColor: "#0d5f7a"
+  card-default:
+    backgroundColor: "#faf8f3"
+    textColor: "{colors.neutral}"
+    rounded: "{rounded.lg}"
+    padding: 24px
+    boxShadow: "0 4px 20px rgba(26, 143, 181, 0.08)"
+---
+
 # Flow Theme
 
 Liquid organic shapes with soft curves, ocean colors, and scrollytelling depth.
@@ -7,6 +44,8 @@ Liquid organic shapes with soft curves, ocean colors, and scrollytelling depth.
 **Mode**: Light
 **Fonts**: Playfair Display (serif display) + Manrope (body)
 **Icons**: `mingcute` — rounded 2px corners feel organic and warm like water curves
+**Principle**: continuity over separation — states morph, they don't swap
+**Motion**: 500-800ms `ease-in-out`; shape morphs and flowing gradients dominate. Use view transitions and `clip-path` for state changes rather than opacity crossfades.
 
 ---
 
@@ -79,6 +118,10 @@ export default defineNuxtConfig({
   50% { border-radius: 60% 40% 30% 70% / 50% 60% 40% 60%; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+}
+
 /* Wave divider */
 .wave-divider {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,60 C200,120 400,0 600,60 C800,120 1000,0 1200,60 V120 H0 Z' fill='%23f0f9ff'/%3E%3C/svg%3E");
@@ -96,7 +139,7 @@ export default defineAppConfig({
     colors: { primary: 'sky', secondary: 'orange', neutral: 'stone' },
     button: {
       slots: { base: 'rounded-blob font-medium transition-all duration-300' },
-      defaultVariants: { variant: 'soft' }
+      defaultVariants: { variant: 'solid' }
     },
     card: {
       slots: { root: 'rounded-blob-lg overflow-hidden shadow-soft' },

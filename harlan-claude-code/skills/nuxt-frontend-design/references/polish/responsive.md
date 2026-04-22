@@ -16,12 +16,14 @@ In Tailwind, unprefixed classes are mobile; `sm:`, `md:`, `lg:` add complexity u
 
 Don't chase device sizes. Start narrow, stretch until the design breaks, add a breakpoint there. Three breakpoints usually suffice — Tailwind's `sm` (640), `md` (768), `lg` (1024) cover most cases.
 
-Use `clamp()` for fluid values without breakpoints:
+Use `clamp()` for fluid scalar values (padding, type, gap) without breakpoints:
 
 ```css
 /* Fluid padding: 1rem at 320px → 3rem at 1280px */
 .section { padding: clamp(1rem, 0.5rem + 2vw, 3rem); }
 ```
+
+For grid *layouts* without breakpoints, use `auto-fit + minmax` instead — columns decide their own count based on available width. See [spatial.md](spatial.md) "Self-Adjusting Grid".
 
 ---
 

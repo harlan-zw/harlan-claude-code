@@ -6,38 +6,38 @@ Toasts, modals, confirmations, and state communication.
 
 ## Toast Notifications
 
+Use `useAppToast()` — a typed wrapper over `useToast()` with preset icons and colors per status. Copy [useAppToast.ts](../../templates/composables/useAppToast.ts) into `app/composables/` first. See [library.md](../library.md).
+
 ```ts
-const toast = useToast()
+const toast = useAppToast()
 
-// Success
-toast.add({ title: 'Saved', icon: 'i-lucide-check', color: 'success' })
+// String shorthand — just a title
+toast.success('Saved')
 
-// Error
-toast.add({ title: 'Failed to save', description: error.message, icon: 'i-lucide-alert-circle', color: 'error' })
-
-// With action
-toast.add({
-  title: 'Item deleted',
-  icon: 'i-lucide-trash-2',
-  actions: [{ label: 'Undo', click: () => restore(id) }]
-})
+// Full form
+toast.error({ title: 'Failed to save', description: error.message })
+toast.warning({ title: 'Unsaved changes', description: 'Save before leaving.' })
+toast.info({ title: 'New version available', actions: [{ label: 'Reload', click: reload }] })
 ```
+
+Why the wrapper: direct `useToast().add({ color, icon, ... })` calls scatter status semantics across the codebase. A typed `.success / .info / .warning / .error` API keeps status meaning in one place, matches call-sites to intent, and makes find-all-errors-in-the-app a single grep.
 
 ### Undo Pattern (prefer over confirm dialogs)
 ```ts
+const toast = useAppToast()
+
 function deleteItem(id: string) {
   const backup = items.value.find(i => i.id === id)
   items.value = items.value.filter(i => i.id !== id)
 
-  toast.add({
+  toast.info({
     title: 'Deleted',
     actions: [{
       label: 'Undo',
-      click: () => { items.value.push(backup!) }
-    }]
+      click: () => { items.value.push(backup!) },
+    }],
   })
 
-  // Actually delete after toast expires
   setTimeout(() => api.delete(id), 5000)
 }
 ```
@@ -143,7 +143,7 @@ const open = ref(false)
 
 ## Empty States
 
-Use `UEmpty` component (v4+):
+Use `UEmpty` (v4+) for simple cases:
 
 ```vue
 <UEmpty
@@ -151,5 +151,17 @@ Use `UEmpty` component (v4+):
   title="No messages"
   description="When you receive messages, they'll appear here."
   :actions="[{ label: 'Compose', variant: 'outline', click: compose }]"
+/>
+```
+
+For richer empty states with action presets (refresh / reset / clear / back) and custom footer, copy [UiNoData.vue](../../templates/components/UiNoData.vue) into `app/components/`. See [library.md](../library.md).
+
+```vue
+<UiNoData
+  icon="i-lucide-search-x"
+  title="No results"
+  message="Try clearing filters or broadening your search."
+  action="reset"
+  @action="clearFilters"
 />
 ```

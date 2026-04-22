@@ -50,7 +50,7 @@ The git diff stats were injected above. If <= 2 files changed AND all are `.vue`
 
 ### 1a-bis. Schema version check
 
-If the handoff JSON was injected, verify `schema_version` is `3`. If different or missing, warn: "Handoff schema version mismatch; design and review skills may be out of sync." Proceed with available fields but note this in the report.
+If the handoff JSON was injected, verify `schema_version` is `4`. If different or missing, warn: "Handoff schema version mismatch; design and review skills may be out of sync." Proceed with available fields but note this in the report.
 
 ### 1b. Read the theme reference FIRST (independent expectations)
 
@@ -77,12 +77,41 @@ The injected git diff already uses the handoff's `git_hash` as the diff base (fa
 
 Read the design system for context:
 ```
-.claude/context/design-guidelines.md
+DESIGN.md
 app/assets/css/main.css
 app.config.ts
 ```
 
-**Respect documented design decisions**: if `design-guidelines.md` contains a `## Design Decisions` section, those are intentional aesthetic choices confirmed by the user. Do not flag these as issues. For example, if the guidelines say "Hero uses text-3xl intentionally: minimal aesthetic for utility tool," do not report small hero text as a problem.
+**Respect documented design decisions**: if `DESIGN.md` contains a `## Design Decisions` section, those are intentional aesthetic choices confirmed by the user. Do not flag these as issues. For example, if the guidelines say "Hero uses text-3xl intentionally: minimal aesthetic for utility tool," do not report small hero text as a problem.
+
+### 1e. Token regression check
+
+The YAML front matter in `DESIGN.md` is the machine-readable source of truth for colors, typography, spacing, radii, and component surfaces. Two checks:
+
+**Drift (git-diff based):** diff the front matter against the `git_hash` baseline from the handoff.
+
+```bash
+HASH=$(jq -r '.git_hash // empty' {JOB_DIR}/build-handoff.json)
+git diff "$HASH" -- DESIGN.md | sed -n '/^---$/,/^---$/p'
+```
+
+If `design_system_changes == false` in the handoff, ANY diff to the front matter is drift. Flag as **TOKEN DRIFT** (hard reject). If `design_system_changes == true`, the diff is expected; verify it aligns with the build contract's stated design intent.
+
+**Structural + contrast lint (preferred):** run the DESIGN.md linter over the current file.
+
+```bash
+npx --yes @google/design.md lint DESIGN.md 2>/dev/null
+```
+
+Parse the JSON. Treat as hard rejects:
+- Any `severity: "error"` (broken refs, invalid hex, section-order violations).
+- Contrast-ratio warnings on `components.*` pairs below 4.5:1, UNLESS the design-guidelines `## Design Decisions` section explicitly accepts that pairing (e.g. "button-primary contrast 3.96:1 accepted: large text only, signature purple is theme-defining").
+
+Treat as informational (not rejects): unknown component property warnings (`shadow`, `border`, `boxShadow`, `transform`) and orphaned-token warnings on palette colors that exist for theming but aren't referenced by a specific component.
+
+**Fallback if CLI unavailable or crashes:** specific theme front matter uses `rgba()` or float values that crash the alpha linter (`raw.match is not a function`). If the CLI returns nonzero without valid JSON, fall back to a manual grep: `grep -oE '\{(colors|rounded|spacing|typography)\.[a-z-]+\}' DESIGN.md` and verify every match resolves to a key in the front matter.
+
+If the front matter is absent entirely, note this and skip; the project predates the token schema.
 
 ## Step 2: Start and Verify the Dev Environment
 

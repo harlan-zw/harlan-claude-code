@@ -6,7 +6,7 @@ Font choices, scale, and rhythm that create character and hierarchy.
 
 ## Font Selection
 
-See gotchas in `nuxt-frontend-design-system` for banned font list and rationale.
+See gotchas in `nuxt-frontend-design` for banned font list and rationale.
 
 ### Better Alternatives to Overused Defaults
 
