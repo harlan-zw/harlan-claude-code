@@ -222,9 +222,56 @@ If Phase 1 fails mid-setup (build error, malformed config):
 
 ---
 
+## Dev Server Setup (Phase 2 & Phase 3)
+
+Run this **once** at the start of Phase 2 or Phase 3, before any smoke tests, polish verification, or Long Task Protocol checkpoints. Skip if `$DEV_PID` is already set in the current shell session.
+
+Allocate a random 5-digit port (with retry on collision), start the dev server in the background, log to a file, and register a cleanup trap so the process is killed even on early exit.
+
+```bash
+# 1. Allocate a free random port (retry up to 3 times)
+for i in 1 2 3; do
+  DEV_PORT=$(shuf -i 10000-65535 -n 1)
+  ss -tln 2>/dev/null | grep -q ":$DEV_PORT " || break
+  DEV_PORT=""
+done
+[ -z "$DEV_PORT" ] && { echo "Could not find free port"; exit 1; }
+
+# 2. Start the matching dev command
+DEV_LOG="{JOB_DIR}/dev-server.log"
+mkdir -p "$(dirname "$DEV_LOG")"
+if [ -d playground ]; then
+  ( pnpm dev:prepare && pnpm --filter '*-playground' dev --port $DEV_PORT ) > "$DEV_LOG" 2>&1 &
+elif [ -f nuxt.config.ts ] || [ -f vite.config.ts ]; then
+  pnpm dev --port $DEV_PORT > "$DEV_LOG" 2>&1 &
+fi
+DEV_PID=$!
+trap "kill $DEV_PID 2>/dev/null" EXIT
+echo "Dev server PID=$DEV_PID PORT=$DEV_PORT LOG=$DEV_LOG"
+
+# 3. Wait for ready
+timeout 90 bash -c "until curl -sf http://localhost:$DEV_PORT/ > /dev/null 2>&1; do sleep 2; done" \
+  || { echo "Dev server failed to start"; tail -100 "$DEV_LOG"; exit 1; }
+```
+
+Use `$DEV_PORT` and `$DEV_LOG` throughout. Record `$DEV_PORT` as `dev_port` in the handoff.
+
+**Error/warning scan** — after any non-trivial change, scan `$DEV_LOG` for build/runtime issues. Target Nuxt/Vite log markers (avoid grepping plain `error`/`warn` substrings to reduce false positives):
+
+```bash
+grep -nE '^\s*(\[error\]|\[warn\]|ERROR|WARN|✖|✘|Hydration |Cannot find|Failed to (resolve|compile))' "$DEV_LOG" \
+  || echo "dev server log clean"
+```
+
+If anything matches, fix the underlying issue before continuing the build.
+
+---
+
 ## Phase 2: Build Pages
 
 Compose pages and UI patterns with Nuxt UI v4+ components. **Requires a design system** (run Phase 1 first if none exists).
+
+Run **Dev Server Setup** above before the first smoke test.
 
 ### Artifact Cleanup
 
@@ -232,7 +279,7 @@ Stale artifact cleanup is no longer needed. Each job gets its own directory unde
 
 ### Build Recovery
 
-If `{JOB_DIR}/build-progress.md` exists but `{JOB_DIR}/build-handoff.json` does not, a previous build was interrupted. Read `build-progress.md` to determine which pages completed and which contract criteria remain. Resume from the last incomplete page rather than starting over.
+If `{JOB_DIR}/build-progress.md` exists but `{JOB_DIR}/build-handoff.json` does not, a previous build was interrupted. Read `build-progress.md` to determine which pages completed and which contract criteria remain. Resume from the last incomplete page rather than starting over. **Re-run Dev Server Setup** since the previous server process is gone.
 
 ### Read the Foundation
 
@@ -387,10 +434,12 @@ When asked to "make it better" or "polish everything":
 
 ### Verify the Route Still Loads
 
-After polish changes, confirm the dev server still serves the affected route without errors:
+Ensure **Dev Server Setup** has run (allocates `$DEV_PORT` / `$DEV_LOG`). Then:
 
 ```bash
-curl -sf "http://localhost:{port}/{route}" > /dev/null && echo OK || echo FAIL
+curl -sf "http://localhost:$DEV_PORT/{route}" > /dev/null && echo OK || echo FAIL
+grep -nE '^\s*(\[error\]|\[warn\]|ERROR|WARN|✖|✘|Hydration |Cannot find|Failed to (resolve|compile))' "$DEV_LOG" \
+  || echo "dev server log clean"
 ```
 
 That is all the self-verification needed at this stage. Full visual + interaction verification is the review skill's job — don't duplicate it here. When handing off, tell the user to run `/nuxt-frontend-review {JOB_ID}`.
@@ -426,7 +475,7 @@ For components not covered by Nuxt UI, or where Nuxt UI is too prescriptive, use
 For builds spanning multiple pages or phases:
 
 1. **Checkpoint after each page**: write `{JOB_DIR}/build-progress.md` BEFORE starting the next page. Use `## {Page Name}` as the heading for each entry (this format is counted by the injected `PAGES_BUILT`). List files created/modified, contract criteria satisfied (by ID), and criteria remaining. You cannot open a new page file until this is written.
-2. **Route smoke test**: after writing the checkpoint, curl the affected route to confirm no build break. `curl -sf "http://localhost:{port}/{route}" > /dev/null && echo OK || echo FAIL`. If FAIL, read the dev server logs and fix before proceeding. Full browser verification belongs to review; don't attempt qualitative self-assessment.
+2. **Route smoke test**: after writing the checkpoint, curl the affected route to confirm no build break. Use the `$DEV_PORT` allocated by **Dev Server Setup** (run that first if not already). `curl -sf "http://localhost:$DEV_PORT/{route}" > /dev/null && echo OK || echo FAIL`. Then run the error-scan grep against `$DEV_LOG`. If FAIL, read `$DEV_LOG` and fix before proceeding. Full browser verification belongs to review; don't attempt qualitative self-assessment.
 3. **Intermediate review**: after the first page in a multi-page build, suggest: "Page 1 complete. For best results, run `/nuxt-frontend-review {JOB_ID}` now before continuing to page 2." This catches systemic issues (wrong tokens, broken shared components) before they propagate.
 4. **Cross-page consistency check**: before starting page N+1, re-read the files from page N. Confirm: same number of states handled, same level of interaction detail, same use of design tokens. If page N+1 scope feels smaller than page N, that is context degradation. Stop and emit the handoff.
 5. **Scope gate**: the injected `PAGES_BUILT` count is your source of truth.
@@ -437,7 +486,7 @@ For builds spanning multiple pages or phases:
 
 ## After Implementation: Emit Handoff
 
-Before finishing, capture the current git state and write `{JOB_DIR}/build-handoff.json`. **`dev_port`**: record the port the dev server is running on (check `nuxt.config.ts` for `devServer.port`, or detect from the running process). This tells the review skill exactly where to verify.
+Before finishing, capture the current git state and write `{JOB_DIR}/build-handoff.json`. **`dev_port`**: record the random 5-digit port (`$DEV_PORT`) you allocated for this job. The review skill ignores it and starts its own server on a fresh random port; it is recorded only for debugging.
 
 ```json
 {
@@ -445,7 +494,7 @@ Before finishing, capture the current git state and write `{JOB_DIR}/build-hando
   "job_id": "{JOB_ID}",
   "created": "<ISO 8601 date from `date -u +%Y-%m-%dT%H:%M:%SZ`>",
   "git_hash": "<current HEAD hash from `git rev-parse HEAD`>",
-  "dev_port": 3000,
+  "dev_port": 47213,
   "pages_changed": ["app/pages/index.vue"],
   "components_created": ["app/components/StatsCard.vue"],
   "routes_to_test": ["/", "/dashboard"],

@@ -18,7 +18,7 @@ You are an **adversarial reviewer**, not the implementer. Your default assumptio
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then OUT=$(grep -E "^\[C[0-9]+\]" ".claude/context/jobs/$JOB/build-contract.md" 2>/dev/null | head -40); if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_CONTRACT"; fi; else echo "NO_CONTRACT"; fi'`
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then HASH=$(jq -r ".git_hash // empty" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null); if [ -n "$HASH" ]; then OUT=$(git diff --stat "$HASH" 2>/dev/null); fi; if [ -z "$OUT" ]; then OUT=$(git diff --stat HEAD 2>/dev/null); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_GIT"; fi; else echo "NO_GIT"; fi'`
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ]; then HASH=$(jq -r ".git_hash // empty" ".claude/context/jobs/$JOB/build-handoff.json" 2>/dev/null); if [ -n "$HASH" ]; then OUT=$(git diff --name-only "$HASH" -- "*.vue" "*.ts" "*.css" 2>/dev/null | head -30); fi; if [ -z "$OUT" ]; then OUT=$(git diff --name-only HEAD -- "*.vue" "*.ts" "*.css" 2>/dev/null | head -30); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_CHANGED_FILES"; fi; else echo "NO_CHANGED_FILES"; fi'`
-!`bash -c 'OUT=$(lsof -i :3000 -i :3001 -i :3002 -i :4000 -i :5173 -sTCP:LISTEN 2>/dev/null | head -5); if [ -z "$OUT" ]; then OUT=$(ss -tlnp 2>/dev/null | grep -E ":300[0-2]|:4000|:5173" | head -5); fi; if [ -n "$OUT" ]; then echo "$OUT"; else echo "NO_SERVER"; fi'`
+!`bash -c 'for i in 1 2 3; do P=$(shuf -i 10000-65535 -n 1); ss -tln 2>/dev/null | grep -q ":$P " || { echo "REVIEW_PORT=$P"; exit 0; }; done; echo "REVIEW_PORT=NONE_FREE"'`
 !`if command -v dev-browser >/dev/null 2>&1; then echo "DEV_BROWSER=true"; else echo "DEV_BROWSER=false"; fi`
 !`bash -c 'JOB=$(ls -t .claude/context/jobs/ 2>/dev/null | head -1); if [ -n "$JOB" ] && [ -f ".claude/context/jobs/$JOB/review-calibration.md" ]; then cat ".claude/context/jobs/$JOB/review-calibration.md"; else echo "NO_CALIBRATION"; fi'`
 
@@ -115,50 +115,65 @@ If the front matter is absent entirely, note this and skip; the project predates
 
 ## Step 2: Start and Verify the Dev Environment
 
-You MUST confirm the app is actually working before handing off to the user. "Server started" is not enough.
+You MUST start your own dev server for every review. Do NOT reuse a server left running by the design skill or another process: a stale build can mask the very issues you are looking for.
 
-### 2a. Start the server
+### 2a. Start the server on a random port
 
-**Port selection**: use `dev_port` from the injected handoff JSON. This is the port the design skill used during the build. If `dev_port` is missing (older handoff), fall back to scanning the injected port list.
+Use the `REVIEW_PORT` value injected above (random 5-digit port, retried up to 3 times against `ss -tln` for a free slot). If injected as `NONE_FREE`, re-run the allocation manually before continuing. Capture stdout+stderr to a log file so you can grep it for errors and warnings, and register a cleanup trap so the process is killed even on early exit.
 
-The injected state above shows whether a server is running. If no dev server is running, detect and start one:
+Detect the project type and start the matching dev command in the background:
 
-1. **Nuxt module monorepo** (has `playground/` dir): `pnpm dev:prepare && pnpm --filter '*-playground' dev`
-2. **Nuxt app** (has `nuxt.config.ts`): `pnpm dev`
-3. **Vite app** (has `vite.config.ts`): `pnpm dev`
+1. **Nuxt module monorepo** (has `playground/` dir): `pnpm dev:prepare && pnpm --filter '*-playground' dev --port $REVIEW_PORT`
+2. **Nuxt app** (has `nuxt.config.ts`): `pnpm dev --port $REVIEW_PORT`
+3. **Vite app** (has `vite.config.ts`): `pnpm dev --port $REVIEW_PORT`
 
-Run the dev server command in the background.
+```bash
+DEV_LOG="{JOB_DIR}/review-dev-server.log"
+mkdir -p "$(dirname "$DEV_LOG")"
+( <detected-command> ) > "$DEV_LOG" 2>&1 &
+DEV_PID=$!
+trap "kill $DEV_PID 2>/dev/null" EXIT
+echo "Started dev server PID=$DEV_PID on port $REVIEW_PORT, log: $DEV_LOG"
+```
+
+Use `$REVIEW_PORT` and `$DEV_PID` throughout the rest of the review. The trap guarantees teardown; explicit `kill $DEV_PID` at the end is still good hygiene for long-lived shells.
 
 ### 2b. Verify the server is healthy
 
-Do NOT skip this. Do NOT just check the port is open. Actually verify:
+Do NOT skip this. Do NOT just check the port is open. Verify it's actually serving the right project AND inspect the process output for build errors and warnings.
 
 ```bash
-# Wait for server, then fetch the page
-timeout 60 bash -c 'until curl -sf http://localhost:{port}/ > /dev/null 2>&1; do sleep 2; done'
-# Fetch the actual HTML to check for errors
-curl -s http://localhost:{port}/{path} | head -50
+# Wait until the server responds
+timeout 90 bash -c "until curl -sf http://localhost:$REVIEW_PORT/ > /dev/null 2>&1; do sleep 2; done" \
+  || { echo "Server failed to start within timeout"; tail -100 "$DEV_LOG"; exit 1; }
+
+# Fetch the actual HTML to check for runtime errors
+curl -s "http://localhost:$REVIEW_PORT/" | head -50
+curl -s "http://localhost:$REVIEW_PORT/" | grep -c '<div id="__nuxt"'
+curl -s "http://localhost:$REVIEW_PORT/" | grep -c 'nuxt-error'
+
+# Inspect dev server process output for build/runtime errors and warnings.
+# Targets Nuxt/Vite log markers explicitly to avoid matching benign substrings.
+grep -nE '^\s*(\[error\]|\[warn\]|ERROR|WARN|✖|✘|Hydration |Cannot find|Failed to (resolve|compile)|\[Vue warn\]|\[nuxt\] error)' "$DEV_LOG" \
+  || echo "dev server log clean"
 ```
 
 **Check the output for:**
 - HTTP errors (500, 404, connection refused)
-- Nuxt/Vite build errors in the terminal output
+- Nuxt/Vite build errors in `$DEV_LOG`
+- Vue/SSR warnings (hydration mismatch, missing imports, deprecated APIs)
 - Blank or empty responses
 - SSR hydration errors in the HTML
 
-Also verify SSR actually rendered content:
-```bash
-curl -s http://localhost:{port}/ | grep -c '<div id="__nuxt"'
-curl -s http://localhost:{port}/ | grep -c 'nuxt-error'
-```
+**Treat any match from the grep above as a finding** and include it in the review report. Hydration mismatches, missing components, `[Vue warn]`, and `[error]` lines are hard rejects. Deprecation warnings are RUBRIC items.
 
-**Verify this is the right project**: check that the response HTML contains a project-specific string (app name from nuxt.config.ts, or a unique component name from the handoff). A stale process from a previous session is not valid.
+**Verify this is the right project**: check that the response HTML contains a project-specific string (app name from `nuxt.config.ts`, or a unique component name from the handoff).
 
 If the server fails to start or returns errors:
-1. Read the terminal output from the background process
-2. Report the error to the user with the relevant output. You cannot fix code (you are the evaluator, not the implementer).
+1. Read `$DEV_LOG` and capture the relevant output in the review report
+2. Report the error to the user. You cannot fix code (you are the evaluator, not the implementer).
 
-**Only proceed once you have confirmed the page loads successfully.**
+**Only proceed once you have confirmed the page loads successfully and the dev server log is clean.**
 
 ## Step 3: Evaluate the Implementation
 
@@ -263,12 +278,12 @@ Determine which browser tool is available (injected above as `DEV_BROWSER`). Use
 
 Write and execute `dev-browser --headless` scripts to verify each affected route. Batch multiple checks into single scripts to minimize turns. Each script runs in a sandboxed Playwright environment.
 
-**Per-route verification script pattern:**
+**Per-route verification script pattern** (heredoc is unquoted so `$REVIEW_PORT` expands; do not introduce JS template literals with `${...}` here without re-quoting and switching to a pre-computed URL var):
 
 ```bash
-dev-browser --headless <<'SCRIPT'
+dev-browser --headless <<SCRIPT
 const page = await browser.getPage("review");
-await page.goto("http://localhost:{port}/{route}");
+await page.goto("http://localhost:$REVIEW_PORT/{route}");
 await page.waitForLoadState("networkidle");
 
 // 1. Desktop screenshot + structural snapshot
@@ -326,9 +341,9 @@ Adapt this pattern per route. For pages with forms, add `page.fill()` and `page.
 **Accessibility check**: run axe-core via `page.evaluate()`:
 
 ```bash
-dev-browser --headless <<'SCRIPT'
+dev-browser --headless <<SCRIPT
 const page = await browser.getPage("a11y");
-await page.goto("http://localhost:{port}/{route}");
+await page.goto("http://localhost:$REVIEW_PORT/{route}");
 await page.waitForLoadState("networkidle");
 // Inject and run axe-core
 await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/axe-core@4/axe.min.js" });
@@ -403,7 +418,7 @@ Re-review is not a differential check. A fix for Issue A can introduce Issue B. 
 ```
 ## {PASS|FAIL|PARTIAL}
 
-**URL:** http://localhost:{port}/{path}
+**URL:** http://localhost:$REVIEW_PORT/{path}
 
 ### Contract Scorecard (if contract exists)
 ✅ PASS [C1]: {criterion} — {evidence}
