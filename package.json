@@ -1,19 +1,19 @@
 {
   "name": "harlan-claude-code",
   "type": "module",
-  "packageManager": "pnpm@10.30.3",
+  "packageManager": "pnpm@11.0.9",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "release": "node --experimental-strip-types scripts/release.ts"
   },
   "dependencies": {
-    "@antfu/eslint-config": "^7.7.3",
-    "eslint": "^10.0.3",
-    "eslint-plugin-harlanzw": "^0.5.22"
+    "@antfu/eslint-config": "^8.2.0",
+    "eslint": "^10.3.0",
+    "eslint-plugin-harlanzw": "^0.12.1"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.6.2",
+    "typescript": "^6.0.3"
   }
 }
