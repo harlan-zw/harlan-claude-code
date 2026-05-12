@@ -93,7 +93,7 @@ Present a numbered list of deepening opportunities. For each candidate:
 
 **Use CONTEXT.md for the domain, [LANGUAGE.md](LANGUAGE.md) for the architecture, [NUXT-SEAMS.md](NUXT-SEAMS.md) for the framework seam, and the relevant convention file + section number when the candidate is a convention gap.** Example phrasings: *"the Order intake module exposed as a Nuxt layer"*, *"establish NITRO-CONVENTIONS.md §1 for the Order create handler"* — not *"the FooBarHandler"*, not *"the Order service"*.
 
-**Reject before listing.** Bias toward fewer, sharper candidates. Validate caller counts with `scan --kind identifier-reference,import-specifier`; no guesswork.
+**Reject before listing.** Bias toward fewer, sharper candidates. Validate caller counts with `scan --kind identifier-reference,import-specifier` scoped to the **whole project** (no `--glob` narrowing to the candidate's own layer/dir), and confirm the shape they consume — a uniform interface for the wrapper is a precondition for collapsing it. Cross-layer callers with a different state shape break the candidate. No guesswork.
 
 - **Deletion test fails.** Thresholds: single caller = adapter, not a seam; Nuxt layer/module needs ≥3 plugins/composables/handlers + shared config or hooks; schema/policy/presenter/validator/async-resource composable earns its keep at ≥2 callers OR real branching/transform; pure value/type mapping (just destructure/rename) needs ≥4 callers.
 - **No locality win.** "Testable in isolation" / "future-proof" without bugs/changes concentrating is relocation, not depth. Includes defensive re-validation of invariants a zod schema, typed event, or DB column already enforces.
@@ -104,6 +104,7 @@ Present a numbered list of deepening opportunities. For each candidate:
 - **Render-factory composable.** Mostly `h()` calls / column defs / template output with little reactive state. Acceptable at ≥4 callers; otherwise inline or slot-scope.
 - **Promotes to global auto-import without cross-feature consumers.** Reject if `scan --tsconfig .nuxt/tsconfig.json` shows callers in a single feature dir — keep colocated + `_`-prefixed. Promote only at ≥2 unrelated feature consumers. See [NUXT-SEAMS.md](NUXT-SEAMS.md) §"Internal vs global scope".
 - **Bundled-concern composable** fusing ≥3 concerns (fetch + cache + optimistic + rollback + retry) with no override seams.
+- **Wrapper-collapse without project-wide caller audit.** A "delete this pass-through wrapper, inline into N callers" candidate is invalid until `scan <Wrapper> --kind identifier-reference,import-specifier` (no `--glob`) has been run and every caller's consumed-shape verified. Wrappers in most cases have cross-layer callers (admin pages, ad-hoc usages) that don't share the "obvious" caller's state shape; collapsing on a partial census produces a narrower interface that breaks the outliers at typecheck.
 - **Config threaded through ≥3 layers unchanged** = missing seam. Consume at creation layer or place adapter at deepest meaningful seam.
 - **Single-reader `runtimeConfig` key.** Confirm with `scan --kind property,member-access`; one hit = fails unless genuinely env-overridable at deploy.
 - **Hides `event` behind a global accessor.** Server abstractions thread `H3Event` through — reject module-level singletons, ambient `useRuntimeConfig()` without `event`, implicit `getRequestEvent()`.
