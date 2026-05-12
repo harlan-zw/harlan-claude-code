@@ -20,11 +20,9 @@ In Nuxt: nitro storage drivers (swap `redis` for `memory` in tests), `$fetch` mo
 
 ### 3. Remote but owned (Ports & Adapters)
 
-Your own services across a network boundary (microservices, internal APIs). Define a **port** (interface) at the seam. The deep module owns the logic; the transport is injected as an **adapter**. Tests use an in-memory adapter. Production uses an HTTP/gRPC/queue adapter.
+Your own services across a network boundary. Define a **port** at the seam; transport is injected as an **adapter**. Tests use in-memory; production uses HTTP/gRPC/queue.
 
-In Nuxt: a Nuxt module that exposes a composable-shaped port (`useFoo()` returns a typed client). Production adapter calls `$fetch` to your own API; test adapter is in-memory. Wire the choice via `runtimeConfig` or a module option.
-
-Recommendation shape: *"Define a port at the seam (the composable's return type), implement an `$fetch` adapter for production and an in-memory adapter for testing, so the logic sits in one deep module even though the transport crosses the network."*
+In Nuxt: a Nuxt module exposing a composable-shaped port (`useFoo()` returns a typed client). Production calls `$fetch`; test adapter is in-memory. Wire via `runtimeConfig` or module option.
 
 ### 4. True external (Mock)
 
@@ -87,10 +85,8 @@ It's the **deepest** seam you can place: by construction, the implementation is 
 
 ## Testing strategy: replace, don't layer
 
-- Old unit tests on shallow composables/plugins/handlers become waste once tests at the deepened module's interface exist — delete them.
-- Write new tests at the deepened module's interface. The **interface is the test surface**.
-- For Nuxt modules and layers, prefer `@nuxt/test-utils` against a fixture that consumes the module/layer with representative options — that's the actual interface.
-- For composables, test through a mounted component (or `@vue/test-utils`) when SSR/client behaviour matters; through a plain function call when it doesn't.
-- For server modules behind handlers, test the server module directly; the handler is a thin adapter.
-- Tests assert on observable outcomes through the interface, not internal state. A test that pokes at `useNuxtApp().$internal` is testing past the seam.
-- Tests should survive internal refactors — they describe behaviour, not implementation. If a test has to change when the implementation changes, it's testing past the interface.
+Old unit tests on shallow composables/plugins/handlers become waste once tests at the deepened module's interface exist — delete them. Write new tests at the interface:
+
+- **Nuxt modules/layers**: `@nuxt/test-utils` against a fixture consuming representative options.
+- **Composables**: mounted component when SSR/client behaviour matters; plain function call when it doesn't.
+- **Server modules behind handlers**: test the module directly; the handler is a thin adapter.

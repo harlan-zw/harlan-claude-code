@@ -157,55 +157,24 @@ When you propose a deepening that introduces or relies on one of these seams, th
 
 ## Internal vs global scope
 
-Auto-import makes every file in `components/`, `composables/`, `utils/`, `server/utils/`, etc. **global by default**: the symbol joins a flat namespace, can be called from anywhere in its scope without an import, and any rename now has app-wide blast radius. Most extractions don't deserve that surface area — they're feature-private implementation details. Default to internal; promote on evidence.
+Auto-import makes every file in `components/`, `composables/`, `utils/`, `server/utils/` **global by default** — flat namespace, app-wide rename blast radius. Most extractions don't deserve that. Default internal; promote on evidence.
 
-### The principle
+- **Default**: feature-local, colocated with consumer, `_`-prefixed (`components/checkout/_LineItemRow.vue`, `composables/checkout/_useCartTotals.ts`) or under `_internal/` when ≥3 internals share a feature. Imported by relative path inside the feature.
+- **Promote to global** only when `scan --tsconfig .nuxt/tsconfig.json` shows callers in **≥2 unrelated feature dirs** AND the name reads unambiguously in all of them.
+- **Reuse within one feature** justifies a feature-local shared file, not promotion.
 
-- **Default**: a newly extracted component or composable is **feature-local**. Colocate with its consumer and mark it internal (see "How to mark internal" below).
-- **Promote to global only when**: `npx -y @ripast/cli scan <symbol> --tsconfig .nuxt/tsconfig.json` shows callers in **≥2 unrelated feature directories**, AND the name reads unambiguously in any of them (no `useFoo` that means different things in checkout vs admin).
-- **Single-feature extractions stay internal even if reused 5× within that feature.** Reuse within a feature does not justify promoting the seam to app-global; it justifies a feature-local shared file.
-
-### How to mark internal
-
-Two equivalent mechanical patterns; pick one per project and stick with it. Both rely on Nuxt's scanner treating `_`-prefixed paths as non-public.
-
-1. **`_`-prefix** (preferred for one-off internals): rename the file/dir with a leading underscore. `components/checkout/_LineItemRow.vue`, `composables/checkout/_useCartTotals.ts`. Reads as "this file is internal" at a glance, no config required.
-2. **`_internal/` subdir** (preferred when a feature has many internals): group them under `_internal/`. `components/checkout/_internal/LineItemRow.vue`. Better when ≥3 internals belong to one feature; keeps the public surface obvious.
-
-Configure Nuxt to skip these from auto-import/scan (do this once at project setup):
+One-time `nuxt.config.ts` setup so Nuxt skips `_`-prefixed paths:
 
 ```ts
-// nuxt.config.ts
 export default defineNuxtConfig({
   ignore: ['**/_*/**', '**/_*.{ts,vue}'],
-  components: [
-    { path: '~/components', pathPrefix: false, ignore: ['**/_*/**', '**/_*'] },
-  ],
-  imports: {
-    scan: true,
-    // composables/ and utils/ scanning respects the top-level `ignore` above.
-  },
+  components: [{ path: '~/components', pathPrefix: false, ignore: ['**/_*/**', '**/_*'] }],
 })
 ```
 
-Inside the feature, internals are imported by **relative path**, never by auto-import name — so the dependency is visible and the rename blast radius is bounded to the feature dir.
+**Promotion checklist**: ≥2 unrelated feature consumers (cited via `scan`), unambiguous global name, explicit typed contract, locality win on deletion. Missing any → keep internal.
 
-### Promotion checklist
-
-When a candidate proposes moving an internal up to the global surface, require all four:
-
-1. **≥2 unrelated feature consumers** (verified with `ripast scan`, cited in the candidate).
-2. **Unambiguous name** in the global namespace — no collision with existing symbols, no feature-specific jargon.
-3. **Typed contract**: the returned shape (composable) or props/emits/slots (component) are explicit, not inferred from a single call site.
-4. **Locality win**: deletion of the global wrapper would re-duplicate behaviour across consumers (the deletion test).
-
-A candidate that proposes a new top-level `components/Foo.vue` or `composables/useFoo.ts` without all four fails on §2 Reject ("promotes to a globally auto-imported composable or component without cross-feature consumers").
-
-### Anti-patterns
-
-- **`composables/useX.ts` with one caller in one page.** Inline it, or move to `composables/<feature>/_useX.ts`. A globally auto-imported single-consumer composable is a hypothetical seam.
-- **`components/<Feature><Thing>.vue` used only by `<Feature>` pages.** Move into `components/<feature>/_Thing.vue` (or `_internal/Thing.vue`) and import by path; the global name is paying for indirection nobody uses.
-- **Cross-feature import of an `_`-prefixed internal.** The underscore is a contract: only the owning feature may import it. A second feature reaching in is the signal that either (a) the contract is wrong (promote) or (b) the consumer is in the wrong feature.
+**Anti-patterns**: `composables/useX.ts` with one caller (inline or move to `_`-prefixed feature dir); `components/<Feature><Thing>.vue` used only by that feature (move to `components/<feature>/_Thing.vue`); cross-feature import of an `_`-prefixed internal (contract violated — either promote or move consumer).
 
 ## Scope boundaries (the three runtimes)
 
@@ -229,58 +198,14 @@ The one sanctioned exception is the **`shared/` directory** (see the seam catalo
 
 ### How scopes talk to each other
 
-Each pair has exactly one supported seam. Use it; don't invent alternatives.
+Each pair has exactly one supported seam:
 
-#### Nitro → Nuxt server: the h3 event context
+- **Nitro → Nuxt server**: the h3 event context. Nitro sets `event.context.foo = ...`; Nuxt server reads via `useRequestEvent()?.context.foo`. The **shape of `event.context`** is the interface — augment `H3EventContext`, never untyped.
+- **Nuxt server → Nuxt client**: `useState(key, init)`, `useAsyncData(key, fn)`, `useFetch(url)`. State key + typed shape is the interface. Never module-level singletons (don't cross the wire) or `window` globals.
+- **Nuxt client → Nuxt server**: HTTP only (`$fetch` / `useFetch` to `server/api/*`). The route is the seam.
+- **App → Nitro at boot**: a Nuxt module via `addServerPlugin` (module options are the seam, not a runtime call).
 
-Nitro attaches state to the request's h3 event:
-
-```ts
-// server/middleware/tenant.ts (nitro scope)
-export default defineEventHandler((event) => {
-  event.context.tenant = resolveTenant(event)
-})
-```
-
-Nuxt server reads it via `useRequestEvent()`:
-
-```ts
-// composables/useTenant.ts (nuxt server/client scope)
-export function useTenant() {
-  if (import.meta.server) {
-    return useRequestEvent()?.context.tenant
-  }
-  // ... client path, typically via useState seeded during SSR
-}
-```
-
-The interface at this seam is the **shape of `event.context`**. Treat it as a typed contract (augment `H3EventContext`) — an untyped `event.context.foo = 'bar'` is a shallow seam.
-
-#### Nuxt server → Nuxt client: `useState` / `useAsyncData` / `useFetch`
-
-State computed during SSR reaches the client by being serialised into the payload. The supported seams are:
-
-- `useState(key, init)` — SSR-safe shared reactive state, serialised to the client.
-- `useAsyncData(key, fn)` — for async-derived state; runs on the server, hydrates on the client.
-- `useFetch(url, opts)` — for HTTP-derived state; same hydration story.
-
-The interface here is the **state key + its typed shape**. Anything you compute in `app.vue`/`pages/`/`composables/` on the server that the client needs must travel through one of these — never via module-level singletons (those don't cross the wire) and never via globals on `window`.
-
-#### Nuxt client → Nuxt server: HTTP only
-
-The client cannot reach the SSR pass after hydration. Subsequent client→server communication is HTTP through `$fetch` / `useFetch` to a `server/api/*` route. The route is the seam; its request/response schema is the interface.
-
-#### Nuxt server / client → Nitro: also HTTP (or hooks at boot)
-
-Application code reaches nitro the same way the browser does — through routes. The exception is build-time setup (a Nuxt module registering a nitro plugin via `addServerPlugin`), where the seam is module options, not a runtime call.
-
-### Naming the scope in every candidate
-
-When proposing a deepening, state which scopes the candidate spans and which seams carry data between them. Example:
-
-> *"Today auth state is set in `server/middleware/auth.ts` (nitro) and re-read in `composables/useUser.ts` (nuxt server/client) by re-parsing the cookie — a duplicated decoder. Deepen by writing the parsed user onto `event.context.user` in nitro, exposing it via `useRequestEvent().context.user` on nuxt server, and seeding `useState('user')` for the client. The h3 context becomes the nitro→nuxt-server seam; `useState('user')` becomes the nuxt-server→client seam. The decoder lives in one place (nitro middleware)."*
-
-Two seams named, three scopes named, one decoder.
+When proposing a candidate, state which scopes it spans and which seams carry data between them.
 
 ## Cross-cutting: build-time vs runtime
 
@@ -294,8 +219,6 @@ Every Nuxt seam sits on one side of this line. State it explicitly when proposin
 A common shallow pattern is a module that *should* be wiring at build time but instead pushes the work into a runtime plugin — usually because the author didn't reach for `addImports`/`addServerHandler`. Flag this when you see it.
 
 ## Anti-patterns (shallow shapes to flag)
-
-These are architectural shapes — wrong seam, parallel seam, or missing interface. Primitive-API hygiene (cookie reads, error throwing, `process.client` guards) is out of scope for this skill.
 
 - **Plugin-per-value**: ten plugins each doing `nuxtApp.provide('x', ...)`. Collapse into one module + one plugin, or replace with composables.
 - **Composable-as-getter**: `useFoo()` that returns a single `useState` ref. Either inline at call sites or grow the composable to own real behaviour.

@@ -215,28 +215,56 @@ Report this comparison after the scorecard. It calibrates trust in future genera
 
 ### Evaluation rubric: mechanical checks
 
-Run ALL of these greps on the changed files. Report results for each, even if clean.
+Run ALL of these on the changed files. Report results for each, even if clean.
+
+**Class-token inventory (preferred over grep for design-system compliance):**
+
+```bash
+# AST-aware class tokenization across .vue/.ts/.tsx (strings, class attrs, @apply).
+# Catches Vue template class bindings and kebab-case component tags that grep misses.
+npx -y @ripast/cli css-class-scan --glob 'app/**' --sort count-desc --json \
+  | jq '[.tokens[] | select(.token | test("^(slate|gray|zinc|stone|bg-white|text-black|border-gray)"))]'
+
+# Banned families anywhere in changed files
+npx -y @ripast/cli css-class-scan --pattern 'font-inter,font-roboto,font-arial,font-system-ui' --glob 'app/**' --json
+```
+
+Cross-reference `slate-/gray-/zinc-/stone-` hits against the project's chosen neutral in `app.config.ts`; exclude the configured neutral.
+
+**Dead code (catches generator-left scaffolding):**
+
+```bash
+# Top-level declarations with zero project references — extracted helpers, unused composables, orphaned components.
+npx -y @ripast/cli unused --tsconfig .nuxt/tsconfig.json --exports local --json
+```
+
+Any hit in a file the generator created/modified = RUBRIC violation.
+
+**Remaining greps (no AST equivalent):**
 
 ```bash
 # Completeness
 grep -rEn 'TODO|FIXME|placeholder|Lorem|Coming soon|Sample' {changed_files}
 
-# Design system compliance
+# Raw color values
 grep -rEn '#[0-9a-fA-F]{3,8}' {changed_files}
 grep -rEn 'rgb|hsl|rgba' {changed_files}
-grep -rEn 'slate-|gray-|zinc-|stone-' {changed_files}
-# Note: cross-reference hits against the project's chosen neutral color in app.config.ts. Exclude matches for the configured neutral.
 
 # Unnecessary custom tokens (should override Nuxt UI tokens, not create new ones)
 grep -rEn '^\s*--[a-z]' app/assets/css/main.css | grep -v '\-\-ui-' | grep -v '\-\-font-' | grep -v '\-\-color-'
 # Each custom token found must be justified: flag any that duplicate a --ui-* variable or Tailwind utility
-
-# Dark mode
-grep -rEn 'bg-white|text-black|border-gray' {changed_files}
-
-# Font compliance
-grep -rEn 'font-(inter|roboto|arial|system-ui)' {changed_files}
 ```
+
+**Component locality (single-caller global components):**
+
+For every component in `app/components/` touched by the diff, verify it has ≥2 unrelated callers — otherwise it should be colocated as `_Component.vue` next to its sole consumer.
+
+```bash
+# For each new/modified component in app/components/
+npx -y @ripast/cli scan <ComponentName> --kind jsx,identifier-reference --tsconfig .nuxt/tsconfig.json --json
+```
+
+Single caller in a single feature dir = RUBRIC violation: "global auto-import without cross-feature consumers."
 
 Then evaluate these qualitatively (but each is still pass/fail):
 

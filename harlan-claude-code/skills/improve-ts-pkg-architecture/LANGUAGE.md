@@ -44,17 +44,7 @@ What maintainers get from depth. Change, bugs, knowledge, and verification conce
 - **The `exports` map IS the interface.** Anything reachable through a declared subpath is contract; anything outside it is private and may move. A consumer reaching past the `exports` map (via deep `pkg/dist/internal/foo`) is using something that isn't theirs.
 - **Prefer TS-pkg-native seams.** If the ecosystem already gives you a seam — subpath/conditional exports for runtime variation, `hookable` for plugin systems, `citty` for CLIs, `c12` for config, `unplugin` for build plugins — use it before inventing a parallel mechanism.
 
-## Relationships
-
-- A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
-- **Depth** is a property of a **Module**, measured against its **Interface**.
-- A **Seam** is where a **Module**'s **Interface** lives.
-- An **Adapter** sits at a **Seam** and satisfies the **Interface**.
-- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
-
 ## Rejected framings
 
-- **Depth as ratio of implementation-lines to interface-lines** (Ousterhout): rewards padding the implementation. We use depth-as-leverage instead.
-- **"Interface" as the TypeScript `interface` keyword or a class's public methods**: too narrow — interface here includes every fact a caller must know, including runtime portability, treeshake/side-effect contract, and `exports` map placement.
-- **"Boundary"**: overloaded with DDD's bounded context. Say **seam** or **interface**.
+- **Depth as ratio of implementation-lines to interface-lines** (Ousterhout): rewards padding. We use depth-as-leverage.
 - **"Service" / "Manager" / "Handler"**: framework-agnostic mush. Name the TS-pkg shape: factory, hook bus, subpath export, workspace package, plugin.

@@ -21,7 +21,7 @@ Before spawning sub-agents, write a user-facing explanation of the problem space
 - The dependencies it would rely on, and which category they fall into (see [DEEPENING.md](DEEPENING.md)).
 - A rough illustrative code sketch to ground the constraints — not a proposal, just a way to make the constraints concrete (e.g. a tiny `package.json` `exports` fragment, a usage line for the proposed factory).
 
-Show this to the user, then immediately proceed to Step 2. The user reads and thinks while the sub-agents work in parallel.
+Then proceed to Step 2.
 
 ### 2. Spawn sub-agents
 
@@ -38,28 +38,14 @@ Prompt each sub-agent with a separate technical brief (file paths, coupling deta
 
 #### Convention-shaped sub-agents
 
-Spawn 3 sub-agents, each designing a different *interface shape* for the chosen convention. Examples by convention type:
-
-- **Factory shape** (PKG-CONVENTIONS.md §1): Agent A returns a flat object of methods `{ run, stop, status }`; Agent B returns a single function with attached methods (`fn.stop`, `fn.status`); Agent C returns a class instance from a factory (only if true lifecycle + private mutable state).
-- **Hook bus** (PKG-CONVENTIONS.md §2): Agent A is `hookable` with a typed map of fully-typed events; Agent B is callback options (`onBeforeRun`, `onAfterRun`) pushed through to the factory; Agent C is an event emitter with a `.on(name, fn)` surface generated from the typed map.
-- **Error modes** (PKG-CONVENTIONS.md §3): Agent A throws `PipelineError` subclasses with discriminator `.code`; Agent B returns `Result<T, E>` tagged unions for expected failure modes and throws on unexpected; Agent C uses `cause`-chained native `Error`s with a small `isPipelineError(err)` predicate.
-- **CLI shape** (PKG-CONVENTIONS.md §4): Agent A is `citty` `defineCommand` with subcommands as separate modules; Agent B is a single command with positional+flag args mapped onto the same factory the programmatic API uses; Agent C is a builder (`createCli({ commands })`) that lets consumers register extra commands.
-- **Config loader** (PKG-CONVENTIONS.md §5): Agent A is `c12` `loadConfig` once at CLI entry, passed through; Agent B is `c12` plus a typed schema (zod) validating before pass-through; Agent C is `c12` returning a resolver function (`getConfig(scope)`) for lazy per-scope reads.
+Spawn 3 sub-agents, each designing a different *interface shape* for the chosen convention. Example, for **Hook bus** (PKG-CONVENTIONS.md §2): Agent A = `hookable` typed map; Agent B = callback options (`onBeforeRun`, `onAfterRun`); Agent C = event emitter with `.on(name, fn)`. Derive analogous trios from the relevant PKG-CONVENTIONS.md section for factory shape, error modes, CLI, config loader.
 
 Each sub-agent's brief includes the convention file's "Gap" + "Seam" entries plus the constraints from Step 1.
 
 Include [LANGUAGE.md](LANGUAGE.md) vocabulary, [TS-PKG-SEAMS.md](TS-PKG-SEAMS.md) vocabulary, the relevant convention section, and CONTEXT.md vocabulary in each brief so every sub-agent names things consistently.
 
-Each sub-agent outputs:
-
-1. Interface (factory options + return shape / subpath surface / port type / hook map — plus invariants, ordering, error modes, runtime targets).
-2. Usage example showing how callers use it, with realistic import specifiers (e.g. `import { createPipeline } from '@org/core/pipeline'`).
-3. What the implementation hides behind the seam (which existing files become private, which hooks fire when, what the `exports` map looks like after).
-4. Dependency strategy and adapters (see [DEEPENING.md](DEEPENING.md)).
-5. Trade-offs — where leverage is high, where it's thin, what's awkward to test, what's awkward to extend, what the SemVer impact looks like.
+Each sub-agent outputs: (1) interface — options + return / subpath surface / port type / hook map, plus invariants, ordering, error modes, runtime targets; (2) usage example with realistic import specifiers; (3) what hides behind the seam (which files become private, resulting `exports` map); (4) dependency strategy and adapters (see [DEEPENING.md](DEEPENING.md)); (5) trade-offs and SemVer impact.
 
 ### 3. Present and compare
 
-Present designs sequentially so the user can absorb each one, then compare them in prose. Contrast by **depth** (leverage at the interface), **locality** (where change concentrates), **seam placement** (which TS-pkg seam carries the interface — factory? subpath? workspace package?), **runtime portability**, and **SemVer impact**.
-
-After comparing, give your own recommendation: which design you think is strongest and why. If elements from different designs would combine well, propose a hybrid (e.g. *"Agent 1's factory shape with Agent 4's port for the SDK adapter, exposed at the subpath from Agent 3"*). Be opinionated — the user wants a strong read, not a menu.
+Present sequentially, then contrast by **depth**, **locality**, **seam placement**, **runtime portability**, and **SemVer impact**. Give a recommendation; propose a hybrid if elements combine well.

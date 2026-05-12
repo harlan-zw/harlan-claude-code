@@ -13,17 +13,8 @@ Use this file alongside [TS-PKG-SEAMS.md](TS-PKG-SEAMS.md): seams are the *where
 **Seam**: a `createX(opts: XOptions): X` factory. Options object captures build-time/init-time concerns. Returned object captures run-time concerns and exposes the hook bus if extension is real. The factory IS the public interface; the returned object's methods are the operational interface.
 
 ```ts
-export interface PipelineOptions {
-  transforms?: Transform[]
-  hooks?: NestedHooks<PipelineHooks>
-}
-
-export interface Pipeline {
-  run: (input: Input) => Promise<Output>
-  hooks: Hookable<PipelineHooks>
-}
-
 export function createPipeline(opts: PipelineOptions = {}): Pipeline { /* … */ }
+// → { run(input): Promise<Output>, hooks: Hookable<PipelineHooks> }
 ```
 
 **Reject**: classes with one public method (`new Foo().run()` → `runFoo()` or `createFoo().run()`); factories whose options surface is 1:1 with private fields (not deep); factories that read `process.env` inside (move env reads to a single config loader, pass the resolved value in).
@@ -58,14 +49,8 @@ interface PipelineHooks {
 **Seam**: `citty` `defineCommand` in `src/cli.ts`; thin `bin/mycli.mjs` shim that imports and runs. Subcommands as separate `defineCommand` exports under `src/commands/`.
 
 ```ts
-// src/cli.ts
-import { defineCommand, runMain } from 'citty'
-
-export const main = defineCommand({
-  meta: { name: 'mycli', version, description: '...' },
-  subCommands: { build, dev, check },
-})
-export function run() { return runMain(main) }
+// src/cli.ts — defineCommand({ meta, subCommands: { build, dev, check } })
+// bin/mycli.mjs — #!/usr/bin/env node + import('../dist/cli.js').then(m => m.run())
 ```
 
 **Reject**: CLI factories that take options from `process.argv` directly (the parser is the seam); business logic in command `run` handlers (call into the same factory the programmatic API uses).
@@ -110,9 +95,7 @@ export function run() { return runMain(main) }
 | EventEmitter replacement | `hookable` |
 | Template / scaffolding download | `giget` |
 
-**Why this is architectural, not a style preference**: `hookable` IS the seam by which independent modules cooperate without importing each other; `unplugin` IS the seam by which one factory targets four bundlers; `c12` IS the single seam for layered config; `unbuild`/`obuild` IS what makes `sideEffects: false` truthful. Each one closes a class of architectural friction.
-
-**Reject**: any candidate that proposes a hand-rolled version of the above. If the user has a load-bearing reason (perf, custom semantics), record it as an ADR — otherwise switch.
+Each primitive IS the seam (`hookable` for cross-module coordination, `unplugin` for multi-bundler, `c12` for layered config, `unbuild`/`obuild` for truthful `sideEffects: false`). Hand-rolled equivalents are a reject; record a load-bearing reason as an ADR if switching isn't possible.
 
 ## §7 Test fixture layout
 

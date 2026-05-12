@@ -15,13 +15,13 @@ The design space depends on what kind of candidate the user picked:
 
 ### 1. Frame the problem space
 
-Before spawning sub-agents, write a user-facing explanation of the problem space for the chosen candidate:
+Write a user-facing explanation of the problem space before spawning sub-agents:
 
-- The constraints any new interface would need to satisfy (SSR/client behaviour, build-time vs runtime, public vs private exports, layer override story, hook ordering)
-- The dependencies it would rely on, and which category they fall into (see [DEEPENING.md](DEEPENING.md))
-- A rough illustrative code sketch to ground the constraints — not a proposal, just a way to make the constraints concrete (e.g. a tiny `nuxt.config.ts` snippet, a usage line for the proposed composable)
+- Constraints any new interface must satisfy (SSR/client, build vs runtime, public vs private exports, layer override, hook ordering)
+- Dependencies and category (see [DEEPENING.md](DEEPENING.md))
+- An illustrative code sketch (a `nuxt.config.ts` snippet, a composable usage line) — to ground constraints, not propose
 
-Show this to the user, then immediately proceed to Step 2. The user reads and thinks while the sub-agents work in parallel.
+Then proceed to Step 2 immediately; sub-agents work in parallel while the user reads.
 
 ### 2. Spawn sub-agents
 

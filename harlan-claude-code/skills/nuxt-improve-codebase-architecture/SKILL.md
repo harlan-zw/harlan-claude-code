@@ -7,27 +7,18 @@ description: Find deepening opportunities in a Nuxt codebase, leaning on Nuxt-na
 
 Surface architectural friction in a Nuxt codebase and propose **deepening opportunities** — refactors that turn shallow modules into deep ones, using Nuxt's own extension points as seams. The aim is testability and AI-navigability.
 
-## Glossary
+## Vocabulary and principles
 
-Use these terms exactly in every suggestion. Consistent language is the point — don't drift into "component," "service," "API," or "boundary." Full definitions in [LANGUAGE.md](LANGUAGE.md).
+Use the terms in [LANGUAGE.md](LANGUAGE.md) exactly — **module**, **interface**, **implementation**, **depth**, **seam**, **adapter**, **leverage**, **locality**. Don't drift into "component," "service," "API," or "boundary."
 
-- **Module** — anything with an interface and an implementation (function, class, package, slice, Nuxt module, layer).
-- **Interface** — everything a caller must know to use the module: types, invariants, error modes, ordering, config. Not just the type signature.
-- **Implementation** — the code inside.
-- **Depth** — leverage at the interface: a lot of behaviour behind a small interface. **Deep** = high leverage. **Shallow** = interface nearly as complex as the implementation.
-- **Seam** — where an interface lives; a place behaviour can be altered without editing in place. (Use this, not "boundary.")
-- **Adapter** — a concrete thing satisfying an interface at a seam.
-- **Leverage** — what callers get from depth.
-- **Locality** — what maintainers get from depth: change, bugs, knowledge concentrated in one place.
+Load-bearing principles (full list in LANGUAGE.md):
 
-Key principles (see [LANGUAGE.md](LANGUAGE.md) for the full list):
-
-- **Deletion test**: imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
+- **Deletion test**: if deleting the module just inlines 1-2 lines into each caller, it was a pass-through.
 - **The interface is the test surface.**
-- **One adapter = hypothetical seam. Two adapters = real seam.**
-- **No import-time side effects.** Modules declare and export at the top level; they don't *do* on import. Side effects live inside functions the caller invokes (or inside a Nuxt plugin / nitro plugin / `app:created` hook the framework owns). Critical for `shared/` (imported into both runtime graphs), composables, and server utils — anything imported here at top-level eagerly executes in every consumer.
-- **Prefer Nuxt-native seams** over hand-rolled equivalents (custom DI containers, ad-hoc singletons, parallel hook systems).
-- **Default to feature-local, promote on evidence.** Every extracted component and composable starts **internal** to the feature that owns it; only promote to a globally auto-imported surface when ≥2 unrelated features consume it. Auto-import scope is part of the interface — a globally-named `useFoo` is a claim of app-wide ownership, and adding one is the most expensive seam decision in a Nuxt codebase (rename blast radius, naming-collision risk, untyped cross-feature coupling). When in doubt: colocate + `_`-prefix.
+- **One adapter = hypothetical seam. Two = real.**
+- **No import-time side effects** — critical for `shared/`, composables, server utils.
+- **Prefer Nuxt-native seams** over hand-rolled equivalents.
+- **Default feature-local, promote on evidence.** New `composables/useFoo.ts` or `components/Foo.vue` is a claim of app-wide ownership; the rename blast radius and naming-collision risk make global auto-import the most expensive seam decision. Colocate + `_`-prefix until ≥2 unrelated features consume it.
 
 This skill is _informed_ by the project's domain model. The domain language gives names to good seams; ADRs record decisions the skill should not re-litigate.
 
@@ -45,21 +36,15 @@ This skill is _informed_ by the project's domain model. The domain language give
 
 ### 1. Explore
 
-**Always run ripast first.** Every claim about depth, caller counts, locality, or cross-scope leaks must be backed by a ripast invocation; text search misses shadowed identifiers, type-only imports, JSX/Vue template refs, and Nuxt auto-imported callers. If you cannot cite ripast output, drop the claim.
+**Always run ripast first.** Every claim about depth, caller counts, locality, or cross-scope leaks must cite a ripast invocation. Text search misses shadowed identifiers, type-only imports, Vue template refs, and Nuxt auto-imported callers.
 
-**Point ripast at `.nuxt/tsconfig.json` so it resolves Nuxt auto-imports.** Run `nuxi prepare` first if `.nuxt/` is missing or stale. Without this flag, `scan`/`rename`/`move`/`tree` ignore composables, utils, and components used without explicit imports — caller counts come back artificially low and renames miss call sites:
-
-```
---tsconfig .nuxt/tsconfig.json
-```
-
-For `scan` (which doesn't take `--tsconfig`), and for trimming when `tree` is still too noisy, pass `--glob` to scope to Nuxt-relevant code:
+Pass `--tsconfig .nuxt/tsconfig.json` on `tree`/`rename`/`move`/`rename-file` so auto-imports resolve. Run `nuxi prepare` first if `.nuxt/` is stale. For `scan` (rg-driven) and when trimming `tree`, scope with `--glob`:
 
 ```
 --glob 'app/**,server/**,composables/**,plugins/**,modules/**,layers/**,shared/**,nuxt.config.ts'
 ```
 
-Trim per project: drop `app/**` on pre-Nuxt-4 layouts (use `pages/**,components/**`), drop `layers/**` if none, add `packages/**` for monorepos, add a Nuxt module's `src/**`.
+Adjust per project: drop `app/**` pre-Nuxt-4 (use `pages/**,components/**`), drop `layers/**` if none, add `packages/**` or a module's `src/**`.
 
 Opening pass — run before forming any candidate:
 
@@ -78,29 +63,24 @@ Per-candidate, before listing (`scan` is rg-driven — use `--glob` here):
 | `npx -y @ripast/cli scan <symbol> --kind identifier-reference,import-specifier --glob ...` | Same, minus string-literal noise |
 | `npx -y @ripast/cli scan <symbol> --graph mermaid --glob ...` | Importer graph → cross-scope leaks (graph spanning `server/` + `composables/` + `plugins/`) |
 
-`unused --exports local` is the most direct deletion-test signal there is: a top-level declaration with no callers either earns a delete or is a confessed shallow seam waiting to be deepened. `--exports exported` filters to public surface; `all` covers both. Cite numbers when presenting ("`scan` returns 2 callers, both in `server/api/` — single-scope, deletion test fails"; "`unused` flagged `useFooBar` with 0 references").
+Cite numbers when presenting ("`scan` returns 2 callers, both in `server/api/` — single-scope, deletion test fails").
 
-Read the project's domain glossary and any ADRs in the area you're touching first. Then orient on the Nuxt shape of the project:
+Read the project's domain glossary and any ADRs in the area first. Then orient on the Nuxt shape of the project:
 
 - Is this a Nuxt **app**, a Nuxt **module**, or a workspace with **layers**?
 - Which Nuxt extension points are already in use: `modules/`, `layers/`, `plugins/`, `composables/`, `server/api`, `server/middleware`, `nitro` plugins, `runtimeConfig`, `app:*`/`nitro:*`/`build:*` hooks, `addImports`, `addServerHandler`, `addComponent`, `addPlugin`?
 - Where does the project hand-roll its own seam (a singleton, a custom plugin pattern, a global registry) instead of using one Nuxt provides?
 
-Then use the Agent tool with `subagent_type=Explore` to walk the codebase. Don't follow rigid heuristics — explore organically and note where you experience friction:
+Then use `subagent_type=Explore` to walk the codebase. Friction signals:
 
-- Where does understanding one feature require bouncing between a `composables/` file, a `plugins/` file, a `server/api` route, and a piece of `runtimeConfig`? `npx -y @ripast/cli scan <feature-symbol> --graph mermaid` spanning three or more Nuxt scopes = no central seam.
-- Where are modules **shallow** — a composable that just wraps a single `useState`, a plugin that only `provide`s one untyped value, a server util that's a one-line passthrough to `$fetch`? Spot via `npx -y @ripast/cli tree --exports exported`.
-- Where have pure functions been extracted just for testability, but the real bugs hide in how Nuxt wires them (no **locality** — e.g. plugin order, hook timing, SSR vs client divergence)?
-- Where does cross-cutting logic (auth, logging, feature flags, telemetry) leak across `app/`, `server/`, `nitro`, instead of sitting behind one hook or one module?
-- Where must a **Nuxt module** or **layer** swallow a cluster of plugins + composables + server handlers and present a small interface (a config object + 2-3 hooks)?
-- Which parts of the codebase are untested, or hard to test through their current interface? (Composables that touch `useNuxtApp()` deep inside, server handlers with embedded business logic, etc.)
-- Walk the convention files for missing seams: [NITRO-CONVENTIONS.md](NITRO-CONVENTIONS.md) on the server side; [VUE-CONVENTIONS.md](VUE-CONVENTIONS.md) + [NUXT-APP-CONVENTIONS.md](NUXT-APP-CONVENTIONS.md) on the app side. Each section's "Gap" entry is a friction signal — if it's present in the codebase, that's a candidate.
-- **Cross-scope leaks.** A `types/`, `utils/`, or `constants/` folder imported from both `server/` and `composables/`/`app/` is a smuggle — move to `shared/` (the one seam Nuxt sanctions for both runtime graphs). Detect with `npx -y @ripast/cli scan <util-name> --graph mermaid`: importer set straddling `server/` and `composables/` is a leak by definition. See [NUXT-SEAMS.md](NUXT-SEAMS.md) `shared/` and `Scope boundaries`.
-- **Import-time side effects in `shared/`, composables, or server utils.** Top-level `console.log`, listener registration, singleton construction, env reads, or `$fetch` calls at module scope. These eagerly fire in every consumer (and break SSR, treeshaking, and tests). Move the work behind an exported function or into the right Nuxt/nitro lifecycle hook.
-
-Apply the **deletion test** to anything you suspect is shallow: would deleting it concentrate complexity, or just move it? A "yes, concentrates" is the signal you want.
-
-Lean on [NUXT-SEAMS.md](NUXT-SEAMS.md) when classifying friction — it maps common shallow patterns to the Nuxt-native deep equivalents.
+- Feature requires bouncing across `composables/`, `plugins/`, `server/api`, `runtimeConfig` — `scan --graph mermaid` spanning ≥3 Nuxt scopes = no central seam.
+- **Shallow modules**: composable wrapping a single `useState`, plugin providing one untyped value, server util that's a one-line `$fetch` passthrough. Spot via `tree --exports exported`.
+- Pure functions extracted for testability while real bugs hide in plugin order / hook timing / SSR vs client divergence (no locality).
+- Cross-cutting concerns (auth, logging, telemetry) smeared across `app/`, `server/`, `nitro` instead of sitting behind one hook/module.
+- A cluster of plugins + composables + server handlers that wants to be a Nuxt module or layer with a small options + hooks interface.
+- Walk the convention files for missing seams: each "Gap" entry is a candidate when present in the codebase.
+- **Cross-scope leaks.** `types/`/`utils/`/`constants/` imported from both `server/` and `composables/` — move to `shared/`. Detect with `scan --graph mermaid`: importer set straddling both = leak.
+- **Import-time side effects** in `shared/`, composables, or server utils — fire in every consumer, break SSR/treeshaking/tests.
 
 ### 2. Present candidates
 
@@ -113,23 +93,23 @@ Present a numbered list of deepening opportunities. For each candidate:
 
 **Use CONTEXT.md for the domain, [LANGUAGE.md](LANGUAGE.md) for the architecture, [NUXT-SEAMS.md](NUXT-SEAMS.md) for the framework seam, and the relevant convention file + section number when the candidate is a convention gap.** Example phrasings: *"the Order intake module exposed as a Nuxt layer"*, *"establish NITRO-CONVENTIONS.md §1 for the Order create handler"* — not *"the FooBarHandler"*, not *"the Order service"*.
 
-**Reject before listing.** Drop any candidate that fails one of these. Bias hard toward fewer, sharper candidates. Validate every caller-count threshold with `npx -y @ripast/cli scan <symbol> --kind identifier-reference,import-specifier`; no guesswork.
+**Reject before listing.** Bias toward fewer, sharper candidates. Validate caller counts with `scan --kind identifier-reference,import-specifier`; no guesswork.
 
-- **Deletion test fails.** If deleting the proposed module just inlines 1-2 lines into each caller, skip. Thresholds: single caller = one adapter, not a seam; a Nuxt layer/module needs ≥3 plugins/composables/handlers + shared config or hooks; a schema/policy/presenter/validator or `useX()` async-resource composable earns its keep at ≥2 callers OR real branching/transform; a pure value/type mapping (no branching, just destructure/rename) needs ≥4 callers.
-- **No locality win.** "Now testable in isolation" or "future-proof" without bugs/changes/knowledge concentrating in one place is relocation, not depth. Covers: pure-function extraction with no consolidation, speculative seams ("will need someday"), and defensive re-validation of invariants the caller's zod schema, typed event, or DB column already enforces. Validate at system boundaries; trust internal types.
-- **Renames or file reshuffles dressed up as architecture.** "Move these files" or "rename this concept" is a refactor task, not a deepening candidate. Note separately or skip.
-- **Smuggles import-time side effects.** If the deepened module runs anything at top level on import (listeners, singletons, env reads, `$fetch`), reshape so the side effect lives inside an exported function or a framework lifecycle hook (Nuxt plugin, nitro plugin, `app:created`).
-- **Already conventional.** If the code already matches a NITRO/VUE/NUXT-APP convention, don't re-propose it.
-- **Meta-handler with no work.** A `defineApiHandler`-style wrapper (NITRO-CONVENTIONS.md §4) earns its keep only when ≥2 of {validation, auth/policy, presenter, domain-error mapping} fire per call. Trivial routes keep `defineEventHandler`.
-- **Render-factory composable.** A `composables/` file that is mostly `h()` calls, column defs, or template output with little reactive state is JSX moved sideways. Acceptable only at ≥4 component callers; otherwise use a slot-scoped template or inline.
-- **Promotes to a globally auto-imported composable or component without cross-feature consumers.** A new `composables/useFoo.ts` or top-level `components/Foo.vue` is a claim of app-wide ownership. Reject if `npx -y @ripast/cli scan <symbol> --tsconfig .nuxt/tsconfig.json` shows callers within a single feature dir — keep it colocated and *internal*, either via an `_`-prefix (`components/checkout/_LineItemRow.vue`, `composables/checkout/_useCartTotals.ts`) or a `_internal/` sibling subdir. Promote to the global surface only at ≥2 unrelated feature consumers, AND name the augmentation/typing you're committing to. See [NUXT-SEAMS.md](NUXT-SEAMS.md) §"Internal vs global scope".
-- **Bundled-concern composable.** A composable that fuses ≥3 concerns (fetch + cache mutation + optimistic update + rollback + retry) with no override seams traps callers in an implicit contract. Split into a chain or hoist concerns to the caller.
-- **Config threaded through ≥3 layers unchanged.** Created at A, passed through B and C untouched, consumed at D = missing seam. Consume at the creation layer or place an adapter at the deepest meaningful seam.
-- **Single-reader `runtimeConfig` key.** A `runtimeConfig` entry read in exactly one file is an inline `const` masquerading as config. Confirm with `npx -y @ripast/cli scan <configKey> --kind property,member-access`; one hit = fails. Keep only if genuinely environment-overridable at deploy time.
-- **Hides `event` behind a global accessor.** Server-side abstractions must thread `H3Event` through (validators, policies, services, presenters, server utils). Reject anything that reaches for module-level singletons, ambient `useRuntimeConfig()` without `event`, or implicit `getRequestEvent()`. See NITRO-CONVENTIONS.md preamble.
-- **Contradicts a current ADR without a load-bearing reason.** See ADR conflicts below.
+- **Deletion test fails.** Thresholds: single caller = adapter, not a seam; Nuxt layer/module needs ≥3 plugins/composables/handlers + shared config or hooks; schema/policy/presenter/validator/async-resource composable earns its keep at ≥2 callers OR real branching/transform; pure value/type mapping (just destructure/rename) needs ≥4 callers.
+- **No locality win.** "Testable in isolation" / "future-proof" without bugs/changes concentrating is relocation, not depth. Includes defensive re-validation of invariants a zod schema, typed event, or DB column already enforces.
+- **Renames or file reshuffles** dressed up as architecture. Note separately or skip.
+- **Smuggles import-time side effects.**
+- **Already matches a NITRO/VUE/NUXT-APP convention.**
+- **Meta-handler with no work.** `defineApiHandler` earns its keep only when ≥2 of {validation, auth, presenter, domain-error mapping} fire per call.
+- **Render-factory composable.** Mostly `h()` calls / column defs / template output with little reactive state. Acceptable at ≥4 callers; otherwise inline or slot-scope.
+- **Promotes to global auto-import without cross-feature consumers.** Reject if `scan --tsconfig .nuxt/tsconfig.json` shows callers in a single feature dir — keep colocated + `_`-prefixed. Promote only at ≥2 unrelated feature consumers. See [NUXT-SEAMS.md](NUXT-SEAMS.md) §"Internal vs global scope".
+- **Bundled-concern composable** fusing ≥3 concerns (fetch + cache + optimistic + rollback + retry) with no override seams.
+- **Config threaded through ≥3 layers unchanged** = missing seam. Consume at creation layer or place adapter at deepest meaningful seam.
+- **Single-reader `runtimeConfig` key.** Confirm with `scan --kind property,member-access`; one hit = fails unless genuinely env-overridable at deploy.
+- **Hides `event` behind a global accessor.** Server abstractions thread `H3Event` through — reject module-level singletons, ambient `useRuntimeConfig()` without `event`, implicit `getRequestEvent()`.
+- **Contradicts a current ADR without a load-bearing reason.**
 
-**Forbidden patterns.** Always flag, never propose. Full lists in NITRO-CONVENTIONS.md §"Forbidden patterns" and NUXT-APP-CONVENTIONS.md §"Forbidden patterns". Headline rule: **never wrap an authenticated route in `defineCachedEventHandler`** — the cache wrapper strips request headers from the inner handler, breaking session/auth on every cached path. Hoist auth to an outer `defineEventHandler` and cache the data fetch via `defineCachedFunction` keyed on the resource.
+**Forbidden patterns** — always flag, never propose. Full lists in NITRO-CONVENTIONS.md and NUXT-APP-CONVENTIONS.md "Forbidden patterns". Headline: **never wrap an authenticated route in `defineCachedEventHandler`** — the cache wrapper strips request headers, breaking session/auth. Hoist auth to an outer `defineEventHandler` and cache the data fetch via `defineCachedFunction` keyed on the resource.
 
 **ADR conflicts**: if a candidate contradicts an existing ADR, only surface it when the friction is real enough to warrant revisiting the ADR. Mark it clearly (e.g. _"contradicts ADR-0007 — but worth reopening because…"_). Don't list every theoretical refactor an ADR forbids.
 
@@ -146,15 +126,13 @@ Side effects happen inline as decisions crystallize:
 - **User rejects the candidate with a load-bearing reason?** Offer an ADR, framed as: _"Want me to record this as an ADR so future architecture reviews don't re-suggest it?"_ Only offer when the reason would actually be needed by a future explorer to avoid re-suggesting the same thing — skip ephemeral reasons ("not worth it right now") and self-evident ones. See [ADR-FORMAT.md](../grill-with-docs/ADR-FORMAT.md).
 - **Want to explore alternative interfaces for the deepened module?** See [INTERFACE-DESIGN.md](INTERFACE-DESIGN.md). Sub-agents are pre-seeded with Nuxt-native shapes (module + hooks, layer, plugin + composable, nitro plugin) so the design space is grounded in what Nuxt already offers.
 - **Need to know the true blast radius of a rename/move before committing?** `npx -y @ripast/cli scan <symbol>` (counts) or `npx -y @ripast/cli scan <symbol> --graph mermaid` (importer graph). Quote numbers before promising scope.
-- **Decision crystallized into a concrete refactor?** Execute through ripast, not Edit. Pick the primitive:
-
-  Pass `--tsconfig .nuxt/tsconfig.json` on `rename`, `move`, and `rename-file` so auto-imported callers are rewritten too.
+- **Decision crystallized into a concrete refactor?** Execute through ripast (`--tsconfig .nuxt/tsconfig.json` rewrites auto-imported callers too):
 
   | Refactor | Command |
   | --- | --- |
-  | Rename a symbol across files | `npx -y @ripast/cli rename <from> <to> --tsconfig .nuxt/tsconfig.json --apply` (add `--scope <file>` if multi-declared) |
-  | Move an exported declaration | `npx -y @ripast/cli move <symbol> --from <a> --to <b> --tsconfig .nuxt/tsconfig.json --apply` (moving out of `composables/`/`utils/`/`components/` auto-import scope inserts explicit imports in consumers) |
-  | Move a file (e.g. `utils/foo.ts` → `shared/foo.ts` to close a cross-scope leak) | `npx -y @ripast/cli rename-file <old> <new> --tsconfig .nuxt/tsconfig.json --apply` (handles `.vue` consumers + Pascal/kebab refs) |
-  | Design-token / utility-class migration | `npx -y @ripast/cli css-class-rename --map tokens.json --apply` (seed from `npx -y @ripast/cli css-class-scan`) |
+  | Rename symbol | `npx -y @ripast/cli rename <from> <to> --tsconfig .nuxt/tsconfig.json --apply` (`--scope <file>` if multi-declared) |
+  | Move exported declaration | `npx -y @ripast/cli move <symbol> --from <a> --to <b> --tsconfig .nuxt/tsconfig.json --apply` |
+  | Move a file | `npx -y @ripast/cli rename-file <old> <new> --tsconfig .nuxt/tsconfig.json --apply` |
+  | Design-token / class migration | `npx -y @ripast/cli css-class-rename --map tokens.json --apply` (seed via `css-class-scan`) |
 
-  All mutating commands default to dry-run — preview the diff, then `--apply`. `--verify` (default on for `rename`/`move`) blocks the apply on new type diagnostics; fix them, never `--no-verify` past them. Edit is only correct for single-file or <5-match changes. ripast carries out the move; it does not justify the deepening.
+  All mutating commands default to dry-run; preview, then `--apply`. `--verify` blocks on new type diagnostics — fix them, never `--no-verify`. Edit is only correct for single-file or <5-match changes.

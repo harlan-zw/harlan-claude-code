@@ -2,9 +2,9 @@
 
 Framework-agnostic Vue patterns the skill applies regardless of whether the codebase is Nuxt, Vite + Vue, or another shell. The Nuxt-specific application of these patterns lives in [NUXT-APP-CONVENTIONS.md](NUXT-APP-CONVENTIONS.md).
 
-The dominant smell on the Vue side is **logic in components** — `<script setup>` blocks growing into multi-hundred-line slabs of refs, watchers, async calls, validation, and error mapping. That's an architectural smell, not style: a component with logic inside is only testable through component mounting, which means jsdom, hydration mismatches, async flush quirks, and slow tests. The seam discipline pushes logic out of components into composables you can unit-test directly.
+The dominant smell on the Vue side is **logic in components** — `<script setup>` blocks growing into refs + watchers + async + validation + error mapping. Only testable via mount + jsdom. Push logic into composables.
 
-> **These are deepening candidates, not unconditional rules.** Surface them during the Explore phase ([SKILL.md](SKILL.md) §1); walk the design tree in the grilling loop ([SKILL.md](SKILL.md) §3); accept rejections with load-bearing reasons via ADR. **No DI container** — vitest module mocking + Vue's `provide`/`inject` cover what one would. Vocabulary: the **module** is the *composable*; "service" describes what the composable owns and is fine in that compound, but don't drop "composable" — that's the Vue shape per [LANGUAGE.md](LANGUAGE.md).
+> **Deepening candidates, not rules.** Surface in Explore; grill before adopting. The **module** is the *composable*; "service" is fine as a compound but don't drop "composable".
 
 ## 1. Service composables (factory + provide + use)
 
@@ -35,9 +35,9 @@ export interface OrderFormService {
   input: Ref<OrderInput>
   errors: Ref<Record<string, string>>
   submitting: Ref<boolean>
-  addItem(sku: string, qty: number): void
-  removeItem(sku: string): void
-  submit(): Promise<Order | null>
+  addItem: (sku: string, qty: number) => void
+  removeItem: (sku: string) => void
+  submit: () => Promise<Order | null>
 }
 
 const KEY: InjectionKey<OrderFormService> = Symbol('OrderFormService')
@@ -143,29 +143,13 @@ describe('OrderFormService', () => {
 })
 ```
 
-The factory takes IO as injected functions (`deps.submit`). Tests pass mocks directly; production passes the real implementation. This is the **Remote-but-owned (Ports & Adapters)** category from DEEPENING.md applied at the composable level — and the reason the entire file unit-tests without a single `mount()` call.
-
-**Why split the factory from the provide wrapper?**
-
-Calling `provide()` outside a component setup throws. If the factory called `provide()` directly, tests would need `effectScope().run()` or `withSetup()` helpers. The split is purely about keeping tests trivial: `createXxxService()` is a plain function call.
+IO injected as ports (`deps.submit`); tests pass mocks. **Remote-but-owned** category from DEEPENING.md at the composable level. The factory/provide split keeps `provide()` out of test paths (it throws outside setup).
 
 ## 2. Component thinness
 
-A component should:
+A component renders, binds to a service composable's state, and translates events into method calls. It does **not** call `$fetch` directly, implement validation inline, or hold business state in raw `ref`s. When the §1 smells appear, extract a service composable.
 
-- Render markup.
-- Bind to a service composable's state.
-- Translate user events into service method calls.
-
-A component should NOT:
-
-- Call HTTP/fetch APIs directly. Pass them as ports into a service composable, or use a typed async-resource composable.
-- Implement validation, multi-step async logic, or error mapping inline.
-- Hold business state in raw `ref`s for more than a few lines.
-
-When the smell signals from §1 are present in `<script setup>`, the fix is always the same: extract a service composable.
-
-**Anti-pattern**: a "container" component containing a "presentational" component, both in the same feature, where the only thing the container does is hold state and pass it down. The container should *be* a service composable; the component renders directly from `useXxx()`.
+**Anti-pattern**: a "container" component that only holds state for a "presentational" one in the same feature. The container should *be* the service composable; the component renders directly from `useXxx()`.
 
 ## 3. State scoping (Vue level)
 
@@ -186,13 +170,4 @@ Pure Vue does not have an SSR-safe app-wide state primitive — for Nuxt's `useS
 
 When in doubt, build the service as a factory (§1) and let consumers choose: `provideX()` at a feature root for subtree, `provideX()` at the app root for app-wide, or call the factory directly without `provide` for a per-component instance.
 
-## How these compose
-
-A typical Vue feature looks like:
-
-1. The **page or feature root** calls `provideX()` from a service composable (§1) and renders.
-2. **Child components** in the subtree call `useX()` to read state and trigger methods (§2 keeps them thin).
-3. The service composable owns its IO via injected ports; the `provide` wrapper supplies the production port (`$fetch`, `axios`, etc.); tests supply mocks to the factory directly.
-4. State scoping (§3) is a deliberate choice, not an accident.
-
-A component with logic in it is failing §1 + §2; a feature where the same state is duplicated across siblings is failing §1; state at the wrong scope is failing §3.
+A feature audit: which of §1–§3 is missing? Each gap is a deepening candidate.

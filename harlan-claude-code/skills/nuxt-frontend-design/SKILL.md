@@ -335,6 +335,7 @@ Framework-specific traps that won't be obvious from grep:
 - **Form validation timing**: `UForm` with Zod validates on blur by default. Set `validate-on="input"` for inline.
 - **`UTable` empty state**: without an explicit `empty` slot, an empty table shows nothing.
 - **SSR boundary**: wrap client-only animations in `ClientOnly`, not entire page sections.
+- **Component locality, promote on evidence**: a new `app/components/Foo.vue` is a claim of app-wide ownership (global auto-import, rename blast radius, naming-collision risk). Default to colocating as `_Foo.vue` next to the page that uses it; the `_` prefix opts out of auto-import. Promote to `app/components/` only when ≥2 unrelated features consume it. Review hard-rejects single-caller globals.
 
 Review's hard rejection list (missing error states, invisible content, dark mode breaks, hardcoded colors, layout breaks) is the authoritative rubric; see `/nuxt-frontend-review`. The Content & Asset Rules section above covers filler/AI slop/placeholders/minimum scales.
 
@@ -370,7 +371,20 @@ Polish modifies an existing voice. Before touching anything, read 2-3 key `.vue`
 
 ### Audit Consistency
 
-Scan `.vue` files for violations using review's mechanical checks as the authoritative list (hardcoded hex/rgb, `slate-`/`gray-`/`zinc-`/`stone-` except the configured neutral, `bg-white`/`text-black`, banned font families, custom `@theme` tokens that duplicate `--ui-*`). See `harlan-claude-code:nuxt-frontend-review` Step 3 "Evaluation rubric: mechanical checks" for the grep patterns. Any violation found here must be fixed before handoff — review will re-grade the same patterns and reject on hits.
+Scan `.vue` files for violations using review's mechanical checks as the authoritative list (hardcoded hex/rgb, `slate-`/`gray-`/`zinc-`/`stone-` except the configured neutral, `bg-white`/`text-black`, banned font families, custom `@theme` tokens that duplicate `--ui-*`). See `harlan-claude-code:nuxt-frontend-review` Step 3 "Evaluation rubric: mechanical checks". Any violation found here must be fixed before handoff — review will re-grade the same patterns and reject on hits.
+
+**Lead with the class-token inventory** — it's the most leveraged audit signal and the same command review runs:
+
+```bash
+npx -y @ripast/cli css-class-scan --glob 'app/**' --sort count-desc --json
+```
+
+Read the output and look for:
+- **Synonym clusters** — `bg-gray-100` + `bg-slate-100` + `bg-zinc-100` all collapsing to a single semantic role (`bg-muted`). Each cluster is a conformity fix.
+- **One-off tokens** (count = 1) — usually a hand-tuned value that should map to a design token.
+- **Low-count token spellings near a high-count one** — drift from the canonical class.
+
+When a token map is obvious, apply it with `ripast css-class-rename --map tokens.json --apply` (dry-run first) rather than hand-editing each call site.
 
 Beyond the mechanical list, also watch for: inconsistent shadow/radius choices across similar components (pick one per component type via `app.config.ts`), inline `style=` attributes, raw HTML where a Nuxt UI component exists, and any rule documented in `DESIGN.md` the implementation contradicts.
 

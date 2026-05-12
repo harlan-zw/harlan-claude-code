@@ -18,20 +18,7 @@ Each seam below has: **Shape** (what it looks like), **Use when** (the condition
 
 ## Conditional exports (runtime adapters)
 
-**Shape**:
-```json
-{
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "node": "./dist/index.node.js",
-      "browser": "./dist/index.browser.js",
-      "workerd": "./dist/index.edge.js",
-      "default": "./dist/index.js"
-    }
-  }
-}
-```
+**Shape**: `exports["."]` is a conditions map, e.g. `{ types, node, browser, workerd, default }` each pointing at a runtime-specific built file.
 
 **Use when**: the same logical module needs runtime-specific implementations (filesystem in node, IndexedDB in browser, KV in workerd). The condition keys are real adapters; the seam is the import specifier.
 
@@ -72,20 +59,7 @@ Each seam below has: **Shape** (what it looks like), **Use when** (the condition
 
 ## Hook bus (`hookable`)
 
-**Shape**:
-```ts
-import { createHooks } from 'hookable'
-
-export function createPipeline(opts) {
-  const hooks = createHooks<{
-    'before:run': (ctx: Ctx) => void | Promise<void>
-    'after:run': (ctx: Ctx, result: Result) => void | Promise<void>
-  }>()
-  if (opts.hooks)
-    hooks.addHooks(opts.hooks)
-  return { hooks, run() { /* ... */ } }
-}
-```
+**Shape**: factory creates `hooks = createHooks<HookMap>()`, calls `hooks.addHooks(opts.hooks)` if provided, returns `{ hooks, run }`. The typed hook map is the extension interface.
 
 **Use when**:
 - The factory exposes ≥2 extension points (or one extension point with ≥2 listener candidates). The typed hook map IS the extension interface.

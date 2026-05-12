@@ -2,14 +2,9 @@
 
 The Nuxt-specific layer of the app-side conventions. The framework-agnostic Vue patterns it builds on (service composables, factory + provide + use, component thinness, per-component vs per-subtree state) live in [VUE-CONVENTIONS.md](VUE-CONVENTIONS.md). Read that first; this file only covers what's specific to Nuxt.
 
-> **These are deepening candidates, not unconditional rules.** Surface them during the Explore phase ([SKILL.md](SKILL.md) §1); walk the design tree in the grilling loop ([SKILL.md](SKILL.md) §3); accept rejections with load-bearing reasons via ADR. Each section names the **interface** at the seam (in [LANGUAGE.md](LANGUAGE.md) terms); reach for the dependency category from [DEEPENING.md](DEEPENING.md) when designing the test strategy for the deepened module.
+> **Deepening candidates, not rules.** Each section names the **interface** at the seam.
 
-What's Nuxt-specific:
-
-- **Where to call `provide`** in a Nuxt app, and how SSR affects it.
-- **`$fetch`, `useAsyncData`, `useFetch`** as the production port for service composables.
-- **Cross-scope policies** that share predicates with the nitro server (mirroring NITRO-CONVENTIONS.md §2).
-- **`useState` for SSR-safe app-wide state**, and how it composes with §1 service composables.
+Nuxt-specific bits: where to call `provide`, `$fetch`/`useAsyncData`/`useFetch` as ports, cross-scope policies (mirror NITRO-CONVENTIONS.md §2), `useState` for SSR-safe app-wide state.
 
 ## 1. Wiring service composables into Nuxt
 
@@ -144,11 +139,7 @@ export function provideCurrentUser() {
 
 Tests pass `{ state: ref<User | null>(null), fetchMe: vi.fn() }` and unit-test without Nuxt at all.
 
-**Common scope mistakes specific to Nuxt.**
-
-- `useState` keys colliding across features (untyped global namespace). Treat keys as private to the owning service composable — one key per service, prefixed by the feature.
-- A service composable's state stuffed into `useState` when it's actually subtree-scoped (form state, wizard state). That state then leaks across pages and SSR requests.
-- `useState` called *outside* a component setup or composable (e.g. in module top-level): breaks SSR; throws on the server.
+**Scope mistakes.** `useState` keys colliding (treat as private to the service, feature-prefix them); subtree-scoped state stuffed into `useState` leaks across pages/SSR.
 
 ## Forbidden patterns
 
@@ -161,14 +152,4 @@ Always wrong on the Nuxt app side. Surface as fixes, never as candidates.
 - **F5. Client policy drift from server policy.** `useCanX()` re-implementing the predicate instead of importing from `shared/policies/` (§2). UI shows actions the server refuses.
 - **F6. Async resource composable with no transform, no shared key, single caller.** `() => useAsyncData('foo', () => $fetch('/api/foo'))` used once. Inline; the composable is import indirection without locality.
 
-## How these compose
-
-A Nuxt feature on the app side typically looks like:
-
-1. The **page or layout** calls `provideX()` for the feature's service composable.
-2. The composable factory is a pure function (VUE-CONVENTIONS.md §1) with `$fetch` injected as the port and, when the state must be SSR-safe and app-wide, `useState` injected as the state seed (§4).
-3. **Child components** call `useX()` to read state and trigger methods.
-4. UI gating uses **client policy composables** (§2) sharing their predicate with the nitro server.
-5. Cross-resource async fetching uses **typed async resource composables** (§3) — promoted into a service composable when mutations enter the picture.
-
-Auditing a Nuxt feature on the app side becomes: which of VUE-CONVENTIONS.md §1–§3 + this file's §1–§4 is missing? Each gap is a deepening candidate with a copy-pasteable starting point.
+A Nuxt app-side feature audit: which of VUE-CONVENTIONS.md §1–§3 + this file's §1–§4 is missing? Each gap is a candidate.

@@ -1,14 +1,12 @@
 # Nitro Conventions
 
-Nitro deliberately ships a minimal server kernel (HTTP routing, storage, cache, hooks) and leaves the rest as conventions you establish in your codebase. This file is the **conformity layer**: a set of conventions inspired by mature frameworks (Laravel especially) that fill those gaps with real **seams** in the [LANGUAGE.md](LANGUAGE.md) sense — not just code style.
+Nitro ships a minimal server kernel; the rest is convention. This file fills those gaps with real **seams**: each section gives the gap, the seam shape, and a copy-pasteable template. Adapt names freely; the *shape* is what matters.
 
-For each convention: the gap it fills, the seam shape, and a copy-pasteable template the agent can drop into a project. Each section names the **interface** at the seam in [LANGUAGE.md](LANGUAGE.md) terms; reach for the dependency category from [DEEPENING.md](DEEPENING.md) when designing the test strategy. Adapt names freely; the *shape* is the load-bearing part.
+> **Deepening candidates, not rules.** Don't propose all of them at once — each one is a real refactor.
 
-> **These are deepening candidates, not unconditional rules.** Surface them during the Explore phase ([SKILL.md](SKILL.md) §1) when you see the gap. The grilling loop ([SKILL.md](SKILL.md) §3) still applies — walk the design tree, run the deletion test, and if the user rejects with a load-bearing reason, offer an ADR. Each section here passes the deletion test by construction (deleting the convention scatters complexity across N handlers), but adopting one is a real refactor with real cost; don't propose all of them at once.
+> **No DI container.** Vitest module mocking covers it; design services as exported functions in `server/utils/`, not classes in a container.
 
-> **No DI container.** Vitest's module mocking (`vi.mock('~~/server/utils/db')`) covers what a Laravel-style service container provides. Design services as plain exported functions in `server/utils/`, not as classes registered in a container — the test seam already exists at the module level.
-
-> **Thread `event` through server code.** The `H3Event` is the request-scoped state object: `event.context` carries the authenticated user, runtime config, request id, `waitUntil`, platform bindings, and per-request caches. Server utils, validators, policies, services, and presenters should accept `event` as their first argument and read state from it — not from module-level singletons, ambient `useRuntimeConfig()` calls without `event`, or implicit `getRequestEvent()` lookups. This keeps handlers pure-ish (one request = one event), makes tests trivial (pass a mock event), and prevents cross-request bleed under concurrency. If a function genuinely doesn't need request state, it doesn't take `event`; if it might need it later, take it now. Reject server-side abstractions that hide `event` behind a global accessor.
+> **Thread `event` through.** Server utils/validators/policies/services/presenters take `event` as first arg; read state from `event.context`. No module singletons, no ambient `useRuntimeConfig()` without `event`, no implicit `getRequestEvent()`.
 
 ## 1. Request validation (`server/validators/`)
 
@@ -472,71 +470,7 @@ export * from '#layers/billing/server/database/schema'
 export * from './tables/users' // host's own tables
 ```
 
-```ts
-// server/database/migrate.ts (host)
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { sql } from 'drizzle-orm'
-import { useDb } from './client'
-
-interface MigrationSource {
-  layer: string // 'billing', 'analytics', 'host'
-  dir: string // absolute path
-}
-
-export async function runMigrations(sources: MigrationSource[]): Promise<void> {
-  const db = useDb()
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS _migrations (
-    layer TEXT NOT NULL,
-    name  TEXT NOT NULL,
-    applied_at INTEGER NOT NULL,
-    PRIMARY KEY (layer, name)
-  )`)
-
-  // Discover all SQL files across all sources, tag with their layer.
-  const files = (await Promise.all(sources.map(async (src) => {
-    const names = (await readdir(src.dir)).filter(f => f.endsWith('.sql')).sort()
-    return names.map(name => ({ layer: src.layer, name, path: join(src.dir, name) }))
-  }))).flat()
-
-  // Global ordering by filename (timestamp-prefixed).
-  files.sort((a, b) => a.name.localeCompare(b.name))
-
-  const applied = new Set(
-    (await db.all<{ layer: string, name: string }>(sql`SELECT layer, name FROM _migrations`))
-      .map(r => `${r.layer}/${r.name}`),
-  )
-
-  for (const f of files) {
-    if (applied.has(`${f.layer}/${f.name}`))
-      continue
-    const sqlText = await readFile(f.path, 'utf8')
-    await db.run(sql.raw(sqlText))
-    await db.run(sql`INSERT INTO _migrations (layer, name, applied_at) VALUES (${f.layer}, ${f.name}, ${Date.now()})`)
-    console.log(`[migrate] ${f.layer}/${f.name} applied`)
-  }
-}
-```
-
-```ts
-// server/tasks/db/migrate.ts (host) — nitro task wrapping the runner
-import { runMigrations } from '~~/server/database/migrate'
-
-export default defineTask({
-  meta: { name: 'db:migrate', description: 'Apply all pending migrations across host + layers' },
-  async run() {
-    await runMigrations([
-      { layer: 'billing', dir: new URL('../../../layers/billing/server/database/migrations', import.meta.url).pathname },
-      { layer: 'analytics', dir: new URL('../../../layers/analytics/server/database/migrations', import.meta.url).pathname },
-      { layer: 'host', dir: new URL('../../database/migrations', import.meta.url).pathname },
-    ])
-    return { result: 'ok' }
-  },
-})
-```
-
-(For better ergonomics, register migration sources via a Nuxt module hook from each layer instead of hard-coding paths — that's the real Laravel `loadMigrationsFrom` shape. The hook accumulates sources at build time; the task reads them at runtime.)
+The runner (`server/database/migrate.ts`) is a ~30-line function: ensures `_migrations (layer, name, applied_at)` table, discovers `*.sql` across sources, sorts by filename (timestamp-prefixed), applies and records unseen entries. Wrap it in a nitro task `db:migrate` (§7). For better ergonomics, register migration sources via a Nuxt module hook from each layer (the real Laravel `loadMigrationsFrom` shape) instead of hard-coding paths.
 
 **Interface = the schema barrel + the `_migrations` table contract.** App code imports table types from `~~/server/database/schema`; the runner cares only about timestamp ordering and the layer/name pair tracked in `_migrations`.
 
@@ -570,12 +504,4 @@ Always wrong on the nitro side. Surface as fixes, never as candidates.
 - **F8. `process.env` in code that runs on edge/Workers.** `undefined` at runtime; degrades silently (e.g. unauthenticated GitHub at 60 req/hr). Use `useRuntimeConfig(event)` and let nitro env-map.
 - **F9. `shouldBypassCache` (or any cache opt) tied to auth/session state without keying on it.** Cache decision varies per principal but the key doesn't — leaks one user's payload to the next.
 
-## How these conventions interact
-
-These conventions compose:
-
-1. A handler wrapped by `defineApiHandler` (§4) calls `validateX(event)` (§1), then `authorize(event, policy, resource)` (§2), then a server module that throws domain errors (§4) and emits `nitroApp.hooks.callHook('thing:happened', ...)` (§6). The handler queries via the schema barrel (§9) and returns `toResource(...)` (§3).
-2. The feature is packaged as a Nuxt module (§5) — or a layer when it owns its own schema (§9) — that registers its nitro plugin (which subscribes listeners + sets up services).
-3. Cron work the feature owns lives in `server/tasks/` (§7); deferred per-request work goes through the job port (§8); schema migrations run through the host's migrate task (§9, composing with §7).
-
-A feature audit using this skill becomes: which of §1–§9 is missing or hand-rolled? Each missing convention is a deepening candidate with a copy-pasteable starting point.
+A nitro-side feature audit: which of §1–§9 is missing or hand-rolled? Each is a candidate.

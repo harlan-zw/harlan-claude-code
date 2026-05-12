@@ -41,17 +41,9 @@ What maintainers get from depth. Change, bugs, knowledge, and verification conce
 - **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. A Nuxt hook with one listener is a hypothetical seam; with two (e.g. core + a layer override), it's real.
 - **Prefer Nuxt-native seams.** If Nuxt already gives you a seam (a hook, a layer, a module option, `runtimeConfig`), use it before inventing a parallel mechanism.
 
-## Relationships
-
-- A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
-- **Depth** is a property of a **Module**, measured against its **Interface**.
-- A **Seam** is where a **Module**'s **Interface** lives.
-- An **Adapter** sits at a **Seam** and satisfies the **Interface**.
-- **Depth** produces **Leverage** for callers and **Locality** for maintainers.
-
 ## Rejected framings
 
-- **Depth as ratio of implementation-lines to interface-lines** (Ousterhout): rewards padding the implementation. We use depth-as-leverage instead.
-- **"Interface" as the TypeScript `interface` keyword or a class's public methods**: too narrow — interface here includes every fact a caller must know, including Nuxt-side concerns like SSR/client split and hook ordering.
-- **"Boundary"**: overloaded with DDD's bounded context. Say **seam** or **interface**.
-- **"Service" / "Manager" / "Handler"**: framework-agnostic mush. Name the Nuxt shape: module, layer, plugin, composable, server route, nitro plugin.
+- **Depth as ratio of impl-lines to interface-lines** (Ousterhout): rewards padding the implementation. Use depth-as-leverage.
+- **"Interface" as just a TS `interface` or class methods**: too narrow.
+- **"Boundary"**: collides with DDD's bounded context. Say **seam**.
+- **"Service" / "Manager" / "Handler"**: framework-agnostic mush. Name the Nuxt shape.
