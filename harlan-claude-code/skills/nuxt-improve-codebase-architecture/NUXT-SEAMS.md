@@ -50,6 +50,7 @@ The auto-imported seam for component-side state and behaviour. A composable's in
 - **When**: components need shared reactive state or behaviour.
 - **Interface**: the returned shape + SSR/client behaviour + which `useState` keys it owns.
 - **Deepening signal**: a composable that just wraps a `ref` or a single `useState` is shallow — inline it, or merge with adjacent composables until the interface earns its keep.
+- **Scope is part of the interface.** A composable placed at `composables/useFoo.ts` (or anywhere in `imports.dirs`) is **global**: every component, page, and other composable in the app graph can call it without an import, and the name lives in a flat app-wide namespace. Treat that as a commitment. Default new extractions to **feature-local + `_`-prefixed** (e.g. `composables/checkout/_useCartTotals.ts`) or to a `_internal/` sibling dir; promote to global only when ≥2 unrelated features call it and the name is unambiguous. See §"Internal vs global scope" below.
 
 ### Server route / handler (`server/api/x.post.ts`, `defineEventHandler`)
 
@@ -84,6 +85,8 @@ The seam between build-time config and runtime values. `runtimeConfig` is for en
 ### Component (`components/`, `addComponent`)
 
 Auto-imported component seam. The slot + props + emits surface is the interface. A deep component takes a small props shape and renders a coordinated piece of UI; a shallow one is a one-liner around a primitive.
+
+**Scope is part of the interface.** Like composables, a component placed in a scanned `components/` dir is **global** by default: every template in the app can use `<Foo />` without an import, and the name lives in a flat namespace (with optional `pathPrefix`-derived prefixes). Default child/extracted components to **feature-local + `_`-prefixed** (`components/checkout/_LineItemRow.vue`) or to a `_internal/` sibling dir; promote to the global surface only at ≥2 unrelated callers. See §"Internal vs global scope" below.
 
 ### Route middleware (`middleware/auth.ts`, `definePageMeta({ middleware })`)
 
@@ -151,6 +154,58 @@ A typed seam is a real seam; an untyped one is a wishful one. The interface of a
 - `declare module '#app' { interface RuntimeNuxtHooks { 'foo:bar': (x: X) => void } }` — types for custom runtime hooks.
 
 When you propose a deepening that introduces or relies on one of these seams, the augmentation is **part of the interface** — list it explicitly in the candidate.
+
+## Internal vs global scope
+
+Auto-import makes every file in `components/`, `composables/`, `utils/`, `server/utils/`, etc. **global by default**: the symbol joins a flat namespace, can be called from anywhere in its scope without an import, and any rename now has app-wide blast radius. Most extractions don't deserve that surface area — they're feature-private implementation details. Default to internal; promote on evidence.
+
+### The principle
+
+- **Default**: a newly extracted component or composable is **feature-local**. Colocate with its consumer and mark it internal (see "How to mark internal" below).
+- **Promote to global only when**: `npx -y @ripast/cli scan <symbol> --tsconfig .nuxt/tsconfig.json` shows callers in **≥2 unrelated feature directories**, AND the name reads unambiguously in any of them (no `useFoo` that means different things in checkout vs admin).
+- **Single-feature extractions stay internal even if reused 5× within that feature.** Reuse within a feature does not justify promoting the seam to app-global; it justifies a feature-local shared file.
+
+### How to mark internal
+
+Two equivalent mechanical patterns; pick one per project and stick with it. Both rely on Nuxt's scanner treating `_`-prefixed paths as non-public.
+
+1. **`_`-prefix** (preferred for one-off internals): rename the file/dir with a leading underscore. `components/checkout/_LineItemRow.vue`, `composables/checkout/_useCartTotals.ts`. Reads as "this file is internal" at a glance, no config required.
+2. **`_internal/` subdir** (preferred when a feature has many internals): group them under `_internal/`. `components/checkout/_internal/LineItemRow.vue`. Better when ≥3 internals belong to one feature; keeps the public surface obvious.
+
+Configure Nuxt to skip these from auto-import/scan (do this once at project setup):
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  ignore: ['**/_*/**', '**/_*.{ts,vue}'],
+  components: [
+    { path: '~/components', pathPrefix: false, ignore: ['**/_*/**', '**/_*'] },
+  ],
+  imports: {
+    scan: true,
+    // composables/ and utils/ scanning respects the top-level `ignore` above.
+  },
+})
+```
+
+Inside the feature, internals are imported by **relative path**, never by auto-import name — so the dependency is visible and the rename blast radius is bounded to the feature dir.
+
+### Promotion checklist
+
+When a candidate proposes moving an internal up to the global surface, require all four:
+
+1. **≥2 unrelated feature consumers** (verified with `ripast scan`, cited in the candidate).
+2. **Unambiguous name** in the global namespace — no collision with existing symbols, no feature-specific jargon.
+3. **Typed contract**: the returned shape (composable) or props/emits/slots (component) are explicit, not inferred from a single call site.
+4. **Locality win**: deletion of the global wrapper would re-duplicate behaviour across consumers (the deletion test).
+
+A candidate that proposes a new top-level `components/Foo.vue` or `composables/useFoo.ts` without all four fails on §2 Reject ("promotes to a globally auto-imported composable or component without cross-feature consumers").
+
+### Anti-patterns
+
+- **`composables/useX.ts` with one caller in one page.** Inline it, or move to `composables/<feature>/_useX.ts`. A globally auto-imported single-consumer composable is a hypothetical seam.
+- **`components/<Feature><Thing>.vue` used only by `<Feature>` pages.** Move into `components/<feature>/_Thing.vue` (or `_internal/Thing.vue`) and import by path; the global name is paying for indirection nobody uses.
+- **Cross-feature import of an `_`-prefixed internal.** The underscore is a contract: only the owning feature may import it. A second feature reaching in is the signal that either (a) the contract is wrong (promote) or (b) the consumer is in the wrong feature.
 
 ## Scope boundaries (the three runtimes)
 
