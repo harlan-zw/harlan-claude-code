@@ -24,6 +24,15 @@ A directory that *is* a Nuxt project, merged into the host. Pages, components, p
 - **Test surface**: run the layer as its own Nuxt app via `@nuxt/test-utils`.
 - **Deepening signal**: cross-cutting feature folders that import from each other in tangled ways and could instead live as separate layers with explicit overrides.
 - **Schema + migrations**: a layer can own its own DB tables and migration files (Laravel-package-style) — see [NITRO-CONVENTIONS.md](NITRO-CONVENTIONS.md) §9 for the host-orchestrated runner that makes per-layer migrations work with Drizzle.
+- **Default: disable auto-import scanning at the layer boundary.** A new layer's `nuxt.config.ts` should ship with `components: []` and `imports: { dirs: [] }`. Layers are merged into the host's global auto-import registry by default, which silently leaks every `components/`, `composables/`, and `utils/` file into the consuming app — readers can't tell which layer a symbol came from, two layers with the same filename collide, and the layer stops being a vertical with a chosen public surface. Force the author to opt back in (per-dir, prefixed) for anything intended as public surface; everything else stays internal and gets reached via explicit `#layers/<name>/...` imports. Cross-layer auto-import is also covered as a smell at line 144 below — this rule is the setup-time prevention.
+
+```ts
+// layers/billing/nuxt.config.ts — start here, opt back in deliberately
+export default defineNuxtConfig({
+  components: [], // no global component auto-registration
+  imports: { dirs: [] }, // no global composable/util auto-import
+})
+```
 
 ### Nuxt hook (`nuxt.hook('app:created', ...)`, `nitro.hook(...)`)
 
